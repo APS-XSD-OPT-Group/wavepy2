@@ -43,4 +43,51 @@
 # POSSIBILITY OF SUCH DAMAGE.                                             #
 # #########################################################################
 
-from wavepy2.utility.read_write import read_tiff, write_tiff
+from wavepy2.utility.read_write_file import read_tiff, write_tiff
+
+###################################################################
+# DO NOT TOUCH THIS CODE -- BEGIN
+###################################################################
+import threading
+
+def synchronized_method(method):
+
+    outer_lock = threading.Lock()
+    lock_name = "__"+method.__name__+"_lock"+"__"
+
+    def sync_method(self, *args, **kws):
+        with outer_lock:
+            if not hasattr(self, lock_name): setattr(self, lock_name, threading.Lock())
+            lock = getattr(self, lock_name)
+            with lock:
+                return method(self, *args, **kws)
+
+    return sync_method
+
+class Singleton:
+
+    def __init__(self, decorated):
+        self.__decorated = decorated
+
+    @synchronized_method
+    def Instance(self, **args):
+        if hasattr(self, "__instance") and not self.__instance is None:
+            return self.__instance
+        else:
+            self.__instance = self.__decorated(**args)
+            return self.__instance
+
+    def __call__(self):
+        raise TypeError('Singletons must be accessed through `Instance()`.')
+
+    def __instancecheck__(self, inst):
+        return isinstance(inst, self.__decorated)
+
+    @synchronized_method
+    def reset(self):
+        self.__instance = None
+
+###################################################################
+# DO NOT TOUCH THIS CODE -- END
+###################################################################
+
