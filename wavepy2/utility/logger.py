@@ -66,12 +66,6 @@ class LoggerMode:
     ERROR = 2
     NONE = 3
 
-class __NullLogger(LoggerFacade):
-    def print(self, message): pass
-    def print_message(self, message): pass
-    def print_warning(self, message): pass
-    def print_error(self, message): pass
-
 class __FullLogger(LoggerFacade):
     class LoggerColor:
         GREY = "grey"
@@ -133,6 +127,13 @@ class __FullLogger(LoggerFacade):
                            highlights=self.LoggerHighlights.ON_GREEN,
                            attrs=[self.LoggerAttributes.BOLD, self.LoggerAttributes.BLINK])
 
+class __NullLogger(LoggerFacade):
+    def __init__(self, stream=DEFAULT_STREAM): pass
+    def print(self, message): pass
+    def print_message(self, message): pass
+    def print_warning(self, message): pass
+    def print_error(self, message): pass
+
 class __ErrorLogger(__FullLogger):
     def __init__(self, stream=DEFAULT_STREAM): super().__init__(stream)
     def print(self, message): pass
@@ -144,7 +145,7 @@ class __WarningLogger(__FullLogger):
     def print(self, message): pass
     def print_message(self, message): pass
 
-class __LoggerList:
+class __LoggerPool(LoggerFacade):
     def __init__(self, logger_list):
         if logger_list is None: raise ValueError("Logger list is None")
         for logger in logger_list:
@@ -152,27 +153,20 @@ class __LoggerList:
 
         self.__logger_list = numpy.array(logger_list)
 
-    def get_logger_items(self):
-        return self.__logger_list
-
-class __LoggerPool(LoggerFacade):
-    def __init__(self, logger_list):
-        self.__logger_list = logger_list
-
     def print(self, message):
-        for logger in self.__logger_list.get_logger_items():
+        for logger in self.__logger_list:
             logger.print(message)
 
     def print_message(self, message):
-        for logger in self.__logger_list.get_logger_items():
+        for logger in self.__logger_list:
             logger.print_message(message)
 
     def print_warning(self, message):
-        for logger in self.__logger_list.get_logger_items():
+        for logger in self.__logger_list:
             logger.print_warning(message)
 
     def print_error(self, message):
-        for logger in self.__logger_list.get_logger_items():
+        for logger in self.__logger_list:
             logger.print_error(message)
 
 
@@ -202,10 +196,10 @@ class __LoggerRegistry:
 
 def register_logger_pool_instance(stream_list=[], logger_mode=LoggerMode.FULL, reset=False):
     if reset: __LoggerRegistry.Instance().reset()
-    if logger_mode==LoggerMode.FULL:      logger_list = __LoggerList([__FullLogger(stream) for stream in stream_list])
-    elif logger_mode==LoggerMode.NONE:    logger_list = __LoggerList([__NullLogger(stream) for stream in stream_list])
-    elif logger_mode==LoggerMode.WARNING: logger_list = __LoggerList([__WarningLogger(stream) for stream in stream_list])
-    elif logger_mode==LoggerMode.ERROR:   logger_list = __LoggerList([__ErrorLogger(stream) for stream in stream_list])
+    if logger_mode==LoggerMode.FULL:      logger_list = [__FullLogger(stream) for stream in stream_list]
+    elif logger_mode==LoggerMode.NONE:    logger_list = [__NullLogger(stream) for stream in stream_list]
+    elif logger_mode==LoggerMode.WARNING: logger_list = [__WarningLogger(stream) for stream in stream_list]
+    elif logger_mode==LoggerMode.ERROR:   logger_list = [__ErrorLogger(stream) for stream in stream_list]
 
     __LoggerRegistry.Instance().register_logger(__LoggerPool(logger_list=logger_list))
 
@@ -219,64 +213,3 @@ def register_logger_single_instance(stream=DEFAULT_STREAM, logger_mode=LoggerMod
 def get_registered_logger_instance():
     return __LoggerRegistry.Instance().get_logger_instance()
 
-# --------------------------------------------------------------------------------
-# TEST CODE
-
-from PyQt5.QtWidgets import QWidget
-from PyQt5.Qt import QApplication, QTextCursor
-
-import oasys.widgets.gui as gui
-
-class TestWidget(LogStream):
-    class Widget(QWidget):
-        def __init__(self):
-            super(TestWidget.Widget, self).__init__()
-
-            self.setFixedHeight(200)
-            self.setFixedWidth(250)
-
-            text_area_box = gui.widgetBox(self, "Test", orientation="vertical", height=160, width=200)
-
-            self.__text_area = gui.textArea(height=120, width=160, readOnly=True)
-            self.__text_area.setText("")
-
-            text_area_box.layout().addWidget(self.__text_area)
-
-        def write(self, text):
-            cursor = self.__text_area.textCursor()
-            cursor.movePosition(QTextCursor.End)
-            cursor.insertText(text)
-            self.__text_area.setTextCursor(cursor)
-            self.__text_area.ensureCursorVisible()
-
-    def __init__(self): self.__widget = TestWidget.Widget()
-    def close(self): pass
-    def write(self, text): self.__widget.write(text)
-    def flush(self, *args, **kwargs): pass
-    def show(self): self.__widget.show()
-
-
-def run_test_logger():
-    a = QApplication(sys.argv)
-
-    test_widget = TestWidget()
-    test_widget.show()
-
-    register_logger_pool_instance([test_widget, open("__TEST/diobescul.txt", "wt"), DEFAULT_STREAM], LoggerMode.FULL)
-    __log()
-
-    register_logger_single_instance(DEFAULT_STREAM, LoggerMode.ERROR, reset=True)
-    __log()
-
-    a.exec_()
-
-def __log():
-    logger = get_registered_logger_instance()
-
-    logger.print('Hello, World!')
-    logger.print_message('Hello, World!')
-    logger.print_warning('Hello, World!')
-    logger.print_error('Hello, World!')
-
-if __name__=="__main__":
-    run_test_logger()
