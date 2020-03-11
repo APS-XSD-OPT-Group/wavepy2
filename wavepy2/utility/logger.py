@@ -2,6 +2,8 @@ from wavepy2.utility import Singleton, synchronized_method
 import sys, io, numpy
 import termcolor
 
+DEFAULT_STREAM=sys.stdout
+
 class LogStream(io.TextIOWrapper):
 
     def close(self, *args, **kwargs):  # real signature unknown
@@ -56,11 +58,23 @@ class LoggerFacade:
         def print_cyan(self, message, highlights=LoggerHighlights.ON_WHITE, attrs=''): raise NotImplementedError()
         def print_white(self, message, highlights=LoggerHighlights.ON_WHITE, attrs=''): raise NotImplementedError()
 
-class Logger(LoggerFacade):
-    def __init__(self, stream=sys.stdout):
+class __NullLogger(LoggerFacade):
+    def print(self, message): pass
+    def print_color(self, message, color=LoggerColor.GREY, highlights=LoggerHighlights.ON_WHITE, attrs=''): pass
+    def print_grey(self, message, highlights=LoggerHighlights.ON_WHITE, attrs=''): pass
+    def print_red(self, message, highlights=LoggerHighlights.ON_WHITE, attrs=''): pass
+    def print_green(self, message, highlights=LoggerHighlights.ON_WHITE, attrs=''): pass
+    def print_yellow(self, message, highlights=LoggerHighlights.ON_WHITE, attrs=''): pass
+    def print_blue(self, message, highlights=LoggerHighlights.ON_WHITE, attrs=''): pass
+    def print_magenta(self, message, highlights=LoggerHighlights.ON_WHITE, attrs=''): pass
+    def print_cyan(self, message, highlights=LoggerHighlights.ON_WHITE, attrs=''): pass
+    def print_white(self, message, highlights=LoggerHighlights.ON_WHITE, attrs=''): pass
+
+class __Logger(LoggerFacade):
+    def __init__(self, stream=DEFAULT_STREAM):
         self.__stream = stream
 
-        if stream == sys.stdout:
+        if stream == DEFAULT_STREAM:
             self.__color_active = True
         elif isinstance(stream, LogStream):
             self.__color_active = stream.is_color_active()
@@ -103,69 +117,106 @@ class Logger(LoggerFacade):
         self.print_color(message, color=LoggerColor.WHITE, highlights=highlights, attrs=attrs)
 
 @Singleton
-class LoggerSingleton(Logger):
-    def __init__(self, stream=sys.stdout):
-        super(LoggerSingleton, self).__init__(stream)
+class __LoggerSingleton(__Logger):
+    def __init__(self, stream=DEFAULT_STREAM):
+        super().__init__(stream)
 
+class __LoggerList:
+    def __init__(self, logger_list):
+        if logger_list is None: raise ValueError("Logger list is None")
+        for logger in logger_list:
+            if not isinstance(logger, LoggerFacade): raise ValueError("Wrong objects in Logger list")
+
+        self.__logger_list = numpy.array(logger_list)
+
+    def get_logger_items(self):
+        return self.__logger_list
 
 @Singleton
-class LoggerPool(LoggerFacade):
-    def __init__(self):
-        self.__logger_list = None
-
-    @synchronized_method
-    def add_logger(self, logger):
-        if self.__logger_list is None:
-            self.__logger_list = numpy.array([logger])
-        else:
-            self.__logger_list = numpy.append(self.__logger_list, logger)
+class __LoggerPool(LoggerFacade):
+    def __init__(self, logger_list):
+        self.__logger_list = logger_list
 
     def print(self, message):
-        for logger in self.__logger_list:
+        for logger in self.__logger_list.get_logger_items():
             logger.print(message)
 
     def print_color(self, message, color=LoggerColor.GREY, highlights=LoggerHighlights.ON_WHITE, attrs=''):
-        for logger in self.__logger_list:
+        for logger in self.__logger_list.get_logger_items():
             logger.print_color(message, color, highlights, attrs)
 
     def print_grey(self, message, highlights=LoggerHighlights.ON_WHITE, attrs=''):
-        for logger in self.__logger_list:
+        for logger in self.__logger_list.get_logger_items():
             logger.print_grey(message, highlights, attrs)
 
     def print_red(self, message, highlights=LoggerHighlights.ON_WHITE, attrs=''):
-        for logger in self.__logger_list:
+        for logger in self.__logger_list.get_logger_items():
             logger.print_red(message, highlights, attrs)
 
     def print_green(self, message, highlights=LoggerHighlights.ON_WHITE, attrs=''):
-        for logger in self.__logger_list:
+        for logger in self.__logger_list.get_logger_items():
             logger.print_green(message, highlights, attrs)
 
     def print_yellow(self, message, highlights=LoggerHighlights.ON_WHITE, attrs=''):
-        for logger in self.__logger_list:
+        for logger in self.__logger_list.get_logger_items():
             logger.print_yellow(message, highlights, attrs)
 
     def print_blue(self, message, highlights=LoggerHighlights.ON_WHITE, attrs=''):
-        for logger in self.__logger_list:
+        for logger in self.__logger_list.get_logger_items():
             logger.print_blue(message, highlights, attrs)
 
     def print_magenta(self, message, highlights=LoggerHighlights.ON_WHITE, attrs=''):
-        for logger in self.__logger_list:
+        for logger in self.__logger_list.get_logger_items():
             logger.print_magenta(message, highlights, attrs)
 
     def print_cyan(self, message, highlights=LoggerHighlights.ON_WHITE, attrs=''):
-        for logger in self.__logger_list:
+        for logger in self.__logger_list.get_logger_items():
             logger.print_cyan(message, highlights, attrs)
 
     def print_white(self, message, highlights=LoggerHighlights.ON_WHITE, attrs=''):
-        for logger in self.__logger_list:
+        for logger in self.__logger_list.get_logger_items():
             logger.print_white(message, highlights, attrs)
 
+@Singleton
+class __LoggerRegistry:
 
-def get_logger_pool():
-    return LoggerPool.Instance()
+    def __init__(self):
+        self.__logger_instance = None
 
-def get_logger_singleton(stream=sys.stdout):
-    return LoggerSingleton.Instance(stream)
+    @synchronized_method
+    def register_logger(self, logger_facade_instance = None):
+        if logger_facade_instance is None: raise ValueError("Logger Instance is None")
+        if not isinstance(logger_facade_instance, LoggerFacade): raise ValueError("Logger Instance do not implement Logger Facade")
+
+        if self.__logger_instance is None: self.__logger_instance = logger_facade_instance
+        else: raise ValueError("Logger Instance already initialized")
+
+    @synchronized_method
+    def reset(self):
+        self.__logger_instance = None
+
+    def get_logger_instance(self):
+        return self.__logger_instance
+
+# -----------------------------------------------------
+# Factory Methods
+
+
+
+def register_logger_pool_instance(stream_list=[], reset=False):
+    if reset: __LoggerRegistry.Instance().reset()
+    __LoggerRegistry.Instance().register_logger(__LoggerPool.Instance(logger_list=__LoggerList([__Logger(stream) for stream in stream_list])))
+
+def register_logger_singleton_instance(stream=DEFAULT_STREAM, reset=False):
+    if reset: __LoggerRegistry.Instance().reset()
+    __LoggerRegistry.Instance().register_logger(__LoggerSingleton.Instance(stream))
+
+def register_null_logger_instance(reset=False):
+    if reset: __LoggerRegistry.Instance().reset()
+    __LoggerRegistry.Instance().register_logger(__NullLogger())
+
+def get_registered_logger_instance():
+    return __LoggerRegistry.Instance().get_logger_instance()
 
 # --------------------------------------------------------------------------------
 
@@ -218,18 +269,23 @@ class TestWidget(LogStream):
 if __name__=="__main__":
     a = QApplication(sys.argv)
 
-    logger_pool = get_logger_pool()
-
     test_widget = TestWidget()
-
-    logger_pool.add_logger(Logger(stream=test_widget))
-    logger_pool.add_logger(Logger(stream=open("diobescul.txt", "wt")))
-    logger_pool.add_logger(Logger())
-
-    logger_pool.print_color('Hello, World!', LoggerColor.RED, LoggerHighlights.ON_GREEN, [LoggerAttributes.BOLD, LoggerAttributes.BLINK])
-    logger_pool.print_red('Hello, World!', attrs=[LoggerAttributes.BOLD])
-    logger_pool.print_blue('Hello, World!')
-
     test_widget.show()
+
+    register_logger_pool_instance([test_widget, open("../../__TEST/diobescul.txt", "wt"), DEFAULT_STREAM])
+
+    logger = get_registered_logger_instance()
+
+    logger.print_color('Hello, World!', LoggerColor.RED, LoggerHighlights.ON_GREEN, [LoggerAttributes.BOLD, LoggerAttributes.BLINK])
+    logger.print_red('Hello, World!', attrs=[LoggerAttributes.BOLD])
+    logger.print_blue('Hello, World!')
+
+    register_null_logger_instance(reset=True)
+
+    logger = get_registered_logger_instance()
+
+    logger.print_color('Hello, World!', LoggerColor.RED, LoggerHighlights.ON_GREEN, [LoggerAttributes.BOLD, LoggerAttributes.BLINK])
+    logger.print_red('Hello, World!', attrs=[LoggerAttributes.BOLD])
+    logger.print_blue('Hello, World!')
 
     a.exec_()

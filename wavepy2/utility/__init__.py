@@ -65,15 +65,14 @@ def synchronized_method(method):
     return sync_method
 
 class Singleton:
-
     def __init__(self, decorated):
         self.__decorated = decorated
 
     @synchronized_method
     def Instance(self, **args):
-        if hasattr(self, "__instance") and not self.__instance is None:
+        try:
             return self.__instance
-        else:
+        except AttributeError:
             self.__instance = self.__decorated(**args)
             return self.__instance
 
@@ -82,10 +81,6 @@ class Singleton:
 
     def __instancecheck__(self, inst):
         return isinstance(inst, self.__decorated)
-
-    @synchronized_method
-    def reset(self):
-        self.__instance = None
 
 ###################################################################
 # DO NOT TOUCH THIS CODE -- END
