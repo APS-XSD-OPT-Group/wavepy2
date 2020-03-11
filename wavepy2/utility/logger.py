@@ -1,3 +1,47 @@
+# #########################################################################
+# Copyright (c) 2020, UChicago Argonne, LLC. All rights reserved.         #
+#                                                                         #
+# Copyright 2020. UChicago Argonne, LLC. This software was produced       #
+# under U.S. Government contract DE-AC02-06CH11357 for Argonne National   #
+# Laboratory (ANL), which is operated by UChicago Argonne, LLC for the    #
+# U.S. Department of Energy. The U.S. Government has rights to use,       #
+# reproduce, and distribute this software.  NEITHER THE GOVERNMENT NOR    #
+# UChicago Argonne, LLC MAKES ANY WARRANTY, EXPRESS OR IMPLIED, OR        #
+# ASSUMES ANY LIABILITY FOR THE USE OF THIS SOFTWARE.  If software is     #
+# modified to produce derivative works, such modified software should     #
+# be clearly marked, so as not to confuse it with the version available   #
+# from ANL.                                                               #
+#                                                                         #
+# Additionally, redistribution and use in source and binary forms, with   #
+# or without modification, are permitted provided that the following      #
+# conditions are met:                                                     #
+#                                                                         #
+#     * Redistributions of source code must retain the above copyright    #
+#       notice, this list of conditions and the following disclaimer.     #
+#                                                                         #
+#     * Redistributions in binary form must reproduce the above copyright #
+#       notice, this list of conditions and the following disclaimer in   #
+#       the documentation and/or other materials provided with the        #
+#       distribution.                                                     #
+#                                                                         #
+#     * Neither the name of UChicago Argonne, LLC, Argonne National       #
+#       Laboratory, ANL, the U.S. Government, nor the names of its        #
+#       contributors may be used to endorse or promote products derived   #
+#       from this software without specific prior written permission.     #
+#                                                                         #
+# THIS SOFTWARE IS PROVIDED BY UChicago Argonne, LLC AND CONTRIBUTORS     #
+# "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT       #
+# LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS       #
+# FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL UChicago     #
+# Argonne, LLC OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,        #
+# INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,    #
+# BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;        #
+# LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER        #
+# CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT      #
+# LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN       #
+# ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE         #
+# POSSIBILITY OF SUCH DAMAGE.                                             #
+# #########################################################################
 from wavepy2.utility import Singleton, synchronized_method
 import sys, io, numpy
 import termcolor
@@ -5,72 +49,58 @@ import termcolor
 DEFAULT_STREAM=sys.stdout
 
 class LogStream(io.TextIOWrapper):
-
-    def close(self, *args, **kwargs):  # real signature unknown
-        raise NotImplementedError()
-
-    def flush(self, *args, **kwargs):  # real signature unknown
-        raise NotImplementedError()
-
-    def write(self, *args, **kwargs):  # real signature unknown
-        raise NotImplementedError()
-
-    def is_color_active(self):
-        return False
-
-class LoggerColor:
-    GREY = "grey"
-    RED = "red"
-    GREEN = "green"
-    YELLOW = "yellow"
-    BLUE = "blue"
-    MAGENTA = "magenta"
-    CYAN = "cyan"
-    WHITE = "white"
-
-class LoggerHighlights:
-    ON_GREY = "on_grey"
-    ON_RED = "on_red"
-    ON_GREEN = "on_green"
-    ON_YELLOW = "on_yellow"
-    ON_BLUE = "on_blue"
-    ON_MAGENTA = "on_magenta"
-    ON_CYAN = "on_cyan"
-    ON_WHITE = "on_white"
-
-class LoggerAttributes:
-    BOLD = "bold"
-    DARK = "dark"
-    UNDERLINE = "underline"
-    BLINK = "blink"
-    REVERSE = "reverse"
-    CONCEALED = "concealed"
+    def close(self, *args, **kwargs): raise NotImplementedError()
+    def flush(self, *args, **kwargs): raise NotImplementedError()
+    def write(self, *args, **kwargs): raise NotImplementedError()
+    def is_color_active(self): return False
 
 class LoggerFacade:
-        def print(self, message): raise NotImplementedError()
-        def print_color(self, message, color=LoggerColor.GREY, highlights=LoggerHighlights.ON_WHITE, attrs=''): raise NotImplementedError()
-        def print_grey(self, message, highlights=LoggerHighlights.ON_WHITE, attrs=''): raise NotImplementedError()
-        def print_red(self, message, highlights=LoggerHighlights.ON_WHITE, attrs=''): raise NotImplementedError()
-        def print_green(self, message, highlights=LoggerHighlights.ON_WHITE, attrs=''): raise NotImplementedError()
-        def print_yellow(self, message, highlights=LoggerHighlights.ON_WHITE, attrs=''): raise NotImplementedError()
-        def print_blue(self, message, highlights=LoggerHighlights.ON_WHITE, attrs=''): raise NotImplementedError()
-        def print_magenta(self, message, highlights=LoggerHighlights.ON_WHITE, attrs=''): raise NotImplementedError()
-        def print_cyan(self, message, highlights=LoggerHighlights.ON_WHITE, attrs=''): raise NotImplementedError()
-        def print_white(self, message, highlights=LoggerHighlights.ON_WHITE, attrs=''): raise NotImplementedError()
+    def print(self, message): raise NotImplementedError()
+    def print_message(self, message): raise NotImplementedError()
+    def print_warning(self, message): raise NotImplementedError()
+    def print_error(self, message): raise NotImplementedError()
+
+class LoggerMode:
+    FULL = 0
+    WARNING = 1
+    ERROR = 2
+    NONE = 3
 
 class __NullLogger(LoggerFacade):
     def print(self, message): pass
-    def print_color(self, message, color=LoggerColor.GREY, highlights=LoggerHighlights.ON_WHITE, attrs=''): pass
-    def print_grey(self, message, highlights=LoggerHighlights.ON_WHITE, attrs=''): pass
-    def print_red(self, message, highlights=LoggerHighlights.ON_WHITE, attrs=''): pass
-    def print_green(self, message, highlights=LoggerHighlights.ON_WHITE, attrs=''): pass
-    def print_yellow(self, message, highlights=LoggerHighlights.ON_WHITE, attrs=''): pass
-    def print_blue(self, message, highlights=LoggerHighlights.ON_WHITE, attrs=''): pass
-    def print_magenta(self, message, highlights=LoggerHighlights.ON_WHITE, attrs=''): pass
-    def print_cyan(self, message, highlights=LoggerHighlights.ON_WHITE, attrs=''): pass
-    def print_white(self, message, highlights=LoggerHighlights.ON_WHITE, attrs=''): pass
+    def print_message(self, message): pass
+    def print_warning(self, message): pass
+    def print_error(self, message): pass
 
-class __Logger(LoggerFacade):
+class __FullLogger(LoggerFacade):
+    class LoggerColor:
+        GREY = "grey"
+        RED = "red"
+        GREEN = "green"
+        YELLOW = "yellow"
+        BLUE = "blue"
+        MAGENTA = "magenta"
+        CYAN = "cyan"
+        WHITE = "white"
+
+    class LoggerHighlights:
+        ON_GREY = "on_grey"
+        ON_RED = "on_red"
+        ON_GREEN = "on_green"
+        ON_YELLOW = "on_yellow"
+        ON_BLUE = "on_blue"
+        ON_MAGENTA = "on_magenta"
+        ON_CYAN = "on_cyan"
+        ON_WHITE = "on_white"
+
+    class LoggerAttributes:
+        BOLD = "bold"
+        DARK = "dark"
+        UNDERLINE = "underline"
+        BLINK = "blink"
+        REVERSE = "reverse"
+        CONCEALED = "concealed"
+
     def __init__(self, stream=DEFAULT_STREAM):
         self.__stream = stream
 
@@ -85,41 +115,34 @@ class __Logger(LoggerFacade):
         self.__stream.write(message + "\n")
         self.__stream.flush()
 
-    def print_color(self, message, color=LoggerColor.GREY, highlights=LoggerHighlights.ON_WHITE, attrs=''):
-        if self.__color_active:
-            self.__stream.write(termcolor.colored(message + "\n", color, highlights, attrs=attrs))
-            self.__stream.flush()
-        else:
-            self.print(message)
+    def __print_color(self, message, color=LoggerColor.GREY, highlights=LoggerHighlights.ON_WHITE, attrs=''):
+        self.__stream.write(termcolor.colored(message + "\n", color, highlights, attrs=attrs) if self.__color_active else (message + "\n"))
+        self.__stream.flush()
 
-    def print_grey(self, message, highlights=LoggerHighlights.ON_WHITE, attrs=''):
-        self.print_color(message, color=LoggerColor.GREY, highlights=highlights, attrs=attrs)
+    def print_message(self, message):
+        self.__print_color("MESSAGE: " + message,
+                           color=self.LoggerColor.BLUE)
 
-    def print_red(self, message, highlights=LoggerHighlights.ON_WHITE, attrs=''):
-        self.print_color(message, color=LoggerColor.RED, highlights=highlights, attrs=attrs)
+    def print_warning(self, message):
+        self.__print_color("WARNING: " + message,
+                           color=self.LoggerColor.MAGENTA)
 
-    def print_green(self, message, highlights=LoggerHighlights.ON_WHITE, attrs=''):
-        self.print_color(message, color=LoggerColor.GREEN, highlights=highlights, attrs=attrs)
+    def print_error(self, message):
+        self.__print_color("ERROR: " + message,
+                           color=self.LoggerColor.RED,
+                           highlights=self.LoggerHighlights.ON_GREEN,
+                           attrs=[self.LoggerAttributes.BOLD, self.LoggerAttributes.BLINK])
 
-    def print_yellow(self, message, highlights=LoggerHighlights.ON_WHITE, attrs=''):
-        self.print_color(message, color=LoggerColor.YELLOW, highlights=highlights, attrs=attrs)
+class __ErrorLogger(__FullLogger):
+    def __init__(self, stream=DEFAULT_STREAM): super().__init__(stream)
+    def print(self, message): pass
+    def print_message(self, message): pass
+    def print_warning(self, message): pass
 
-    def print_blue(self, message, highlights=LoggerHighlights.ON_WHITE, attrs=''):
-        self.print_color(message, color=LoggerColor.BLUE, highlights=highlights, attrs=attrs)
-
-    def print_magenta(self, message, highlights=LoggerHighlights.ON_WHITE, attrs=''):
-        self.print_color(message, color=LoggerColor.MAGENTA, highlights=highlights, attrs=attrs)
-
-    def print_cyan(self, message, highlights=LoggerHighlights.ON_WHITE, attrs=''):
-        self.print_color(message, color=LoggerColor.CYAN, highlights=highlights, attrs=attrs)
-
-    def print_white(self, message, highlights=LoggerHighlights.ON_WHITE, attrs=''):
-        self.print_color(message, color=LoggerColor.WHITE, highlights=highlights, attrs=attrs)
-
-@Singleton
-class __LoggerSingleton(__Logger):
-    def __init__(self, stream=DEFAULT_STREAM):
-        super().__init__(stream)
+class __WarningLogger(__FullLogger):
+    def __init__(self, stream=DEFAULT_STREAM): super().__init__(stream)
+    def print(self, message): pass
+    def print_message(self, message): pass
 
 class __LoggerList:
     def __init__(self, logger_list):
@@ -132,7 +155,6 @@ class __LoggerList:
     def get_logger_items(self):
         return self.__logger_list
 
-@Singleton
 class __LoggerPool(LoggerFacade):
     def __init__(self, logger_list):
         self.__logger_list = logger_list
@@ -141,41 +163,18 @@ class __LoggerPool(LoggerFacade):
         for logger in self.__logger_list.get_logger_items():
             logger.print(message)
 
-    def print_color(self, message, color=LoggerColor.GREY, highlights=LoggerHighlights.ON_WHITE, attrs=''):
+    def print_message(self, message):
         for logger in self.__logger_list.get_logger_items():
-            logger.print_color(message, color, highlights, attrs)
+            logger.print_message(message)
 
-    def print_grey(self, message, highlights=LoggerHighlights.ON_WHITE, attrs=''):
+    def print_warning(self, message):
         for logger in self.__logger_list.get_logger_items():
-            logger.print_grey(message, highlights, attrs)
+            logger.print_warning(message)
 
-    def print_red(self, message, highlights=LoggerHighlights.ON_WHITE, attrs=''):
+    def print_error(self, message):
         for logger in self.__logger_list.get_logger_items():
-            logger.print_red(message, highlights, attrs)
+            logger.print_error(message)
 
-    def print_green(self, message, highlights=LoggerHighlights.ON_WHITE, attrs=''):
-        for logger in self.__logger_list.get_logger_items():
-            logger.print_green(message, highlights, attrs)
-
-    def print_yellow(self, message, highlights=LoggerHighlights.ON_WHITE, attrs=''):
-        for logger in self.__logger_list.get_logger_items():
-            logger.print_yellow(message, highlights, attrs)
-
-    def print_blue(self, message, highlights=LoggerHighlights.ON_WHITE, attrs=''):
-        for logger in self.__logger_list.get_logger_items():
-            logger.print_blue(message, highlights, attrs)
-
-    def print_magenta(self, message, highlights=LoggerHighlights.ON_WHITE, attrs=''):
-        for logger in self.__logger_list.get_logger_items():
-            logger.print_magenta(message, highlights, attrs)
-
-    def print_cyan(self, message, highlights=LoggerHighlights.ON_WHITE, attrs=''):
-        for logger in self.__logger_list.get_logger_items():
-            logger.print_cyan(message, highlights, attrs)
-
-    def print_white(self, message, highlights=LoggerHighlights.ON_WHITE, attrs=''):
-        for logger in self.__logger_list.get_logger_items():
-            logger.print_white(message, highlights, attrs)
 
 @Singleton
 class __LoggerRegistry:
@@ -201,24 +200,27 @@ class __LoggerRegistry:
 # -----------------------------------------------------
 # Factory Methods
 
-
-
-def register_logger_pool_instance(stream_list=[], reset=False):
+def register_logger_pool_instance(stream_list=[], logger_mode=LoggerMode.FULL, reset=False):
     if reset: __LoggerRegistry.Instance().reset()
-    __LoggerRegistry.Instance().register_logger(__LoggerPool.Instance(logger_list=__LoggerList([__Logger(stream) for stream in stream_list])))
+    if logger_mode==LoggerMode.FULL:      logger_list = __LoggerList([__FullLogger(stream) for stream in stream_list])
+    elif logger_mode==LoggerMode.NONE:    logger_list = __LoggerList([__NullLogger(stream) for stream in stream_list])
+    elif logger_mode==LoggerMode.WARNING: logger_list = __LoggerList([__WarningLogger(stream) for stream in stream_list])
+    elif logger_mode==LoggerMode.ERROR:   logger_list = __LoggerList([__ErrorLogger(stream) for stream in stream_list])
 
-def register_logger_singleton_instance(stream=DEFAULT_STREAM, reset=False):
-    if reset: __LoggerRegistry.Instance().reset()
-    __LoggerRegistry.Instance().register_logger(__LoggerSingleton.Instance(stream))
+    __LoggerRegistry.Instance().register_logger(__LoggerPool(logger_list=logger_list))
 
-def register_null_logger_instance(reset=False):
+def register_logger_single_instance(stream=DEFAULT_STREAM, logger_mode=LoggerMode.FULL, reset=False):
     if reset: __LoggerRegistry.Instance().reset()
-    __LoggerRegistry.Instance().register_logger(__NullLogger())
+    if logger_mode==LoggerMode.FULL:      __LoggerRegistry.Instance().register_logger(__FullLogger(stream))
+    elif logger_mode==LoggerMode.NONE:    __LoggerRegistry.Instance().register_logger(__NullLogger(stream))
+    elif logger_mode==LoggerMode.WARNING: __LoggerRegistry.Instance().register_logger(__WarningLogger(stream))
+    elif logger_mode==LoggerMode.ERROR:   __LoggerRegistry.Instance().register_logger(__ErrorLogger(stream))
 
 def get_registered_logger_instance():
     return __LoggerRegistry.Instance().get_logger_instance()
 
 # --------------------------------------------------------------------------------
+# TEST CODE
 
 from PyQt5.QtWidgets import QWidget
 from PyQt5.Qt import QApplication, QTextCursor
@@ -226,9 +228,7 @@ from PyQt5.Qt import QApplication, QTextCursor
 import oasys.widgets.gui as gui
 
 class TestWidget(LogStream):
-
     class Widget(QWidget):
-
         def __init__(self):
             super(TestWidget.Widget, self).__init__()
 
@@ -249,43 +249,34 @@ class TestWidget(LogStream):
             self.__text_area.setTextCursor(cursor)
             self.__text_area.ensureCursorVisible()
 
-
-    def __init__(self):
-        self.__widget = TestWidget.Widget()
-
-    def close(self):
-        pass
-
-    def write(self, text):
-        self.__widget.write(text)
-
-    def flush(self, *args, **kwargs):
-        pass
-
-    def show(self):
-        self.__widget.show()
+    def __init__(self): self.__widget = TestWidget.Widget()
+    def close(self): pass
+    def write(self, text): self.__widget.write(text)
+    def flush(self, *args, **kwargs): pass
+    def show(self): self.__widget.show()
 
 
-if __name__=="__main__":
+def run_test_logger():
     a = QApplication(sys.argv)
 
     test_widget = TestWidget()
     test_widget.show()
 
-    register_logger_pool_instance([test_widget, open("../../__TEST/diobescul.txt", "wt"), DEFAULT_STREAM])
+    register_logger_pool_instance([test_widget, open("__TEST/diobescul.txt", "wt"), DEFAULT_STREAM], LoggerMode.FULL)
+    __log()
 
-    logger = get_registered_logger_instance()
-
-    logger.print_color('Hello, World!', LoggerColor.RED, LoggerHighlights.ON_GREEN, [LoggerAttributes.BOLD, LoggerAttributes.BLINK])
-    logger.print_red('Hello, World!', attrs=[LoggerAttributes.BOLD])
-    logger.print_blue('Hello, World!')
-
-    register_null_logger_instance(reset=True)
-
-    logger = get_registered_logger_instance()
-
-    logger.print_color('Hello, World!', LoggerColor.RED, LoggerHighlights.ON_GREEN, [LoggerAttributes.BOLD, LoggerAttributes.BLINK])
-    logger.print_red('Hello, World!', attrs=[LoggerAttributes.BOLD])
-    logger.print_blue('Hello, World!')
+    register_logger_single_instance(DEFAULT_STREAM, LoggerMode.ERROR, reset=True)
+    __log()
 
     a.exec_()
+
+def __log():
+    logger = get_registered_logger_instance()
+
+    logger.print('Hello, World!')
+    logger.print_message('Hello, World!')
+    logger.print_warning('Hello, World!')
+    logger.print_error('Hello, World!')
+
+if __name__=="__main__":
+    run_test_logger()
