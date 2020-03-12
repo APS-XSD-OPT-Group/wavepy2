@@ -42,7 +42,7 @@
 # ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE         #
 # POSSIBILITY OF SUCH DAMAGE.                                             #
 # #########################################################################
-from wavepy2.utility import Singleton, synchronized_method
+from wavepy2.tools import Singleton, synchronized_method
 import sys, io, numpy
 import termcolor
 
@@ -78,6 +78,7 @@ class __FullLogger(LoggerFacade):
         WHITE = "white"
 
     class LoggerHighlights:
+        NONE = None
         ON_GREY = "on_grey"
         ON_RED = "on_red"
         ON_GREEN = "on_green"
@@ -88,6 +89,7 @@ class __FullLogger(LoggerFacade):
         ON_WHITE = "on_white"
 
     class LoggerAttributes:
+        NONE = None
         BOLD = "bold"
         DARK = "dark"
         UNDERLINE = "underline"
@@ -109,7 +111,7 @@ class __FullLogger(LoggerFacade):
         self.__stream.write(message + "\n")
         self.__stream.flush()
 
-    def __print_color(self, message, color=LoggerColor.GREY, highlights=LoggerHighlights.ON_WHITE, attrs=''):
+    def __print_color(self, message, color=LoggerColor.GREY, highlights=LoggerHighlights.NONE, attrs=LoggerAttributes.NONE):
         self.__stream.write(termcolor.colored(message + "\n", color, highlights, attrs=attrs) if self.__color_active else (message + "\n"))
         self.__stream.flush()
 

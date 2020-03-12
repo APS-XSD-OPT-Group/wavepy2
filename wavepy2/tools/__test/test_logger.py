@@ -42,7 +42,7 @@
 # ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE         #
 # POSSIBILITY OF SUCH DAMAGE.                                             #
 # #########################################################################
-from wavepy2.utility.logger import *
+from wavepy2.tools.log.logger import *
 
 from PyQt5.QtWidgets import QWidget
 from PyQt5.Qt import QApplication, QTextCursor
@@ -57,7 +57,7 @@ class TestWidget(LogStream):
             self.setFixedHeight(200)
             self.setFixedWidth(250)
 
-            text_area_box = gui.widgetBox(self, "Test", orientation="vertical", height=160, width=200)
+            text_area_box = gui.__widgetBox(self, "Test", orientation="vertical", height=160, width=200)
 
             self.__text_area = gui.textArea(height=120, width=160, readOnly=True)
             self.__text_area.setText("")

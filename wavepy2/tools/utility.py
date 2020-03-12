@@ -42,47 +42,110 @@
 # ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE         #
 # POSSIBILITY OF SUCH DAMAGE.                                             #
 # #########################################################################
+import numpy as np
+try:
+    from  pyfftw.interfaces.numpy_fft import fft2, ifft2
+except ImportError:
+    from  numpy.fft import fft2, ifft2
 
-from wavepy2.utility.read_write_file import read_tiff, write_tiff
+class FourierTransform:
+    @classmethod
+    def fft(cls, img):
+        return np.fft.fftshift(fft2(img, norm='ortho'))
 
-###################################################################
-# DO NOT TOUCH THIS CODE -- BEGIN
-###################################################################
-import threading
+    @classmethod
+    def ifft(cls, imgFFT):
+        return ifft2(np.fft.ifftshift(imgFFT), norm='ortho')
 
-def synchronized_method(method):
+def choose_unit(array):
+    """
 
-    outer_lock = threading.Lock()
-    lock_name = "__"+method.__name__+"_lock"+"__"
+    Script to choose good(best) units in engineering notation
+    for a ``ndarray``.
 
-    def sync_method(self, *args, **kws):
-        with outer_lock:
-            if not hasattr(self, lock_name): setattr(self, lock_name, threading.Lock())
-            lock = getattr(self, lock_name)
-            with lock:
-                return method(self, *args, **kws)
+    For a given input array, the function returns ``factor`` and ``unit``
+    according to
 
-    return sync_method
+    .. math:: 10^{n} < \max(array) < 10^{n + 3}
 
-class Singleton:
-    def __init__(self, decorated):
-        self.__decorated = decorated
+    +------------+----------------------+------------------------+
+    |     n      |    factor (float)    |        unit(str)       |
+    +============+======================+========================+
+    |     0      |    1.0               |   ``''`` empty string  |
+    +------------+----------------------+------------------------+
+    |     -12     |    10^-12           |        ``p``           |
+    +------------+----------------------+------------------------+
+    |     -9     |    10^-9             |        ``n``           |
+    +------------+----------------------+------------------------+
+    |     -6     |    10^-6             |     ``r'\mu'``         |
+    +------------+----------------------+------------------------+
+    |     -3     |    10^-3             |        ``m``           |
+    +------------+----------------------+------------------------+
+    |     +3     |    10^-6             |        ``k``           |
+    +------------+----------------------+------------------------+
+    |     +6     |    10^-9             |        ``M``           |
+    +------------+----------------------+------------------------+
+    |     +9     |    10^-6             |        ``G``           |
+    +------------+----------------------+------------------------+
 
-    @synchronized_method
-    def Instance(self, **args):
-        try:
-            return self.__instance
-        except AttributeError:
-            self.__instance = self.__decorated(**args)
-            return self.__instance
+    ``n=-6`` returns ``\mu`` since this is the latex syntax for micro.
+    See Example.
 
-    def __call__(self):
-        raise TypeError('Singletons must be accessed through `Instance()`.')
 
-    def __instancecheck__(self, inst):
-        return isinstance(inst, self.__decorated)
+    Parameters
+    ----------
+    array : ndarray
+        array from where to choose proper unit.
 
-###################################################################
-# DO NOT TOUCH THIS CODE -- END
-###################################################################
+    Returns
+    -------
+    float, unit :
+        Multiplication Factor and strig for unit
 
+    Example
+    -------
+
+    >>> array1 = np.linspace(0,100e-6,101)
+    >>> array2 = array1*1e10
+    >>> factor1, unit1 = choose_unit(array1)
+    >>> factor2, unit2 = choose_unit(array2)
+    >>> plt.plot(array1*factor1,array2*factor2)
+    >>> plt.xlabel(r'${0} m$'.format(unit1))
+    >>> plt.ylabel(r'${0} m$'.format(unit2))
+
+    The syntax ``r'$ string $ '`` is necessary to use latex commands in the
+    :py:mod:`matplotlib` labels.
+
+    """
+
+    max_abs = np.max(np.abs(array))
+
+    if 2e0 < max_abs <= 2e3:
+        factor = 1.0
+        unit = ''
+    elif 2e-12 < max_abs <= 2e-9:
+        factor = 1.0e12
+        unit = 'p'
+    elif 2e-9 < max_abs <= 2e-6:
+        factor = 1.0e9
+        unit = 'n'
+    elif 2e-6 < max_abs <= 2e-3:
+        factor = 1.0e6
+        unit = r'\mu'
+    elif 2e-3 < max_abs <= 2e0:
+        factor = 1.0e3
+        unit = 'm'
+    elif 2e3 < max_abs <= 2e6:
+        factor = 1.0e-3
+        unit = 'k'
+    elif 2e6 < max_abs <= 2e9:
+        factor = 1.0e-6
+        unit = 'M'
+    elif 2e9 < max_abs <= 2e12:
+        factor = 1.0e-6
+        unit = 'G'
+    else:
+        factor = 1.0
+        unit = ' '
+
+    return factor, unit
