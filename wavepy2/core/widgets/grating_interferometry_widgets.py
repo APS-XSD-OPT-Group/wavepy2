@@ -44,30 +44,11 @@
 # #########################################################################
 import numpy as np
 
+from wavepy2.util.common.common_tools import get_idxPeak_ij, extent_func
 from wavepy2.util.plot.plotter import WavePyWidget
-from wavepy2.util.plot import plot_tools
 
 from matplotlib.patches import Rectangle
 from matplotlib.figure import Figure
-
-def get_idxPeak_ij(harV, harH, nRows, nColumns, periodVert, periodHor):
-    return [nRows // 2 + harV * periodVert, nColumns // 2 + harH * periodHor]
-
-def get_idxPeak_ij_exp(imgFFT, harV, harH, periodVert, periodHor, searchRegion):
-    (nRows, nColumns) = imgFFT.shape
-
-    idxPeak_ij = get_idxPeak_ij(harV, harH, nRows, nColumns, periodVert, periodHor)
-
-    maskSearchRegion = np.zeros((nRows, nColumns))
-    maskSearchRegion[idxPeak_ij[0] - searchRegion:
-                     idxPeak_ij[0] + searchRegion,
-                     idxPeak_ij[1] - searchRegion:
-                     idxPeak_ij[1] + searchRegion] = 1.0
-
-    intensity = (np.abs(imgFFT))
-    idxPeak_ij_exp = np.where(intensity * maskSearchRegion == np.max(intensity * maskSearchRegion))
-
-    return [idxPeak_ij_exp[0][0], idxPeak_ij_exp[1][0]]
 
 class ExtractHarmonicPlot(WavePyWidget):
     def get_plot_tab_name(self):
@@ -84,7 +65,7 @@ class ExtractHarmonicPlot(WavePyWidget):
 
         figure = Figure(figsize=(8, 7))
         ax = figure.subplots(1, 1)
-        ax.imshow(np.log10(intensity), cmap='inferno', extent=plot_tools.extent_func(intensity))
+        ax.imshow(np.log10(intensity), cmap='inferno', extent=extent_func(intensity))
 
         ax.set_xlabel('Pixels')
         ax.set_ylabel('Pixels')
@@ -125,7 +106,7 @@ class HarmonicGridPlot(WavePyWidget):
         figure = Figure(figsize=(8, 7))
         ax = figure.subplots(1, 1)
         ax.imshow(np.log10(np.abs(imgFFT)), cmap='inferno',
-                   extent=plot_tools.extent_func(imgFFT))
+                   extent=extent_func(imgFFT))
 
         ax.set_xlabel('Pixels')
         ax.set_ylabel('Pixels')
@@ -184,14 +165,12 @@ class HarmonicPeakPlot(WavePyWidget):
 
         for i in range(-5, 5):
             ax1.plot(np.abs(imgFFT[idxPeak_ij[0] - 100 : idxPeak_ij[0] + 100, idxPeak_ij[1]-i]), lw=2, label='01 Vert ' + str(i))
-
         ax1.grid()
 
         idxPeak_ij = get_idxPeak_ij(1, 0, nRows, nColumns, periodVert, periodHor)
 
         for i in range(-5, 5):
             ax2.plot(np.abs(imgFFT[idxPeak_ij[0]-i, idxPeak_ij[1] - 100 : idxPeak_ij[1] + 100]), lw=2, label='10 Horz ' + str(i))
-
         ax2.grid()
 
         ax1.set_xlabel('Pixels')
@@ -228,7 +207,7 @@ class SingleGratingHarmonicImages(WavePyWidget):
             # The vmin and vmax arguments specify the color limits
             im = ax.imshow(dat, cmap='inferno', vmin=np.min(intFFT00),
                            vmax=np.max(intFFT00),
-                           extent=plot_tools.extent_func(dat))
+                           extent=extent_func(dat))
 
             ax.set_title(textTitle)
             if textTitle == 'FFT 00': ax.set_ylabel('Pixels')

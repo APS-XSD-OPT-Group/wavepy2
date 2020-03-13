@@ -50,8 +50,10 @@ from wavepy2.util.plot.plotter import get_registered_plotter_instance, PlotterMo
 from wavepy2.util.io.read_write_file import read_tiff
 
 from wavepy2.core.grating_interferometry import *
-from wavepy2.core.widgets.grating_interferometry import *
+from wavepy2.core.widgets.grating_interferometry_widgets import *
 
+from scipy import constants
+hc = constants.value('inverse meter-electron volt relationship')  # hc
 
 def main_single_gr_Talbot(img, imgRef,
                           phenergy, pixelsize, distDet2sample,
@@ -119,8 +121,6 @@ from wavepy2.util.log.logger import register_logger_single_instance
 from PyQt5.Qt import QApplication
 from PyQt5.QtWidgets import QWidget, QMainWindow
 from scipy import constants
-
-
 
 if __name__=="__main__":
     a = QApplication(sys.argv)

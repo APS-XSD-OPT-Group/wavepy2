@@ -43,77 +43,25 @@
 # POSSIBILITY OF SUCH DAMAGE.                                             #
 # #########################################################################
 import numpy as np
-from scipy.interpolate import UnivariateSpline
+import sys
 
-def fwhm_xy(xvalues, yvalues):
-    """
-    Calculate FWHM of a vector  y(x)
+from PyQt5.QtWidgets import QMainWindow
 
-    Parameters
-    ----------
-    xvalues : ndarray
-        vector with the values of x
-    yvalues : ndarray
-        vector with the values of x
+# ---------------------------------------------------------------------------
+# WIDGET FOR SCRIPTING
 
-    Returns
-    -------
-    list
-        list of values x and y(x) at half maximum in the format
-        [[fwhm_x1, fwhm_x2], [fwhm_y1, fwhm_y2]]
-    """
+class DefaultMainWindow(QMainWindow):
+    def __init__(self, title):
+        super().__init__()
+        self.setWindowTitle(title)
+        self.__container_widget = QWidget()
+        self.setCentralWidget(self.__container_widget)
 
-    spline = UnivariateSpline(xvalues,
-                              yvalues-np.min(yvalues)/2-np.max(yvalues)/2,
-                              s=0)
-    # find the roots and return
+    def get_container_widget(self):
+        return self.__container_widget
 
-    xvalues = spline.roots().tolist()
-    yvalues = (spline(spline.roots()) + np.min(yvalues)/2 +
-               np.max(yvalues)/2).tolist()
-
-    if len(xvalues) == 2:
-        return [xvalues, yvalues]
-
-    else:
-        return[[], []]
-
-def mean_plus_n_sigma(array, n_sigma=5):
-
-    '''
-    TODO: Write Docstring
-    '''
-    return np.nanmean(array) + n_sigma*np.nanstd(array)
-
-def extent_func(img, pixelsize=[1, 1]):
-    '''
-    TODO: Write Docstring
-
-    pixelsize is a list of size 2 as [pixelsize_i, pixelsize_j]
-
-    if pixelsize is a float, then pixelsize_i = pixelsize_j
-
-    Returns
-    -------
-    array
-        with coordinates (left, right, bottom, top)
-
-
-    See Also
-    --------
-    :py:func:`matplotlib.pyplot.imshow`
-    '''
-
-    if isinstance(pixelsize, float):
-        pixelsize = [pixelsize, pixelsize]
-
-    return np.array((-img.shape[1] // 2 * pixelsize[1],
-                     (img.shape[1] - img.shape[1] // 2) * pixelsize[1],
-                     -img.shape[0] // 2 * pixelsize[0],
-                     (img.shape[0] - img.shape[0] // 2) * pixelsize[0]))
-
-
-# WIDGETS UTILS FROM OASYS -------------------------------------------
+# ---------------------------------------------------------------------------
+# WIDGETS UTILS FROM OASYS
 
 from PyQt5.QtWidgets import QWidget, QGroupBox, QTabWidget, QScrollArea, QLayout, QHBoxLayout, QVBoxLayout
 from PyQt5.QtCore import Qt
@@ -187,3 +135,5 @@ def __separator(widget, width=4, height=4):
     if widget.layout() is not None: widget.layout().addWidget(sep)
     sep.setFixedSize(width, height)
     return sep
+
+

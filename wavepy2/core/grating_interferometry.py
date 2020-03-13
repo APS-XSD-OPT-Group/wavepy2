@@ -44,8 +44,9 @@
 # #########################################################################
 from wavepy2.util.log.logger   import get_registered_logger_instance
 from wavepy2.util.plot.plotter import get_registered_plotter_instance
-from wavepy2.util.common.common_tools import FourierTransform
-from wavepy2.core.widgets.grating_interferometry import *
+from wavepy2.util.common.common_tools import FourierTransform, get_idxPeak_ij_exp
+from wavepy2.core.widgets.grating_interferometry_widgets import *
+
 from skimage.restoration import unwrap_phase
 
 def __check_harmonic_inside_image(harV, harH, nRows, nColumns, periodVert, periodHor):

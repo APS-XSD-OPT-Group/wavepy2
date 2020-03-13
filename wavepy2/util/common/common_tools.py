@@ -43,6 +43,11 @@
 # POSSIBILITY OF SUCH DAMAGE.                                             #
 # #########################################################################
 import numpy as np
+from scipy.interpolate import UnivariateSpline
+
+# ---------------------------------------------------------------------------
+# Fourier Transform
+
 try:
     from  pyfftw.interfaces.numpy_fft import fft2, ifft2
 except ImportError:
@@ -56,6 +61,9 @@ class FourierTransform:
     @classmethod
     def ifft(cls, imgFFT):
         return ifft2(np.fft.ifftshift(imgFFT), norm='ortho')
+
+# ---------------------------------------------------------------------------
+# MISCELLANEA (FROM WAVEPY)
 
 def choose_unit(array):
     """
@@ -149,3 +157,57 @@ def choose_unit(array):
         unit = ' '
 
     return factor, unit
+
+def crop_matrix_at_indexes(input_matrix, list_of_indexes):
+    if list_of_indexes == [0, -1, 0, -1]:
+        return input_matrix
+
+    return np.copy(input_matrix[list_of_indexes[0]:list_of_indexes[1],
+                   list_of_indexes[2]:list_of_indexes[3]])
+
+def fwhm_xy(xvalues, yvalues):
+    spline = UnivariateSpline(xvalues,
+                              yvalues-np.min(yvalues)/2-np.max(yvalues)/2,
+                              s=0)
+
+    xvalues = spline.roots().tolist()
+    yvalues = (spline(spline.roots()) + np.min(yvalues)/2 +
+               np.max(yvalues)/2).tolist()
+
+    if len(xvalues) == 2:
+        return [xvalues, yvalues]
+
+    else:
+        return[[], []]
+
+def mean_plus_n_sigma(array, n_sigma=5):
+    return np.nanmean(array) + n_sigma*np.nanstd(array)
+
+def extent_func(img, pixelsize=[1, 1]):
+    if isinstance(pixelsize, float): pixelsize = [pixelsize, pixelsize]
+
+    return np.array((-img.shape[1] // 2 * pixelsize[1],
+                     (img.shape[1] - img.shape[1] // 2) * pixelsize[1],
+                     -img.shape[0] // 2 * pixelsize[0],
+                     (img.shape[0] - img.shape[0] // 2) * pixelsize[0]))
+
+
+def get_idxPeak_ij(harV, harH, nRows, nColumns, periodVert, periodHor):
+    return [nRows // 2 + harV * periodVert, nColumns // 2 + harH * periodHor]
+
+
+def get_idxPeak_ij_exp(imgFFT, harV, harH, periodVert, periodHor, searchRegion):
+    (nRows, nColumns) = imgFFT.shape
+
+    idxPeak_ij = get_idxPeak_ij(harV, harH, nRows, nColumns, periodVert, periodHor)
+
+    maskSearchRegion = np.zeros((nRows, nColumns))
+    maskSearchRegion[idxPeak_ij[0] - searchRegion:
+                     idxPeak_ij[0] + searchRegion,
+                     idxPeak_ij[1] - searchRegion:
+                     idxPeak_ij[1] + searchRegion] = 1.0
+
+    intensity = (np.abs(imgFFT))
+    idxPeak_ij_exp = np.where(intensity * maskSearchRegion == np.max(intensity * maskSearchRegion))
+
+    return [idxPeak_ij_exp[0][0], idxPeak_ij_exp[1][0]]
