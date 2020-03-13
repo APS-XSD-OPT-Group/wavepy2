@@ -42,7 +42,7 @@
 # ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE         #
 # POSSIBILITY OF SUCH DAMAGE.                                             #
 # #########################################################################
-from wavepy2.tools.log.logger import *
+from wavepy2.util.log.logger import *
 
 from PyQt5.QtWidgets import QWidget
 from PyQt5.Qt import QApplication, QTextCursor

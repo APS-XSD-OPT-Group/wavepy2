@@ -42,31 +42,36 @@
 # ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE         #
 # POSSIBILITY OF SUCH DAMAGE.                                             #
 # #########################################################################
-from wavepy2.tools import Singleton, synchronized_method
-from wavepy2.tools.plot import plot_tools
+from wavepy2.util import Singleton, synchronized_method
+from wavepy2.util.plot import plot_tools
 
 from PyQt5.QtWidgets import QWidget, QVBoxLayout
 
-from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg
+from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 
 class WavePyWidget(QWidget):
-    def __init__(self):
-        super().__init__()
 
     def get_plot_tab_name(self): raise NotImplementedError()
 
     def build_plot(self, **kwargs):
         layout = QVBoxLayout()
-        layout.addWidget(FigureCanvasQTAgg(self.build_figure(**kwargs)))
+        figure = self.build_figure(**kwargs)
+        dpi = figure.get_dpi()
+        figure.set_size_inches(w=(350/float(dpi)), h=(250/float(dpi)))
+        canvas = FigureCanvas(figure)
+        canvas.setParent(self)
+        layout.addWidget(canvas)
+        layout.setStretchFactor(canvas, 1)
 
         self.setLayout(layout)
 
     def build_figure(self, **kwargs): raise NotImplementedError()
 
+
 class PlotterFacade:
     def push_plot(self, context_key, widget_class, **kwargs): raise NotImplementedError()
-    def get_context_plots(self, key): raise NotImplementedError()
-    def plot_context(self, key): raise NotImplementedError()
+    def get_context_plots(self, context_key): raise NotImplementedError()
+    def draw_context_on_widget(self, context_key, container_widget): raise NotImplementedError()
 
 class PlotterMode:
     FULL = 0
@@ -94,12 +99,11 @@ class __FullPlotter(PlotterFacade):
         if context_key in self.__plot_dictionary: return self.__plot_dictionary[context_key]
         else: return None
 
-    def plot_context(self, context_key):
-        container = QWidget()
-        container.setFixedWidth(800)
-        container.setFixedHeight(800)
+    def draw_context_on_widget(self, context_key, container_widget, width=800, height=600):
+        container_widget.setMinimumWidth(width)
+        container_widget.setMinimumHeight(height)
 
-        main_box = plot_tools.widgetBox(container, "", orientation="vertical")
+        main_box = plot_tools.widgetBox(container_widget, context_key, orientation="vertical")
         tab_widget = plot_tools.tabWidget(main_box)
 
         if context_key in self.__plot_dictionary:
@@ -108,12 +112,28 @@ class __FullPlotter(PlotterFacade):
                                          plot_widget_instance.get_plot_tab_name(),
                                          plot_widget_instance)
 
-        container.show()
+        container_widget.update()
+
+    def show_context(self, context_key, container_widget, width=800, height=600):
+        container_widget.setMinimumWidth(800)
+        container_widget.setMinimumHeight(600)
+
+        main_box = plot_tools.widgetBox(container_widget, context_key, orientation="vertical")
+        tab_widget = plot_tools.tabWidget(main_box)
+
+        if context_key in self.__plot_dictionary:
+            for plot_widget_instance in self.__plot_dictionary[context_key]:
+                plot_tools.createTabPage(tab_widget,
+                                         plot_widget_instance.get_plot_tab_name(),
+                                         plot_widget_instance)
+
+        container_widget.update()
+
 
 class __NullPlotter(PlotterFacade):
     def push_plot(self, context_key, widget_class, **kwargs): pass
-    def get_context_plots(self, key): pass
-    def plot_context(self, key): pass
+    def get_context_plots(self, context_key): pass
+    def draw_context_on_widget(self, context_key, container_widget): pass
 
 
 @Singleton

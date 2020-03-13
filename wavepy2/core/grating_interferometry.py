@@ -42,9 +42,9 @@
 # ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE         #
 # POSSIBILITY OF SUCH DAMAGE.                                             #
 # #########################################################################
-from wavepy2.tools.log.logger   import get_registered_logger_instance
-from wavepy2.tools.plot.plotter import get_registered_plotter_instance
-from wavepy2.tools.utility import FourierTransform
+from wavepy2.util.log.logger   import get_registered_logger_instance
+from wavepy2.util.plot.plotter import get_registered_plotter_instance
+from wavepy2.util.common.common_tools import FourierTransform
 from wavepy2.core.widgets.grating_interferometry import *
 from skimage.restoration import unwrap_phase
 
@@ -208,7 +208,7 @@ def single_grating_harmonic_images(img, harmonicPeriod, searchRegion=10, context
 
     imgFFT = FourierTransform.fft(img)
 
-    #plotter.push_plot(context_key, HarmonicGridPlot, imgFFT=imgFFT, harmonicPeriod=harmonicPeriod)
+    plotter.push_plot(context_key, HarmonicGridPlot, imgFFT=imgFFT, harmonicPeriod=harmonicPeriod)
 
     imgFFT00 = extract_harmonic(imgFFT,
                                 harmonicPeriod=harmonicPeriod,
@@ -228,7 +228,7 @@ def single_grating_harmonic_images(img, harmonicPeriod, searchRegion=10, context
                                 searchRegion=searchRegion,
                                 context_key=context_key)
 
-    #plotter.push_plot(context_key, SingleGratingHarmonicImages, imgFFT00=imgFFT00, imgFFT01=imgFFT01, imgFFT10=imgFFT10)
+    plotter.push_plot(context_key, SingleGratingHarmonicImages, imgFFT00=imgFFT00, imgFFT01=imgFFT01, imgFFT10=imgFFT10)
 
     img00 = FourierTransform.ifft(imgFFT00)
 

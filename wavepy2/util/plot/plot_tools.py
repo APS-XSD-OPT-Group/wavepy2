@@ -129,7 +129,7 @@ def tabWidget(widget, height=None, width=None):
     return w
 
 def createTabPage(tabWidget, name, widgetToAdd=None, canScroll=False):
-    if widgetToAdd is None: widgetToAdd = __widgetBox(tabWidget, addToLayout=0, margin=4)
+    if widgetToAdd is None: widgetToAdd = widgetBox(tabWidget, addToLayout=0, margin=4)
     if canScroll:
         scrollArea = QScrollArea()
         tabWidget.addTab(scrollArea, name)

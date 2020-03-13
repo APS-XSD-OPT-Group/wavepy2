@@ -44,9 +44,10 @@
 # #########################################################################
 import numpy as np
 
-from wavepy2.tools.log.logger import get_registered_logger_instance
-from wavepy2.tools.plot.plotter import get_registered_plotter_instance
-from wavepy2.tools.io.read_write_file import read_tiff
+from wavepy2.util.common.common_tools import FourierTransform
+from wavepy2.util.log.logger import get_registered_logger_instance, LoggerMode
+from wavepy2.util.plot.plotter import get_registered_plotter_instance, PlotterMode
+from wavepy2.util.io.read_write_file import read_tiff
 
 from wavepy2.core.grating_interferometry import *
 from wavepy2.core.widgets.grating_interferometry import *
@@ -86,7 +87,6 @@ def main_single_gr_Talbot(img, imgRef,
 
         harmPeriod = [period_harm_Vert, period_harm_Hor]
 
-    # print(period_harm_Vert,period_harm_Vert_o)
     # Calculate everything
 
     [int00, int01, int10,
@@ -114,19 +114,25 @@ def main_single_gr_Talbot(img, imgRef,
 
 import sys
 
-from wavepy2.tools.plot.plotter import register_plotter_instance
-from wavepy2.tools.log.logger import register_logger_single_instance
+from wavepy2.util.plot.plotter import register_plotter_instance
+from wavepy2.util.log.logger import register_logger_single_instance
 from PyQt5.Qt import QApplication
-from PyQt5.QtWidgets import QWidget
+from PyQt5.QtWidgets import QWidget, QMainWindow
 from scipy import constants
+
+
 
 if __name__=="__main__":
     a = QApplication(sys.argv)
+    main_window = QMainWindow()
+    main_window.setWindowTitle("Single Grating Talbot")
+    container_widget = QWidget()
+    main_window.setCentralWidget(container_widget)
 
     hc = constants.value('inverse meter-electron volt relationship')  # hc
 
-    register_logger_single_instance()
-    register_plotter_instance()
+    register_logger_single_instance(logger_mode=LoggerMode.WARNING)
+    register_plotter_instance(plotter_mode=PlotterMode.FULL)
 
     # ==========================================================================
     # %% Experimental parameters
@@ -162,7 +168,8 @@ if __name__=="__main__":
                                    phenergy, pixelsize, distDet2sample,
                                    period_harm=[period_harm_Vert,
                                                 period_harm_Hor],
-                                   unwrapFlag=True)
+                                   unwrapFlag=True,
+                                   context_key="Single Grating Talbot")
 
     [int00, int01, int10,
      darkField01, darkField10,
@@ -171,6 +178,9 @@ if __name__=="__main__":
 
     plotter = get_registered_plotter_instance()
 
-    plotter.plot_context("main_single_gr_Talbot")
+    plotter.draw_context_on_widget("Single Grating Talbot", container_widget=container_widget)
+
+    main_window.show()
 
     a.exec_()
+

@@ -44,8 +44,8 @@
 # #########################################################################
 import numpy as np
 
-from wavepy2.tools.plot.plotter import WavePyWidget
-from wavepy2.tools.plot import plot_tools
+from wavepy2.util.plot.plotter import WavePyWidget
+from wavepy2.util.plot import plot_tools
 
 from matplotlib.patches import Rectangle
 from matplotlib.figure import Figure
@@ -162,9 +162,9 @@ class HarmonicPeakPlot(WavePyWidget):
         return "Harmonic Peak"
 
     def build_figure(self, **kwargs):
-        imgFFT = kwargs["imgFFT"]
+        imgFFT         = kwargs["imgFFT"]
         harmonicPeriod = kwargs["harmonicPeriod"]
-        fname = kwargs["fname"]
+        fname          = kwargs["fname"]
 
         (nRows, nColumns) = imgFFT.shape
 
@@ -218,7 +218,8 @@ class SingleGratingHarmonicImages(WavePyWidget):
         intFFT01 = np.log10(np.abs(kwargs["imgFFT01"]))
         intFFT10 = np.log10(np.abs(kwargs["imgFFT10"]))
 
-        figure, axes = plt.subplots(nrows=1, ncols=3, figsize=(14, 5))
+        figure = Figure(figsize=(14, 5))
+        axes = figure.subplots(nrows=1, ncols=3)
 
         for dat, ax, textTitle in zip([intFFT00, intFFT01, intFFT10],
                                       axes.flat,
@@ -235,6 +236,6 @@ class SingleGratingHarmonicImages(WavePyWidget):
 
         # Make an axis for the colorbar on the right side
         figure.colorbar(im, cax=figure.add_axes([0.92, 0.1, 0.03, 0.8]))
-        plt.suptitle('FFT subsets - Intensity', fontsize=18, weight='bold')
+        figure.suptitle('FFT subsets - Intensity', fontsize=18, weight='bold')
 
         return figure
