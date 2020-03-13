@@ -58,81 +58,77 @@ class CropDialogPlot(WavePyWidget):
         img         = kwargs["img"]
         saveFigFlag = kwargs["saveFigFlag"]
 
+        # take index from ini file
+        idx4crop = list(map(int, (wpu.get_from_ini_file(inifname, 'Parameters', 'Crop').split(','))))
 
-# %%
-def crop_dialog(img, saveFigFlag=False):
+        wpu.print_red(idx4crop)
 
-    # take index from ini file
-    idx4crop = list(map(int, (wpu.get_from_ini_file(inifname, 'Parameters', 'Crop').split(','))))
+        # Plot Real Image wiht default crop
 
-    wpu.print_red(idx4crop)
+        tmpImage = wpu.crop_matrix_at_indexes(img, idx4crop)
 
-    # Plot Real Image wiht default crop
-
-    tmpImage = wpu.crop_matrix_at_indexes(img, idx4crop)
-
-    plt.figure()
-    plt.imshow(tmpImage,
-               cmap='viridis',
-               extent=wpu.extent_func(tmpImage, pixelsize)*1e6)
-    plt.xlabel(r'$[\mu m]$')
-    plt.ylabel(r'$[\mu m]$')
-    plt.colorbar()
-
-    plt.title('Raw Image with initial Crop', fontsize=18, weight='bold')
-
-    plt.show(block=False)
-    plt.pause(.5)
-    # ask if the crop need to be changed
-    newCrop = gui_mode and easyqt.get_yes_or_no('New Crop?')
-
-    if saveFigFlag and not newCrop:
-        wpu.save_figs_with_idx(saveFileSuf)
-
-    plt.close(plt.gcf())
-
-    if newCrop:
-
-        [colorlimit,
-         cmap] = wpu.plot_slide_colorbar(img,
-                                         title='SELECT COLOR SCALE,\n' +
-                                         'Raw Image, No Crop',
-                                         xlabel=r'x [$\mu m$ ]',
-                                         ylabel=r'y [$\mu m$ ]',
-                                         extent=wpu.extent_func(img,
-                                                                pixelsize)*1e6)
-
-        cmap2crop = plt.cm.get_cmap(cmap)
-        cmap2crop.set_over('#FF0000')
-        cmap2crop.set_under('#8B008B')
-        idx4crop = wpu.graphical_roi_idx(img, verbose=True,
-                                         kargs4graph={'cmap': cmap,
-                                                      'vmin': colorlimit[0],
-                                                      'vmax': colorlimit[1]})
-
-        cmap2crop.set_over(cmap2crop(1))  # Reset Colorbar
-        cmap2crop.set_under(cmap2crop(cmap2crop.N-1))
-
-        wpu.set_at_ini_file(inifname, 'Parameters', 'Crop',
-                            '{}, {}, {}, {}'.format(idx4crop[0], idx4crop[1],
-                                                    idx4crop[2], idx4crop[3]))
-
-        img = wpu.crop_matrix_at_indexes(img, idx4crop)
-
-        # Plot Real Image AFTER crop
-
-        plt.imshow(img, cmap='viridis',
-                   extent=wpu.extent_func(img, pixelsize)*1e6)
+        plt.figure()
+        plt.imshow(tmpImage,
+                   cmap='viridis',
+                   extent=wpu.extent_func(tmpImage, pixelsize)*1e6)
         plt.xlabel(r'$[\mu m]$')
         plt.ylabel(r'$[\mu m]$')
         plt.colorbar()
-        plt.title('Raw Image with New Crop', fontsize=18, weight='bold')
 
-        if saveFigFlag:
+        plt.title('Raw Image with initial Crop', fontsize=18, weight='bold')
+
+        plt.show(block=False)
+        plt.pause(.5)
+        # ask if the crop need to be changed
+        newCrop = gui_mode and easyqt.get_yes_or_no('New Crop?')
+
+        if saveFigFlag and not newCrop:
             wpu.save_figs_with_idx(saveFileSuf)
-        plt.show(block=True)
 
-    else:
-        img = tmpImage
+        plt.close(plt.gcf())
 
-    return img, idx4crop
+        if newCrop:
+
+            [colorlimit,
+             cmap] = wpu.plot_slide_colorbar(img,
+                                             title='SELECT COLOR SCALE,\n' +
+                                             'Raw Image, No Crop',
+                                             xlabel=r'x [$\mu m$ ]',
+                                             ylabel=r'y [$\mu m$ ]',
+                                             extent=wpu.extent_func(img,
+                                                                    pixelsize)*1e6)
+
+            cmap2crop = plt.cm.get_cmap(cmap)
+            cmap2crop.set_over('#FF0000')
+            cmap2crop.set_under('#8B008B')
+            idx4crop = wpu.graphical_roi_idx(img, verbose=True,
+                                             kargs4graph={'cmap': cmap,
+                                                          'vmin': colorlimit[0],
+                                                          'vmax': colorlimit[1]})
+
+            cmap2crop.set_over(cmap2crop(1))  # Reset Colorbar
+            cmap2crop.set_under(cmap2crop(cmap2crop.N-1))
+
+            wpu.set_at_ini_file(inifname, 'Parameters', 'Crop',
+                                '{}, {}, {}, {}'.format(idx4crop[0], idx4crop[1],
+                                                        idx4crop[2], idx4crop[3]))
+
+            img = wpu.crop_matrix_at_indexes(img, idx4crop)
+
+            # Plot Real Image AFTER crop
+
+            plt.imshow(img, cmap='viridis',
+                       extent=wpu.extent_func(img, pixelsize)*1e6)
+            plt.xlabel(r'$[\mu m]$')
+            plt.ylabel(r'$[\mu m]$')
+            plt.colorbar()
+            plt.title('Raw Image with New Crop', fontsize=18, weight='bold')
+
+            if saveFigFlag:
+                wpu.save_figs_with_idx(saveFileSuf)
+            plt.show(block=True)
+
+        else:
+            img = tmpImage
+
+        return img, idx4crop
