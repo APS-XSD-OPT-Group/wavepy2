@@ -44,19 +44,59 @@
 # #########################################################################
 import numpy as np
 
-from wavepy2.util.plot.plotter import WavePyWidget
+from wavepy2.util.plot.plotter import WavePyWidget, WavePyInteractiveWidget
+from wavepy2.util.log.logger import get_registered_logger_instance, LoggerColor
+from wavepy2.util.ini.initializer import get_registered_ini_instance
+
+from wavepy2.util.plot import plot_tools
 from wavepy2.util.common import common_tools
 
 from matplotlib.patches import Rectangle
 from matplotlib.figure import Figure
+from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 
-class CropDialogPlot(WavePyWidget):
-    def get_plot_tab_name(self):
-        return "Crop Plot"
+class CropDialogPlot(WavePyInteractiveWidget):
 
-    def build_figure(self, **kwargs):
+    def __init__(self, parent):
+        super(CropDialogPlot, self).__init__(parent, message="New Crop?", title="Crop Image")
+        self.__ini    = get_registered_ini_instance()
+        self.__logger = get_registered_logger_instance()
+
+    def build_widget(self, **kwargs):
         img         = kwargs["img"]
         saveFigFlag = kwargs["saveFigFlag"]
+        pixelsize   = kwargs["pixelsize"]
+
+        idx4crop = self.__ini.get_list_from_ini("Parameters", "Crop")
+
+        self.__logger.print_other(idx4crop, "Stored Crop Indexes: ", color=LoggerColor.RED)
+
+        tmpImage = common_tools.crop_matrix_at_indexes(img, idx4crop)
+
+        original_figure = Figure()
+        ax = original_figure.subplots(1, 1)
+        image = ax.imshow(tmpImage, cmap='viridis', extent=common_tools.extent_func(tmpImage, pixelsize)*1e6)
+        ax.set_xlabel(r'$[\mu m]$')
+        ax.set_ylabel(r'$[\mu m]$')
+
+        original_figure.colorbar(image, ax=ax, orientation='vertical')
+
+        ax.set_title('Raw Image with initial Crop', fontsize=18, weight='bold')
+
+        tab_widget = plot_tools.tabWidget(self.get_central_widget())
+
+        tab_raw = plot_tools.createTabPage(tab_widget, "Raw Image", FigureCanvas(original_figure))
+
+        self.update()
+
+        self.__img      = img
+        self.__idx4crop = idx4crop
+
+    def get_user_selection(self):
+        return self.__img, self.__idx4crop
+
+'''
+    def build_figure(self, **kwargs):
 
         # take index from ini file
         idx4crop = list(map(int, (wpu.get_from_ini_file(inifname, 'Parameters', 'Crop').split(','))))
@@ -132,3 +172,4 @@ class CropDialogPlot(WavePyWidget):
             img = tmpImage
 
         return img, idx4crop
+'''

@@ -88,6 +88,29 @@ class __LocalIniFile(IniFacade):
     def set_at_ini(self, section, key, value):
         self.__config_parser[section][key] = str(value)
 
+    def get_string_from_ini(self, section ,key):
+        value = self.get_from_ini(section, key)
+        return None if value is None else value.strip()
+
+    def get_int_from_ini(self, section ,key):
+        value = self.get_from_ini(section, key)
+        return None if value is None else int(value.strip())
+
+    def get_float_from_ini(self, section ,key):
+        value = self.get_from_ini(section, key)
+        return None if value is None else float(value.strip())
+
+    def get_list_from_ini(self, section,key):
+        value = self.get_from_ini(section, key)
+        return None if value is None else list(map(int, self.get_from_ini(section, key).split(',')))
+
+    def set_list_at_ini(self, section, key, values_list=[]):
+        if not values_list is None:
+            values_string = ""
+            for value in values_list: values_string += str(value) + ", "
+            values_string = values_string[:, -2]
+            self.set_at_ini(section, key, values_string)
+
     def push(self):
         with open(self.__ini_file_name, "w") as ini_file: self.__config_parser.write(ini_file)
 

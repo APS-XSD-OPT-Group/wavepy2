@@ -59,6 +59,7 @@ class LoggerFacade:
     def print_message(self, message): raise NotImplementedError()
     def print_warning(self, message): raise NotImplementedError()
     def print_error(self, message): raise NotImplementedError()
+    def print_other(self, message, prefix, color): raise NotImplementedError()
 
 class LoggerMode:
     FULL = 0
@@ -66,36 +67,38 @@ class LoggerMode:
     ERROR = 2
     NONE = 3
 
+class LoggerColor:
+    GREY = "grey"
+    RED = "red"
+    GREEN = "green"
+    YELLOW = "yellow"
+    BLUE = "blue"
+    MAGENTA = "magenta"
+    CYAN = "cyan"
+    WHITE = "white"
+
+class LoggerHighlights:
+    NONE = None
+    ON_GREY = "on_grey"
+    ON_RED = "on_red"
+    ON_GREEN = "on_green"
+    ON_YELLOW = "on_yellow"
+    ON_BLUE = "on_blue"
+    ON_MAGENTA = "on_magenta"
+    ON_CYAN = "on_cyan"
+    ON_WHITE = "on_white"
+
+class LoggerAttributes:
+    NONE = None
+    BOLD = "bold"
+    DARK = "dark"
+    UNDERLINE = "underline"
+    BLINK = "blink"
+    REVERSE = "reverse"
+    CONCEALED = "concealed"
+
 class __FullLogger(LoggerFacade):
-    class LoggerColor:
-        GREY = "grey"
-        RED = "red"
-        GREEN = "green"
-        YELLOW = "yellow"
-        BLUE = "blue"
-        MAGENTA = "magenta"
-        CYAN = "cyan"
-        WHITE = "white"
 
-    class LoggerHighlights:
-        NONE = None
-        ON_GREY = "on_grey"
-        ON_RED = "on_red"
-        ON_GREEN = "on_green"
-        ON_YELLOW = "on_yellow"
-        ON_BLUE = "on_blue"
-        ON_MAGENTA = "on_magenta"
-        ON_CYAN = "on_cyan"
-        ON_WHITE = "on_white"
-
-    class LoggerAttributes:
-        NONE = None
-        BOLD = "bold"
-        DARK = "dark"
-        UNDERLINE = "underline"
-        BLINK = "blink"
-        REVERSE = "reverse"
-        CONCEALED = "concealed"
 
     def __init__(self, stream=DEFAULT_STREAM):
         self.__stream = stream
@@ -115,19 +118,20 @@ class __FullLogger(LoggerFacade):
         self.__stream.write(termcolor.colored(message + "\n", color, highlights, attrs=attrs) if self.__color_active else (message + "\n"))
         self.__stream.flush()
 
+    def print_other(self, message, prefix="", color=LoggerColor.GREY):
+        self.__print_color(str(prefix) + str(message), color=color)
+
     def print_message(self, message):
-        self.__print_color("MESSAGE: " + message,
-                           color=self.LoggerColor.BLUE)
+        self.__print_color("MESSAGE: " + str(message), color=LoggerColor.BLUE)
 
     def print_warning(self, message):
-        self.__print_color("WARNING: " + message,
-                           color=self.LoggerColor.MAGENTA)
+        self.__print_color("WARNING: " + str(message), color=LoggerColor.MAGENTA)
 
     def print_error(self, message):
-        self.__print_color("ERROR: " + message,
-                           color=self.LoggerColor.RED,
-                           highlights=self.LoggerHighlights.ON_GREEN,
-                           attrs=[self.LoggerAttributes.BOLD, self.LoggerAttributes.BLINK])
+        self.__print_color("ERROR: " + str(message),
+                           color=LoggerColor.RED,
+                           highlights=LoggerHighlights.ON_GREEN,
+                           attrs=[LoggerAttributes.BOLD, LoggerAttributes.BLINK])
 
 class __NullLogger(LoggerFacade):
     def __init__(self, stream=DEFAULT_STREAM): pass

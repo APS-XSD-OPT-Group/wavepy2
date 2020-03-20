@@ -45,15 +45,19 @@
 from wavepy2.util import Singleton, synchronized_method
 from wavepy2.util.plot import plot_tools
 
-from PyQt5.QtWidgets import QWidget, QVBoxLayout
+from PyQt5.QtWidgets import QWidget, QDialog, QVBoxLayout, QMessageBox, QDialogButtonBox
+from PyQt5.QtCore import Qt
 
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 
-class WavePyWidget(QWidget):
+class WavePyGenericWidget(object):
+    def build_widget(self, **kwargs): raise NotImplementedError()
+
+class WavePyWidget(QWidget, WavePyGenericWidget):
 
     def get_plot_tab_name(self): raise NotImplementedError()
 
-    def build_plot(self, **kwargs):
+    def build_widget(self, **kwargs):
         layout = QVBoxLayout()
         figure = self.build_figure(**kwargs)
         dpi = figure.get_dpi()
@@ -67,11 +71,51 @@ class WavePyWidget(QWidget):
 
     def build_figure(self, **kwargs): raise NotImplementedError()
 
+class WavePyInteractiveWidget(QDialog, WavePyGenericWidget):
+
+    def __init__(self, parent, message, title, width=800, height=600):
+        super(QDialog, self).__init__(parent)
+
+        self.setWindowTitle(message)
+        self.setModal(True)
+
+        self.central_widget = plot_tools.widgetBox(self, title, "vertical")
+
+        layout = QVBoxLayout(self)
+
+        button_box = QDialogButtonBox(orientation=Qt.Horizontal,
+                                      standardButtons=QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
+
+        button_box.accepted.connect(self.__accepted)
+        button_box.rejected.connect(self.__rejected)
+        layout.addWidget(self.central_widget)
+        layout.addWidget(button_box)
+
+        self.output = None
+
+    def __accepted(self):
+        self.output = self.get_user_selection()
+        self.accept()
+
+    def __rejected(self):
+        self.output = None
+        self.reject()
+
+    def get_user_selection(self): raise NotImplementedError(0)
+
+    def get_central_widget(self):
+        return self.central_widget
+
+    @classmethod
+    def get_output(cls, dialog):
+        dialog.exec_()
+        return dialog.output
 
 class PlotterFacade:
     def push_plot(self, context_key, widget_class, **kwargs): raise NotImplementedError()
     def get_context_plots(self, context_key): raise NotImplementedError()
     def draw_context_on_widget(self, context_key, container_widget): raise NotImplementedError()
+    def show_interactive_plot(self, widget_class, **kwargs): raise NotImplementedError()
 
 class PlotterMode:
     FULL = 0
@@ -86,7 +130,7 @@ class __FullPlotter(PlotterFacade):
 
         try:
             plot_widget_instance = widget_class()
-            plot_widget_instance.build_plot(**kwargs)
+            plot_widget_instance.build_widget(**kwargs)
         except Exception as e:
             raise ValueError("Plot Widget can't be created: " + str(e))
 
@@ -114,26 +158,23 @@ class __FullPlotter(PlotterFacade):
 
         container_widget.update()
 
-    def show_context(self, context_key, container_widget, width=800, height=600):
-        container_widget.setMinimumWidth(800)
-        container_widget.setMinimumHeight(600)
+    def show_interactive_plot(self, widget_class, container_widget, **kwargs):
+        if not issubclass(widget_class, WavePyInteractiveWidget): raise ValueError("Widget class is not a WavePyWidget")
 
-        main_box = plot_tools.widgetBox(container_widget, context_key, orientation="vertical")
-        tab_widget = plot_tools.tabWidget(main_box)
+        try:
+            interactive_widget_instance = widget_class(parent=container_widget)
+            interactive_widget_instance.build_widget(**kwargs)
+        except Exception as e:
+            raise ValueError("Plot Widget can't be created: " + str(e))
 
-        if context_key in self.__plot_dictionary:
-            for plot_widget_instance in self.__plot_dictionary[context_key]:
-                plot_tools.createTabPage(tab_widget,
-                                         plot_widget_instance.get_plot_tab_name(),
-                                         plot_widget_instance)
-
-        container_widget.update()
+        return widget_class.get_output(interactive_widget_instance)
 
 
 class __NullPlotter(PlotterFacade):
     def push_plot(self, context_key, widget_class, **kwargs): pass
     def get_context_plots(self, context_key): pass
     def draw_context_on_widget(self, context_key, container_widget): pass
+    def show_interactive_plot(self, widget_class, container_widget, **kwargs): pass
 
 
 @Singleton
