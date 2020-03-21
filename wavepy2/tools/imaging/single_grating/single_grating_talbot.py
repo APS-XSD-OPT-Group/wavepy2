@@ -42,8 +42,12 @@
 # ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE         #
 # POSSIBILITY OF SUCH DAMAGE.                                             #
 # #########################################################################
+import matplotlib
+matplotlib.use('Qt5Agg')
+
 import numpy as np
 
+from wavepy2.util.common import common_tools
 from wavepy2.util.common.common_tools import FourierTransform
 from wavepy2.util.log.logger import get_registered_logger_instance, LoggerMode
 from wavepy2.util.plot.plotter import get_registered_plotter_instance, PlotterMode
@@ -74,9 +78,10 @@ def main_single_gr_Talbot(img, imgRef,
 
     img, idx4crop = plotter.show_interactive_plot(CropDialogPlot, container_widget, img=img, saveFigFlag=saveFigFlag, pixelsize=pixelsize)
 
-    #img, idx4crop = crop_dialog(img, saveFigFlag=saveFigFlag)
-    #if imgRef is not None:
-    #    imgRef = wpu.crop_matrix_at_indexes(imgRef, idx4crop)
+    #plotter.push_plot(context_key, )
+
+    if not imgRef is None: imgRef = common_tools.crop_matrix_at_indexes(img, idx4crop)
+
 
     period_harm_Vert_o = int(period_harm[0]*img.shape[0]/img_size_o[0]) + 1
     period_harm_Hor_o = int(period_harm[1]*img.shape[1]/img_size_o[1]) + 1

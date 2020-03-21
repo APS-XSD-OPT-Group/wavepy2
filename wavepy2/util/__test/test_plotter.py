@@ -28,7 +28,7 @@ class MyInteractiveWidget(WavePyInteractiveWidget):
     def build_widget(self, **kwargs):
         pass
 
-    def get_user_selection(self):
+    def get_accepted_output(self):
         return "TEST2"
 
 plotter.draw_context_on_widget("CONTEXT1", container_widget=container)

@@ -79,7 +79,7 @@ class WavePyInteractiveWidget(QDialog, WavePyGenericWidget):
         self.setWindowTitle(message)
         self.setModal(True)
 
-        self.central_widget = plot_tools.widgetBox(self, title, "vertical")
+        self.__central_widget = plot_tools.widgetBox(self, title, "vertical")
 
         layout = QVBoxLayout(self)
 
@@ -88,28 +88,33 @@ class WavePyInteractiveWidget(QDialog, WavePyGenericWidget):
 
         button_box.accepted.connect(self.__accepted)
         button_box.rejected.connect(self.__rejected)
-        layout.addWidget(self.central_widget)
+        layout.addWidget(self.__central_widget)
         layout.addWidget(button_box)
 
-        self.output = None
+        self.__output = None
 
     def __accepted(self):
-        self.output = self.get_user_selection()
+        self.__output = self.get_accepted_output()
         self.accept()
 
     def __rejected(self):
-        self.output = None
+        self.__output = self.get_rejected_output()
         self.reject()
 
-    def get_user_selection(self): raise NotImplementedError(0)
+    def get_output_object(self):
+        return self.__output
+
+    def get_accepted_output(self): raise NotImplementedError()
+    def get_rejected_output(self): raise NotImplementedError()
 
     def get_central_widget(self):
-        return self.central_widget
+        return self.__central_widget
 
     @classmethod
     def get_output(cls, dialog):
         dialog.exec_()
-        return dialog.output
+
+        return dialog.get_output_object()
 
 class PlotterFacade:
     def push_plot(self, context_key, widget_class, **kwargs): raise NotImplementedError()

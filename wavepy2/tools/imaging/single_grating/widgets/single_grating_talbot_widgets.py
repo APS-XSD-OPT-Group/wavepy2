@@ -69,17 +69,20 @@ class CropDialogPlot(WavePyInteractiveWidget):
 
         idx4crop = self.__ini.get_list_from_ini("Parameters", "Crop")
 
+        self.__img_original      = img
+        self.__idx4crop_original = idx4crop
+
         self.__logger.print_other(idx4crop, "Stored Crop Indexes: ", color=LoggerColor.RED)
 
         tmpImage = common_tools.crop_matrix_at_indexes(img, idx4crop)
 
         original_figure = Figure()
         ax = original_figure.subplots(1, 1)
-        image = ax.imshow(tmpImage, cmap='viridis', extent=common_tools.extent_func(tmpImage, pixelsize)*1e6)
+        original_image = ax.imshow(tmpImage, cmap='viridis', extent=common_tools.extent_func(tmpImage, pixelsize)*1e6)
         ax.set_xlabel(r'$[\mu m]$')
         ax.set_ylabel(r'$[\mu m]$')
 
-        original_figure.colorbar(image, ax=ax, orientation='vertical')
+        original_figure.colorbar(original_image, ax=ax, orientation='vertical')
 
         ax.set_title('Raw Image with initial Crop', fontsize=18, weight='bold')
 
@@ -87,13 +90,28 @@ class CropDialogPlot(WavePyInteractiveWidget):
 
         tab_raw = plot_tools.createTabPage(tab_widget, "Raw Image", FigureCanvas(original_figure))
 
+        self.__figure_slide_colorbar = plot_tools.FigureSlideColorbar(self,
+                                                                      image=img,
+                                                                      title='SELECT COLOR SCALE,\nRaw Image, No Crop',
+                                                                      xlabel=r'x [$\mu m$ ]',
+                                                                      ylabel=r'y [$\mu m$ ]',
+                                                                      extent=common_tools.extent_func(img, pixelsize)*1e6)
+
+        tab_cm = plot_tools.createTabPage(tab_widget, "Colormap", self.__figure_slide_colorbar)
+
         self.update()
 
         self.__img      = img
         self.__idx4crop = idx4crop
 
-    def get_user_selection(self):
+    def get_accepted_output(self):
         return self.__img, self.__idx4crop
+
+    def get_rejected_output(self):
+        return self.__img_original , self.__idx4crop_original
+
+    def casso(self):
+        print("casso")
 
 '''
     def build_figure(self, **kwargs):
@@ -141,6 +159,7 @@ class CropDialogPlot(WavePyInteractiveWidget):
             cmap2crop = plt.cm.get_cmap(cmap)
             cmap2crop.set_over('#FF0000')
             cmap2crop.set_under('#8B008B')
+            
             idx4crop = wpu.graphical_roi_idx(img, verbose=True,
                                              kargs4graph={'cmap': cmap,
                                                           'vmin': colorlimit[0],
