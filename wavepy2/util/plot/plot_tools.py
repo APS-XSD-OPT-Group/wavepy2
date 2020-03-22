@@ -45,10 +45,22 @@
 import numpy as np
 import sys
 
-from PyQt5.QtWidgets import QMainWindow
+from PyQt5.QtWidgets import QMainWindow, QDesktopWidget
+from PyQt5.QtCore import QRect
+
+
 
 ##########################################################################
 # WIDGET FOR SCRIPTING
+
+def set_screen_at_center(window):
+    qtRectangle = window.frameGeometry()
+    centerPoint = QDesktopWidget().availableGeometry().center()
+
+    print(centerPoint)
+    qtRectangle.moveCenter(centerPoint)
+    window.move(qtRectangle.topLeft())
+    window.update()
 
 class DefaultMainWindow(QMainWindow):
     def __init__(self, title):
@@ -56,6 +68,17 @@ class DefaultMainWindow(QMainWindow):
         self.setWindowTitle(title)
         self.__container_widget = QWidget()
         self.setCentralWidget(self.__container_widget)
+
+        desktop_widget = QDesktopWidget()
+        actual_geometry = self.frameGeometry()
+        screen_geometry = desktop_widget.availableGeometry()
+        new_geometry = QRect()
+        new_geometry.setWidth(actual_geometry.width())
+        new_geometry.setHeight(actual_geometry.height())
+        new_geometry.setTop(screen_geometry.height()*0.05)
+        new_geometry.setLeft(screen_geometry.width()*0.05)
+
+        self.setGeometry(new_geometry)
 
     def get_container_widget(self):
         return self.__container_widget
@@ -72,10 +95,50 @@ from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 
 from wavepy2.util.common import common_tools
 
+FIXED_WIDTH = 800
+
+class SimplePlot(QWidget):
+    def __init__(self, parent, image, title='', xlabel='', ylabel='', **kwargs4imshow):
+        super(SimplePlot, self).__init__(parent)
+
+        self.setFixedWidth(FIXED_WIDTH)
+
+        figure_canvas = FigureCanvas(Figure())
+        mpl_figure = figure_canvas.figure
+
+        ax = mpl_figure.subplots(1, 1)
+        mpl_image = ax.imshow(image, cmap='viridis', **kwargs4imshow)
+        mpl_image.cmap.set_over('#FF0000')  # Red
+        mpl_image.cmap.set_under('#8B008B')  # Light Cyan
+
+        ax.set_title(title, fontsize=18, weight='bold')
+        ax.set_xlabel(xlabel)
+        ax.set_ylabel(ylabel)
+
+        mpl_figure.colorbar(mpl_image, ax=ax, orientation="vertical")
+
+        self.__image_to_change = ImageToChange(mpl_image=mpl_image, mpl_figure=mpl_figure)
+
+        layout = QVBoxLayout()
+        layout.addWidget(figure_canvas)
+        layout.setAlignment(Qt.AlignCenter)
+
+        self.setLayout(layout)
+
+    def get_image_to_change(self):
+        return self.__image_to_change
+
 class ImageToChange(object):
     def __init__(self, mpl_image, mpl_figure):
         self.__mpl_image = mpl_image
         self.__mpl_figure = mpl_figure
+
+        self.__mpl_data = self.__mpl_image.get_array().data.astype(float)
+        self.__cmin_o   = self.__mpl_image.get_clim()[0]
+        self.__cmax_o   = self.__mpl_image.get_clim()[1]
+
+    def get_mpl_data(self):
+        return self.__mpl_data
 
     def get_mpl_image(self):
         return self.__mpl_image
@@ -83,90 +146,26 @@ class ImageToChange(object):
     def get_mpl_figure(self):
         return self.__mpl_figure
 
+    def get_cmin_o(self):
+        return self.__cmin_o
+
+    def get_cmax_o(self):
+        return self.__cmax_o
+
 class FigureSlideColorbar(QWidget):
     def __init__(self, parent, image, title='', xlabel='', ylabel='', cmin_o=None, cmax_o=None, **kwargs4imshow):
         super(FigureSlideColorbar, self).__init__(parent)
+
+        __radio1_values = ['gray', 'gray_r', 'viridis', 'viridis_r', 'inferno', 'rainbow', 'RdGy_r']
+        __radio2_values = ['lin', 'pow 1/7', 'pow 1/3', 'pow 3', 'pow 7']
+        __radio3_values = ['none', 'sigma = 1', 'sigma = 3', 'sigma = 5']
 
         self.__image = image.astype(float) # avoid problems when masking integerimages. necessary because integer NAN doesn't exist
         self.__images_to_change = []
 
         layout = QGridLayout(self)
 
-        '''
-        resetax = figure.add_axes([0.8, 0.015, 0.1, 0.04])
-        button = Button(resetax, 'Reset')#, hovercolor='0.975')
-  
-        cmapax = figure.add_axes([0.025, 0.2, 0.15, 0.25])
-        radio1 = RadioButtons(cmapax, ('gray', 'gray_r',
-                                       'viridis', 'viridis_r',
-                                       'inferno', 'rainbow', 'RdGy_r'), active=2)
-
-        powax = figure.add_axes([0.025, 0.7, 0.15, 0.15])
-        radio2 = RadioButtons(powax, ('lin', 'pow 1/7', 'pow 1/3',
-                                      'pow 3', 'pow 7'), active=0)
-
-        sparkax = figure.add_axes([0.025, 0.5, 0.15, 0.15])
-        radio3 = RadioButtons(sparkax, ('none', 'sigma = 1',
-                                        'sigma = 3', 'sigma = 5'), active=0)
-        
-        
-        def reset(event):
-            scmin.set_val(cmin_o)
-            scmax.set_val(cmax_o)
-            scmin.reset()
-            scmax.reset()
-
-
-        def colorfunc(label):
-            surface.set_cmap(label)
-            surface.cmap.set_over('#FF0000')  # Red
-            surface.cmap.set_under('#8B008B')  # Light Cyan
-            figure.canvas.draw_idle()
-
-        def lin_or_pow(label):
-            radio3.set_active(0)
-            filter_sparks('none')
-            if label == 'lin':
-                n = 1
-            elif label == 'pow 1/3':
-                n = 1/3
-            elif label == 'pow 1/7':
-                n = 1/7
-            elif label == 'pow 3':
-                n = 3
-            elif label == 'pow 7':
-                n = 7
-
-            image_2plot = ((image-image.min())**n*np.ptp(image) /
-                             np.ptp(image)**n + image.min())
-            surface.set_data(image_2plot)
-            figure.canvas.draw_idle()
-
-
-        def filter_sparks(label):
-            image_2plot = surface.get_array().data
-            if label == 'none':
-                reset(None)
-                return
-            elif label == 'sigma = 1':
-                sigma = 1
-            elif label == 'sigma = 3':
-                sigma = 3
-            elif label == 'sigma = 5':
-                sigma = 5
-
-            scmin.set_val(mean_plus_n_sigma(image_2plot, -sigma))
-            scmax.set_val(mean_plus_n_sigma(image_2plot, sigma))
-            surface.set_clim(mean_plus_n_sigma(image_2plot, -sigma),
-                          mean_plus_n_sigma(image_2plot, sigma))
-                          
-
-        button.on_clicked(reset)
-        radio1.on_clicked(colorfunc)
-        radio2.on_clicked(lin_or_pow)
-        radio3.on_clicked(filter_sparks)
-                                  
-        '''
+        self.setFixedWidth(FIXED_WIDTH)
 
         figure_canvas = FigureCanvas(Figure())
         figure = figure_canvas.figure
@@ -212,10 +211,10 @@ class FigureSlideColorbar(QWidget):
                 scmin.label.set_text('Max')
                 scmax.label.set_text('Min')
 
-            surface.set_clim(cmax, cmin)
+            surface.set_clim(vmin=min(cmin, cmax), vmax=max(cmin, cmax))
 
             for image_to_change in self.__images_to_change:
-                image_to_change.get_mpl_image().set_clim(cmax, cmin)
+                image_to_change.get_mpl_image().set_clim(vmin=min(cmin, cmax), vmax=max(cmin, cmax))
                 image_to_change.get_mpl_figure().canvas.draw()
 
         scmin.on_changed(update)
@@ -224,17 +223,82 @@ class FigureSlideColorbar(QWidget):
         button_box_container = QWidget()
         button_box_container.setFixedWidth(figure_canvas.get_width_height()[0])
         button_box_container.setFixedHeight(45)
-        button_box = widgetBox(button_box_container, orientation="vertical", width=button_box_container.width())
+        button_box = widgetBox(button_box_container, orientation="horizontal", width=button_box_container.width())
+        separator(button_box, width=button_box_container.width()*0.8)
 
         def reset():
             scmin.set_val(cmin_o)
             scmax.set_val(cmax_o)
             scmin.reset()
             scmax.reset()
-            figure.canvas.draw_idle()
+
+            figure.canvas.draw()
+
+            for image_to_change in self.__images_to_change:
+                image_to_change.get_mpl_image().set_clim(vmin=image_to_change.get_cmin_o(),
+                                                         vmax=image_to_change.get_cmax_o())
+                image_to_change.get_mpl_figure().canvas.draw()
+
+        def colorfunc():
+            surface.set_cmap(__radio1_values[self.radio1])
+            surface.cmap.set_over('#FF0000')  # Red
+            surface.cmap.set_under('#8B008B')  # Light Cyan
+            figure.canvas.draw()
+
+            for image_to_change in self.__images_to_change:
+                image_to_change.get_mpl_image().set_cmap(__radio1_values[self.radio1])
+                image_to_change.get_mpl_image().cmap.set_over('#FF0000')  # Red
+                image_to_change.get_mpl_image().cmap.set_under('#8B008B')  # Light Cyan
+                image_to_change.get_mpl_figure().canvas.draw()
+
+        def lin_or_pow():
+            self.radio3 = 0
+            self.rb_radio3.buttons[0].setChecked(True)
+            filter_sparks()
+
+            if self.radio2   == 0: n = 1
+            elif self.radio2 == 1: n = 1/3
+            elif self.radio2 == 2: n = 1/7
+            elif self.radio2 == 3: n = 3
+            elif self.radio2 == 4: n = 7
+
+            def get_image_2plot(image):
+                return ((image-image.min())**n*np.ptp(image) / np.ptp(image)**n + image.min())
+            
+            surface.set_data(get_image_2plot(self.__image))
+            figure.canvas.draw()
+            
+            for image_to_change in self.__images_to_change:
+                image_to_change.get_mpl_image().set_data(get_image_2plot(image_to_change.get_mpl_data()))
+                image_to_change.get_mpl_figure().canvas.draw()
+
+            
+        def filter_sparks(): 
+            if self.radio3 == 0: reset(); return
+            elif self.radio3 == 1: sigma = 1
+            elif self.radio3 == 2: sigma = 3
+            elif self.radio3 == 3: sigma = 5
+
+            image_2plot = surface.get_array().data
+            
+            cmin = common_tools.mean_plus_n_sigma(image_2plot, -sigma)
+            cmax = common_tools.mean_plus_n_sigma(image_2plot, sigma)
+            
+            scmin.set_val(cmin)
+            scmax.set_val(cmax)
+            surface.set_clim(vmin=cmin, vmax=cmax)
+
+            figure.canvas.draw()
+
+            for image_to_change in self.__images_to_change:
+                image_2plot = image_to_change.get_mpl_image().get_array().data
+                cmin = common_tools.mean_plus_n_sigma(image_2plot, -sigma)
+                cmax = common_tools.mean_plus_n_sigma(image_2plot, sigma)
+
+                image_to_change.get_mpl_image().set_clim(vmin=cmin, vmax=cmax)
+                image_to_change.get_mpl_figure().canvas.draw()
 
         button(button_box, self, "Reset", callback=reset, width=100, height=35)
-
 
         radio_button_box_container = QWidget()
         radio_button_box_container.setFixedWidth(120)
@@ -244,52 +308,10 @@ class FigureSlideColorbar(QWidget):
         self.radio1 = 2
         self.radio2 = 0
         self.radio3 = 0
-        radio1_values = ['gray', 'gray_r', 'viridis', 'viridis_r', 'inferno', 'rainbow', 'RdGy_r']
-        radio2_values = ['lin', 'pow 1/7', 'pow 1/3', 'pow 3', 'pow 7']
-        radio3_values = ['none', 'sigma = 1', 'sigma = 3', 'sigma = 5']
 
-        def colorfunc():
-            surface.set_cmap(radio1_values[self.radio1])
-            surface.cmap.set_over('#FF0000')  # Red
-            surface.cmap.set_under('#8B008B')  # Light Cyan
-            figure.canvas.draw_idle()
-
-            for image_to_change in self.__images_to_change:
-                image_to_change.get_mpl_image().set_cmap(radio1_values[self.radio1])
-                image_to_change.get_mpl_figure().canvas.draw()
-
-        def lin_or_pow():
-            self.radio3 = 0
-            filter_sparks()
-            if self.radio2 == 0: n = 1
-            elif self.radio2 == 1: n = 1/3
-            elif self.radio2 == 2: n = 1/7
-            elif self.radio2 == 3: n = 3
-            elif self.radio2 == 4: n = 7
-
-            image_2plot = ((self.__image-self.__image.min())**n*np.ptp(self.__image) / np.ptp(self.__image)**n + self.__image.min())
-            surface.set_data(image_2plot)
-            figure.canvas.draw_idle()
-
-        def filter_sparks():
-            image_2plot = surface.get_array().data
-            if self.radio3 == 0:
-                reset()
-                return
-            elif self.radio3 == 1: sigma = 1
-            elif self.radio3 == 2: sigma = 3
-            elif self.radio3 == 3: sigma = 5
-
-            scmin.set_val(common_tools.mean_plus_n_sigma(image_2plot, -sigma))
-            scmax.set_val(common_tools.mean_plus_n_sigma(image_2plot, sigma))
-            surface.set_clim(common_tools.mean_plus_n_sigma(image_2plot, -sigma),
-                             common_tools.mean_plus_n_sigma(image_2plot, sigma))
-
-        radioButtons(radio_button_box, self, "radio2", btnLabels=radio2_values, box="Lin or Pow", callback=lin_or_pow)
-        radioButtons(radio_button_box, self, "radio3", btnLabels=radio3_values, box="Filter Sparks", callback=filter_sparks)
-        radioButtons(radio_button_box, self, "radio1", btnLabels=radio1_values, box="Color Map", callback=colorfunc)
-
-
+        self.rb_radio2 = radioButtons(radio_button_box, self, "radio2", btnLabels=__radio2_values, box="Lin or Pow", callback=lin_or_pow)
+        self.rb_radio3 = radioButtons(radio_button_box, self, "radio3", btnLabels=__radio3_values, box="Filter Sparks", callback=filter_sparks)
+        self.rb_radio1 = radioButtons(radio_button_box, self, "radio1", btnLabels=__radio1_values, box="Color Map", callback=colorfunc)
 
         layout.addWidget(figure_canvas, 1, 1)
         layout.addWidget(button_box_container, 2, 1)
@@ -297,10 +319,100 @@ class FigureSlideColorbar(QWidget):
 
         self.setLayout(layout)
 
-        #return [[scmin.val, scmax.val], radio1.value_selected]
-
     def set_images_to_change(self, images_to_change):
         self.__images_to_change = images_to_change
+
+from wavepy2.util.log.logger import get_registered_logger_instance
+from matplotlib.widgets import RectangleSelector
+
+class GraphicalRoiIdx(QWidget):
+    def __init__(self, parent, image, set_crop_output_listener):
+        super(GraphicalRoiIdx, self).__init__(parent)
+
+        logger = get_registered_logger_instance()
+
+        layout = QHBoxLayout()
+
+        figure_canvas = FigureCanvas(Figure(facecolor="white", figsize=(10, 8)))
+        figure = figure_canvas.figure
+
+        ax = figure.subplots()
+
+        surface = ax.imshow(image, cmap='viridis')
+        surface.cmap.set_over('#FF0000')  # Red
+        surface.cmap.set_under('#8B008B')  # Light Cyan
+
+        ax.set_xlabel('Pixels')
+        ax.set_ylabel('Pixels')
+        ax.set_title("Choose Roi, Right Click: reset", fontsize=16, color='r', weight='bold')
+
+        figure.colorbar(surface)
+
+        def onselect(eclick, erelease):
+            """eclick and erelease are matplotlib events at press and release"""
+
+            if eclick.button == 3: # right click
+                ax.set_xlim(0, np.shape(image)[1])
+                ax.set_ylim(np.shape(image)[0], 0)
+
+                set_crop_output_listener([0, -1, 0, -1])
+
+            elif eclick.button == 1:
+                ROI_j_lim = np.sort([eclick.xdata, erelease.xdata]).astype(int).tolist()
+                ROI_i_lim = np.sort([eclick.ydata, erelease.ydata]).astype(int).tolist()
+
+                idx4crop = [0, 0, 0, 0]
+
+                # this round method has an error of +-1pixel
+                if ROI_j_lim[0] <= ROI_j_lim[1]:
+                    idx4crop[0] = ROI_j_lim[0] - 1
+                    idx4crop[1] = ROI_j_lim[1] + 1
+                else:
+                    idx4crop[0] = ROI_j_lim[1] - 1
+                    idx4crop[1] = ROI_j_lim[0] + 1
+
+                if ROI_i_lim[0] <= ROI_i_lim[1]:
+                    idx4crop[2] = ROI_i_lim[0] + 1
+                    idx4crop[3] = ROI_i_lim[1] - 1
+                else:
+                    idx4crop[2] = ROI_i_lim[1] - 1
+                    idx4crop[3] = ROI_i_lim[0] + 1
+
+                logger.print('\nSelecting ROI:')
+                logger.print(' lower position : (%d, %d)' % (ROI_j_lim[0], ROI_i_lim[0]))
+                logger.print(' higher position   : (%d, %d)' % (ROI_j_lim[1], ROI_i_lim[1]))
+                logger.print(' width x and y: (%d, %d)' % (ROI_j_lim[1] - ROI_j_lim[0], ROI_i_lim[1] - ROI_i_lim[0]))
+
+                ax.set_xlim(idx4crop[0], idx4crop[1])
+                ax.set_ylim(idx4crop[3], idx4crop[2])
+
+        def toggle_selector(event):
+            logger.print(' Key pressed.')
+            if event.key in ['Q', 'q'] and toggle_selector.RS.active:
+                logger.print(' RectangleSelector deactivated.')
+                toggle_selector.RS.set_active(False)
+            if event.key in ['A', 'a'] and not toggle_selector.RS.active:
+                logger.print(' RectangleSelector activated.')
+                toggle_selector.RS.set_active(True)
+
+        toggle_selector.RS = RectangleSelector(figure.gca(), onselect,
+                                               drawtype='box',
+                                               rectprops=dict(facecolor='purple',
+                                                              edgecolor='black',
+                                                              alpha=0.5,
+                                                              fill=True))
+
+        figure.canvas.mpl_connect('key_press_event', toggle_selector)
+        figure.tight_layout(rect=[0, 0, 1, 1])
+
+        layout.addWidget(figure_canvas)
+
+        self.__image_to_change = ImageToChange(mpl_image=surface, mpl_figure=figure)
+
+        self.setLayout(layout)
+
+    def get_image_to_change(self):
+        return self.__image_to_change
 
 
 ##########################################################################

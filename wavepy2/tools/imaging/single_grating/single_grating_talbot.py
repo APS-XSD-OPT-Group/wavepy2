@@ -54,10 +54,8 @@ from wavepy2.util.plot.plotter import get_registered_plotter_instance, PlotterMo
 from wavepy2.util.ini.initializer import get_registered_ini_instance, IniMode
 from wavepy2.util.io.read_write_file import read_tiff
 
-from wavepy2.core.grating_interferometry import *
-from wavepy2.core.widgets.grating_interferometry_widgets import *
-
-from wavepy2.tools.imaging.single_grating.widgets.single_grating_talbot_widgets import *
+from wavepy2.core import grating_interferometry
+from wavepy2.tools.imaging.single_grating.widgets.single_grating_talbot_widgets import CropDialogPlot, ShowCroppedFigure
 
 from scipy import constants
 hc = constants.value('inverse meter-electron volt relationship')  # hc
@@ -66,8 +64,6 @@ def main_single_gr_Talbot(img, imgRef,
                           phenergy, pixelsize, distDet2sample,
                           period_harm,
                           unwrapFlag=True,
-                          saveFigFlag=False,
-                          container_widget=None,
                           context_key="main_single_gr_Talbot"):
 
     plotter = get_registered_plotter_instance()
@@ -76,12 +72,16 @@ def main_single_gr_Talbot(img, imgRef,
 
     img_size_o = np.shape(img)
 
-    img, idx4crop = plotter.show_interactive_plot(CropDialogPlot, container_widget, img=img, saveFigFlag=saveFigFlag, pixelsize=pixelsize)
+    if plotter.is_active():
+        img, idx4crop = plotter.show_interactive_plot(CropDialogPlot, container_widget=None, img=img, pixelsize=pixelsize)
+    else:
+        idx4crop = ini.get_list_from_ini("Parameters", "Crop")
+        img = common_tools.crop_matrix_at_indexes(img, idx4crop)
 
-    #plotter.push_plot(context_key, )
+    # Plot Real Image AFTER crop
+    plotter.push_plot(context_key, ShowCroppedFigure, img=img, pixelsize=pixelsize)
 
-    if not imgRef is None: imgRef = common_tools.crop_matrix_at_indexes(img, idx4crop)
-
+    if not imgRef is None: imgRef = common_tools.crop_matrix_at_indexes(imgRef, idx4crop)
 
     period_harm_Vert_o = int(period_harm[0]*img.shape[0]/img_size_o[0]) + 1
     period_harm_Hor_o = int(period_harm[1]*img.shape[1]/img_size_o[1]) + 1
@@ -95,11 +95,11 @@ def main_single_gr_Talbot(img, imgRef,
     else:
         imgRefFFT = FourierTransform.fft(imgRef)
 
-        (_, period_harm_Hor) = exp_harm_period(imgRefFFT, [period_harm_Vert_o, period_harm_Hor_o], harmonic_ij=['0', '1'], searchRegion=30)
+        (_, period_harm_Hor) = grating_interferometry.exp_harm_period(imgRefFFT, [period_harm_Vert_o, period_harm_Hor_o], harmonic_ij=['0', '1'], searchRegion=30)
 
         logger.print_message('MESSAGE: Obtain harmonic 10 exprimentally')
 
-        (period_harm_Vert, _) = exp_harm_period(imgRefFFT, [period_harm_Vert_o, period_harm_Hor_o], harmonic_ij=['1', '0'], searchRegion=30)
+        (period_harm_Vert, _) = grating_interferometry.exp_harm_period(imgRefFFT, [period_harm_Vert_o, period_harm_Hor_o], harmonic_ij=['1', '0'], searchRegion=30)
 
         harmPeriod = [period_harm_Vert, period_harm_Hor]
 
@@ -108,11 +108,11 @@ def main_single_gr_Talbot(img, imgRef,
     [int00, int01, int10,
      darkField01, darkField10,
      phaseFFT_01,
-     phaseFFT_10] = single_2Dgrating_analyses(img,
-                                              img_ref=imgRef,
-                                              harmonicPeriod=harmPeriod,
-                                              unwrapFlag=unwrapFlag,
-                                              context_key=context_key)
+     phaseFFT_10] = grating_interferometry.single_2Dgrating_analyses(img,
+                                                                     img_ref=imgRef,
+                                                                     harmonicPeriod=harmPeriod,
+                                                                     unwrapFlag=unwrapFlag,
+                                                                     context_key=context_key)
 
     virtual_pixelsize = [0, 0]
     virtual_pixelsize[0] = pixelsize[0]*img.shape[0]/int00.shape[0]
@@ -126,82 +126,3 @@ def main_single_gr_Talbot(img, imgRef,
             darkField01, darkField10,
             diffPhase01, diffPhase10,
             virtual_pixelsize]
-
-
-import sys
-
-from wavepy2.util.plot.plotter import register_plotter_instance
-from wavepy2.util.log.logger import register_logger_single_instance
-from wavepy2.util.ini.initializer import register_ini_instance
-from PyQt5.Qt import QApplication
-from PyQt5.QtWidgets import QWidget, QMainWindow
-from scipy import constants
-
-if __name__=="__main__":
-    a = QApplication(sys.argv)
-    main_window = QMainWindow()
-    main_window.setWindowTitle("Single Grating Talbot")
-    container_widget = QWidget()
-    main_window.setCentralWidget(container_widget)
-
-    hc = constants.value('inverse meter-electron volt relationship')  # hc
-
-    register_logger_single_instance(logger_mode=LoggerMode.WARNING)
-    register_plotter_instance(plotter_mode=PlotterMode.FULL)
-    register_ini_instance(ini_mode=IniMode.LOCAL_FILE, reset=True, ini_file_name=".single_grating_talbot.ini")
-
-    # ==========================================================================
-    # %% Experimental parameters
-    # ==========================================================================
-
-    ini = get_registered_ini_instance()
-
-    img    = ini.get_string_from_ini("Files", "sample")
-    imgRef = ini.get_string_from_ini("Files", "reference")
-
-    pixel          = ini.get_float_from_ini("Parameters", "pixel size")
-    pixelsize      = [pixel, pixel]
-    gratingPeriod  = ini.get_float_from_ini("Parameters", "checkerboard grating period")
-    pattern        = ini.get_string_from_ini("Parameters", "pattern")
-    distDet2sample = ini.get_float_from_ini("Parameters", "distance detector to gr")
-    phenergy       = ini.get_float_from_ini("Parameters", "photon energy")
-    sourceDistance = ini.get_float_from_ini("Parameters", "source distance")
-
-    wavelength = hc/phenergy
-    kwave = 2*np.pi/wavelength
-
-    # calculate the theoretical position of the hamonics
-    period_harm_Vert = np.int(pixelsize[0]/gratingPeriod*img.shape[0] /
-                              (sourceDistance + distDet2sample)*sourceDistance)
-    period_harm_Hor = np.int(pixelsize[1]/gratingPeriod*img.shape[1] /
-                             (sourceDistance + distDet2sample)*sourceDistance)
-
-    saveFigFlag = True
-
-    # ==========================================================================
-    # %% do the magic
-    # ==========================================================================
-
-    # for relative mode we need to have imgRef=None,
-    result = main_single_gr_Talbot(img, imgRef,
-                                   phenergy, pixelsize, distDet2sample,
-                                   period_harm=[period_harm_Vert,
-                                                period_harm_Hor],
-                                   unwrapFlag=True,
-                                   saveFigFlag=saveFigFlag,
-                                   container_widget = container_widget,
-                                   context_key="Single Grating Talbot")
-
-    [int00, int01, int10,
-     darkField01, darkField10,
-     diffPhase01, diffPhase10,
-     virtual_pixelsize] = result
-
-    plotter = get_registered_plotter_instance()
-
-    plotter.draw_context_on_widget("Single Grating Talbot", container_widget=container_widget)
-
-    main_window.show()
-
-    a.exec_()
-

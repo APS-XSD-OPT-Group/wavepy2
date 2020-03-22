@@ -45,7 +45,7 @@
 from wavepy2.util import Singleton, synchronized_method
 from wavepy2.util.plot import plot_tools
 
-from PyQt5.QtWidgets import QWidget, QDialog, QVBoxLayout, QMessageBox, QDialogButtonBox
+from PyQt5.QtWidgets import QWidget, QDialog, QVBoxLayout, QHBoxLayout, QMessageBox, QDialogButtonBox
 from PyQt5.QtCore import Qt
 
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
@@ -58,14 +58,17 @@ class WavePyWidget(QWidget, WavePyGenericWidget):
     def get_plot_tab_name(self): raise NotImplementedError()
 
     def build_widget(self, **kwargs):
-        layout = QVBoxLayout()
+        layout = QHBoxLayout()
+        layout.setAlignment(Qt.AlignCenter)
+
         figure = self.build_figure(**kwargs)
-        dpi = figure.get_dpi()
-        figure.set_size_inches(w=(350/float(dpi)), h=(250/float(dpi)))
         canvas = FigureCanvas(figure)
         canvas.setParent(self)
-        layout.addWidget(canvas)
+
+        self.setFixedWidth(canvas.get_width_height()[0]*1.1)
+        self.setFixedHeight(canvas.get_width_height()[1]*1.1)
         layout.setStretchFactor(canvas, 1)
+        layout.addWidget(canvas)
 
         self.setLayout(layout)
 
@@ -73,15 +76,19 @@ class WavePyWidget(QWidget, WavePyGenericWidget):
 
 class WavePyInteractiveWidget(QDialog, WavePyGenericWidget):
 
-    def __init__(self, parent, message, title, width=800, height=600):
+    def __init__(self, parent, message, title):
         super(QDialog, self).__init__(parent)
 
         self.setWindowTitle(message)
         self.setModal(True)
 
+        self.setWindowFlags(self.windowFlags() | Qt.CustomizeWindowHint)
+        self.setWindowFlags(self.windowFlags() & ~Qt.WindowCloseButtonHint)
+
         self.__central_widget = plot_tools.widgetBox(self, title, "vertical")
 
         layout = QVBoxLayout(self)
+        layout.setAlignment(Qt.AlignCenter)
 
         button_box = QDialogButtonBox(orientation=Qt.Horizontal,
                                       standardButtons=QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
@@ -117,10 +124,11 @@ class WavePyInteractiveWidget(QDialog, WavePyGenericWidget):
         return dialog.get_output_object()
 
 class PlotterFacade:
+    def is_active(self): raise NotImplementedError()
     def push_plot(self, context_key, widget_class, **kwargs): raise NotImplementedError()
     def get_context_plots(self, context_key): raise NotImplementedError()
     def draw_context_on_widget(self, context_key, container_widget): raise NotImplementedError()
-    def show_interactive_plot(self, widget_class, **kwargs): raise NotImplementedError()
+    def show_interactive_plot(self, widget_class, container_widget, **kwargs): raise NotImplementedError()
 
 class PlotterMode:
     FULL = 0
@@ -129,6 +137,8 @@ class PlotterMode:
 class __FullPlotter(PlotterFacade):
     def __init__(self):
         self.__plot_dictionary = {}
+
+    def is_active(self): return True
 
     def push_plot(self, context_key, widget_class, **kwargs):
         if not issubclass(widget_class, WavePyWidget): raise ValueError("Widget class is not a WavePyWidget")
@@ -148,18 +158,26 @@ class __FullPlotter(PlotterFacade):
         if context_key in self.__plot_dictionary: return self.__plot_dictionary[context_key]
         else: return None
 
-    def draw_context_on_widget(self, context_key, container_widget, width=800, height=600):
-        container_widget.setMinimumWidth(width)
-        container_widget.setMinimumHeight(height)
-
-        main_box = plot_tools.widgetBox(container_widget, context_key, orientation="vertical")
+    def draw_context_on_widget(self, context_key, container_widget):
+        main_box = plot_tools.widgetBox(container_widget, context_key, orientation="horizontal")
+        main_box.layout().setAlignment(Qt.AlignCenter)
         tab_widget = plot_tools.tabWidget(main_box)
+
+        widths  = []
+        heights = []
 
         if context_key in self.__plot_dictionary:
             for plot_widget_instance in self.__plot_dictionary[context_key]:
-                plot_tools.createTabPage(tab_widget,
-                                         plot_widget_instance.get_plot_tab_name(),
-                                         plot_widget_instance)
+                tab = plot_tools.createTabPage(tab_widget, plot_widget_instance.get_plot_tab_name())
+                tab.layout().setAlignment(Qt.AlignCenter)
+                tab.layout().addWidget(plot_widget_instance)
+                widths.append(plot_widget_instance.width())
+                heights.append(plot_widget_instance.height())
+
+        tab_widget.setFixedWidth(max(widths)*1.05)
+        tab_widget.setFixedHeight(max(heights)*1.05)
+        container_widget.setFixedWidth(max(widths)*1.07)
+        container_widget.setFixedHeight(max(heights)*1.1)
 
         container_widget.update()
 
@@ -176,6 +194,7 @@ class __FullPlotter(PlotterFacade):
 
 
 class __NullPlotter(PlotterFacade):
+    def is_active(self): return False
     def push_plot(self, context_key, widget_class, **kwargs): pass
     def get_context_plots(self, context_key): pass
     def draw_context_on_widget(self, context_key, container_widget): pass

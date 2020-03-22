@@ -55,54 +55,78 @@ from matplotlib.patches import Rectangle
 from matplotlib.figure import Figure
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 
+from PyQt5.QtWidgets import QHBoxLayout
+from PyQt5.QtCore import Qt
+
+class ShowCroppedFigure(WavePyWidget):
+    def build_widget(self, **kwargs):
+        img         = kwargs["img"]
+        pixelsize   = kwargs["pixelsize"]
+
+        layout = QHBoxLayout()
+        layout.setAlignment(Qt.AlignCenter)
+
+        widget = plot_tools.SimplePlot(self,
+                                       image=img,
+                                       title="Cropped Raw Image",
+                                       xlabel=r'x [$\mu m$ ]',
+                                       ylabel=r'y [$\mu m$ ]',
+                                       extent=common_tools.extent_func(img, pixelsize)*1e6)
+        layout.addWidget(widget)
+
+        self.setLayout(layout)
+
+    def get_plot_tab_name(self):
+        return "Raw Image with New Crop"
+
 class CropDialogPlot(WavePyInteractiveWidget):
 
     def __init__(self, parent):
         super(CropDialogPlot, self).__init__(parent, message="New Crop?", title="Crop Image")
-        self.__ini    = get_registered_ini_instance()
-        self.__logger = get_registered_logger_instance()
+        self.__ini     = get_registered_ini_instance()
+        self.__logger  = get_registered_logger_instance()
 
     def build_widget(self, **kwargs):
         img         = kwargs["img"]
-        saveFigFlag = kwargs["saveFigFlag"]
         pixelsize   = kwargs["pixelsize"]
 
         idx4crop = self.__ini.get_list_from_ini("Parameters", "Crop")
 
-        self.__img_original      = img
-        self.__idx4crop_original = idx4crop
+        self.__init_output(img, idx4crop)
+        self.create_cropped_output(idx4crop)
+        self.__set_original()
 
         self.__logger.print_other(idx4crop, "Stored Crop Indexes: ", color=LoggerColor.RED)
 
-        tmpImage = common_tools.crop_matrix_at_indexes(img, idx4crop)
+        original_cropped_image = plot_tools.SimplePlot(self,
+                                                       image=self.__img,
+                                                       title="Raw Image with initial Crop",
+                                                       xlabel=r'$[\mu m]$',
+                                                       ylabel=r'$[\mu m]$',
+                                                       extent=common_tools.extent_func(self.__img, pixelsize)*1e6)
 
-        original_figure = Figure()
-        ax = original_figure.subplots(1, 1)
-        original_image = ax.imshow(tmpImage, cmap='viridis', extent=common_tools.extent_func(tmpImage, pixelsize)*1e6)
-        ax.set_xlabel(r'$[\mu m]$')
-        ax.set_ylabel(r'$[\mu m]$')
+        crop_image = plot_tools.GraphicalRoiIdx(self,
+                                                image=img,
+                                                set_crop_output_listener=self.create_cropped_output)
 
-        original_figure.colorbar(original_image, ax=ax, orientation='vertical')
+        figure_slide_colorbar = plot_tools.FigureSlideColorbar(self,
+                                                               image=img,
+                                                               title='SELECT COLOR SCALE,\nRaw Image, No Crop',
+                                                               xlabel=r'x [$\mu m$ ]',
+                                                               ylabel=r'y [$\mu m$ ]',
+                                                               extent=common_tools.extent_func(img, pixelsize)*1e6)
 
-        ax.set_title('Raw Image with initial Crop', fontsize=18, weight='bold')
+        figure_slide_colorbar.set_images_to_change([crop_image.get_image_to_change()])
 
         tab_widget = plot_tools.tabWidget(self.get_central_widget())
 
-        tab_raw = plot_tools.createTabPage(tab_widget, "Raw Image", FigureCanvas(original_figure))
+        plot_tools.createTabPage(tab_widget, "Raw Image",  original_cropped_image)
+        plot_tools.createTabPage(tab_widget, "Colormap",   figure_slide_colorbar)
+        plot_tools.createTabPage(tab_widget, "Crop Image", crop_image)
 
-        self.__figure_slide_colorbar = plot_tools.FigureSlideColorbar(self,
-                                                                      image=img,
-                                                                      title='SELECT COLOR SCALE,\nRaw Image, No Crop',
-                                                                      xlabel=r'x [$\mu m$ ]',
-                                                                      ylabel=r'y [$\mu m$ ]',
-                                                                      extent=common_tools.extent_func(img, pixelsize)*1e6)
-
-        tab_cm = plot_tools.createTabPage(tab_widget, "Colormap", self.__figure_slide_colorbar)
+        self.setFixedWidth(max(original_cropped_image.width(), figure_slide_colorbar.width(), crop_image.width())*1.1)
 
         self.update()
-
-        self.__img      = img
-        self.__idx4crop = idx4crop
 
     def get_accepted_output(self):
         return self.__img, self.__idx4crop
@@ -110,85 +134,14 @@ class CropDialogPlot(WavePyInteractiveWidget):
     def get_rejected_output(self):
         return self.__img_original , self.__idx4crop_original
 
-    def casso(self):
-        print("casso")
+    def create_cropped_output(self, idx4crop):
+        self.__img      = common_tools.crop_matrix_at_indexes(self.__img, idx4crop)
+        self.__idx4crop = idx4crop
 
-'''
-    def build_figure(self, **kwargs):
+    def __init_output(self, img, idx4crop):
+        self.__img      = img
+        self.__idx4crop = idx4crop
 
-        # take index from ini file
-        idx4crop = list(map(int, (wpu.get_from_ini_file(inifname, 'Parameters', 'Crop').split(','))))
-
-        wpu.print_red(idx4crop)
-
-        # Plot Real Image wiht default crop
-
-        tmpImage = wpu.crop_matrix_at_indexes(img, idx4crop)
-
-        plt.figure()
-        plt.imshow(tmpImage,
-                   cmap='viridis',
-                   extent=wpu.extent_func(tmpImage, pixelsize)*1e6)
-        plt.xlabel(r'$[\mu m]$')
-        plt.ylabel(r'$[\mu m]$')
-        plt.colorbar()
-
-        plt.title('Raw Image with initial Crop', fontsize=18, weight='bold')
-
-        plt.show(block=False)
-        plt.pause(.5)
-        # ask if the crop need to be changed
-        newCrop = gui_mode and easyqt.get_yes_or_no('New Crop?')
-
-        if saveFigFlag and not newCrop:
-            wpu.save_figs_with_idx(saveFileSuf)
-
-        plt.close(plt.gcf())
-
-        if newCrop:
-
-            [colorlimit,
-             cmap] = wpu.plot_slide_colorbar(img,
-                                             title='SELECT COLOR SCALE,\n' +
-                                             'Raw Image, No Crop',
-                                             xlabel=r'x [$\mu m$ ]',
-                                             ylabel=r'y [$\mu m$ ]',
-                                             extent=wpu.extent_func(img,
-                                                                    pixelsize)*1e6)
-
-            cmap2crop = plt.cm.get_cmap(cmap)
-            cmap2crop.set_over('#FF0000')
-            cmap2crop.set_under('#8B008B')
-            
-            idx4crop = wpu.graphical_roi_idx(img, verbose=True,
-                                             kargs4graph={'cmap': cmap,
-                                                          'vmin': colorlimit[0],
-                                                          'vmax': colorlimit[1]})
-
-            cmap2crop.set_over(cmap2crop(1))  # Reset Colorbar
-            cmap2crop.set_under(cmap2crop(cmap2crop.N-1))
-
-            wpu.set_at_ini_file(inifname, 'Parameters', 'Crop',
-                                '{}, {}, {}, {}'.format(idx4crop[0], idx4crop[1],
-                                                        idx4crop[2], idx4crop[3]))
-
-            img = wpu.crop_matrix_at_indexes(img, idx4crop)
-
-            # Plot Real Image AFTER crop
-
-            plt.imshow(img, cmap='viridis',
-                       extent=wpu.extent_func(img, pixelsize)*1e6)
-            plt.xlabel(r'$[\mu m]$')
-            plt.ylabel(r'$[\mu m]$')
-            plt.colorbar()
-            plt.title('Raw Image with New Crop', fontsize=18, weight='bold')
-
-            if saveFigFlag:
-                wpu.save_figs_with_idx(saveFileSuf)
-            plt.show(block=True)
-
-        else:
-            img = tmpImage
-
-        return img, idx4crop
-'''
+    def __set_original(self):
+        self.__img_original      = self.__img
+        self.__idx4crop_original = self.__idx4crop

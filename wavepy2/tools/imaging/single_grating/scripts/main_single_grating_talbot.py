@@ -57,27 +57,35 @@ from wavepy2.core.grating_interferometry import *
 from wavepy2.core.widgets.grating_interferometry_widgets import *
 from wavepy2.tools.imaging.single_grating.single_grating_talbot import main_single_gr_Talbot, hc
 
-
-register_logger_single_instance(logger_mode=LoggerMode.WARNING)
+register_logger_single_instance(logger_mode=LoggerMode.FULL)
 register_ini_instance(IniMode.LOCAL_FILE, ini_file_name=".single_grating_talbot.ini")
 register_qt_application_instance(QtApplicationMode.QT)
 register_plotter_instance(plotter_mode=PlotterMode.FULL)
 
-main_window = DefaultMainWindow("Single Grating Talbot")
+plotter = get_registered_plotter_instance()
+
+if plotter.is_active():
+    main_window = DefaultMainWindow("Single Grating Talbot")
+    container_widget = main_window.get_container_widget()
+else:
+    container_widget = None
 
 # ==========================================================================
 # %% Experimental parameters
 # ==========================================================================
 
-img    = read_tiff("/Users/lrebuffi/Desktop/grating_200mm/sample_5s_005.tif")
-imgRef = read_tiff("/Users/lrebuffi/Desktop/grating_200mm/ref_5s_006.tif")
+ini = get_registered_ini_instance()
 
-pixelsize = [6.5e-07, 6.5e-07]
-gratingPeriod = 4.8e-06
-pattern = "Diagonal half pi"
-distDet2sample = 0.33
-phenergy = 14000.0
-sourceDistance = 32.0
+img    = read_tiff(ini.get_string_from_ini("Files", "sample"))
+imgRef = read_tiff(ini.get_string_from_ini("Files", "reference"))
+
+pixel          = ini.get_float_from_ini("Parameters", "pixel size")
+pixelsize      = [pixel, pixel]
+gratingPeriod  = ini.get_float_from_ini("Parameters", "checkerboard grating period")
+pattern        = ini.get_string_from_ini("Parameters", "pattern")
+distDet2sample = ini.get_float_from_ini("Parameters", "distance detector to gr")
+phenergy       = ini.get_float_from_ini("Parameters", "photon energy")
+sourceDistance = ini.get_float_from_ini("Parameters", "source distance")
 
 wavelength = hc/phenergy
 kwave = 2*np.pi/wavelength
@@ -87,8 +95,6 @@ period_harm_Vert = np.int(pixelsize[0]/gratingPeriod*img.shape[0] /
                           (sourceDistance + distDet2sample)*sourceDistance)
 period_harm_Hor = np.int(pixelsize[1]/gratingPeriod*img.shape[1] /
                          (sourceDistance + distDet2sample)*sourceDistance)
-
-saveFigFlag = True
 
 # ==========================================================================
 # %% do the magic
@@ -107,11 +113,9 @@ result = main_single_gr_Talbot(img, imgRef,
  diffPhase01, diffPhase10,
  virtual_pixelsize] = result
 
-plotter = get_registered_plotter_instance()
+plotter.draw_context_on_widget("Single Grating Talbot", container_widget=container_widget)
 
-plotter.draw_context_on_widget("Single Grating Talbot", container_widget=main_window.get_container_widget())
-
-main_window.show()
+if plotter.is_active(): main_window.show()
 
 get_registered_qt_application_instance().run_qt_application()
 
