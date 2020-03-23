@@ -44,6 +44,7 @@
 # #########################################################################
 from wavepy2.util import Singleton, synchronized_method
 from wavepy2.util.plot import plot_tools
+from wavepy2.util.common import common_tools
 
 from PyQt5.QtWidgets import QWidget, QDialog, QVBoxLayout, QHBoxLayout, QMessageBox, QDialogButtonBox
 from PyQt5.QtCore import Qt
@@ -73,6 +74,8 @@ class WavePyWidget(QWidget, WavePyGenericWidget):
         self.setLayout(layout)
 
     def build_figure(self, **kwargs): raise NotImplementedError()
+    def get_save_file_name(self): raise NotImplementedError()
+    def get_figure_to_save(self): raise NotImplementedError()
 
 class WavePyInteractiveWidget(QDialog, WavePyGenericWidget):
 
@@ -131,32 +134,49 @@ class PlotterFacade:
     def show_interactive_plot(self, widget_class, container_widget, **kwargs): raise NotImplementedError()
 
 class PlotterMode:
-    FULL = 0
-    NONE = 1
+    FULL         = 0
+    DISPLAY_ONLY = 1
+    SAVE_ONLY    = 2
+    NONE         = 3
 
-class __FullPlotter(PlotterFacade):
-    def __init__(self):
-        self.__plot_dictionary = {}
+class __AbstractPlotter(PlotterFacade):
+    @classmethod
+    def save_image(cls, plot_widget_instance, **kwargs):
+        file_name = plot_widget_instance.get_save_file_name()
+        figure    = plot_widget_instance.get_figure_to_save()
 
-    def is_active(self): return True
+        if not figure is None: figure.savefig(common_tools.get_unique_filename(file_name, extension=".png"), **kwargs)
 
-    def push_plot(self, context_key, widget_class, **kwargs):
+    @classmethod
+    def build_plot(cls, widget_class, **kwargs):
         if not issubclass(widget_class, WavePyWidget): raise ValueError("Widget class is not a WavePyWidget")
 
         try:
             plot_widget_instance = widget_class()
             plot_widget_instance.build_widget(**kwargs)
+
+            return plot_widget_instance
         except Exception as e:
             raise ValueError("Plot Widget can't be created: " + str(e))
 
-        if context_key in self.__plot_dictionary and not self.__plot_dictionary[context_key] is None:
-            self.__plot_dictionary[context_key].append(plot_widget_instance)
-        else:
-            self.__plot_dictionary[context_key] = [plot_widget_instance]
+class __AbstractActivePlotter(__AbstractPlotter):
+    def __init__(self):
+        self.__plot_dictionary = {}
+
+    def is_active(self): return True
+
+    def get_plot_dictionary(self):
+        return self.__plot_dictionary
 
     def get_context_plots(self, context_key):
         if context_key in self.__plot_dictionary: return self.__plot_dictionary[context_key]
         else: return None
+
+    def register_plot(self, context_key, plot_widget_instance):
+        if context_key in self.__plot_dictionary and not self.__plot_dictionary[context_key] is None:
+            self.__plot_dictionary[context_key].append(plot_widget_instance)
+        else:
+            self.__plot_dictionary[context_key] = [plot_widget_instance]
 
     def draw_context_on_widget(self, context_key, container_widget):
         main_box = plot_tools.widgetBox(container_widget, context_key, orientation="horizontal")
@@ -192,6 +212,23 @@ class __FullPlotter(PlotterFacade):
 
         return widget_class.get_output(interactive_widget_instance)
 
+class __FullPlotter(__AbstractActivePlotter):
+    def push_plot(self, context_key, widget_class, **kwargs):
+        plot_widget_instance = self.build_plot(widget_class, **kwargs)
+
+        self.register_plot(context_key, plot_widget_instance)
+        self.save_image(plot_widget_instance, **kwargs)
+
+class __DisplayOnlyPlotter(__AbstractActivePlotter):
+    def push_plot(self, context_key, widget_class, **kwargs):
+        self.register_plot(context_key, self.build_plot(widget_class, **kwargs))
+
+class __SaveOnlyPlotter(__AbstractActivePlotter):
+    def is_active(self): return False
+    def push_plot(self, context_key, widget_class, **kwargs): self.save_image(self.build_plot(widget_class, **kwargs))
+    def get_context_plots(self, context_key): pass
+    def draw_context_on_widget(self, context_key, container_widget): pass
+    def show_interactive_plot(self, widget_class, container_widget, **kwargs): pass
 
 class __NullPlotter(PlotterFacade):
     def is_active(self): return False
@@ -199,7 +236,6 @@ class __NullPlotter(PlotterFacade):
     def get_context_plots(self, context_key): pass
     def draw_context_on_widget(self, context_key, container_widget): pass
     def show_interactive_plot(self, widget_class, container_widget, **kwargs): pass
-
 
 @Singleton
 class __PlotterRegistry:
@@ -227,8 +263,11 @@ class __PlotterRegistry:
 
 def register_plotter_instance(plotter_mode=PlotterMode.FULL, reset=False):
     if reset: __PlotterRegistry.Instance().reset()
-    if plotter_mode == PlotterMode.FULL:      __PlotterRegistry.Instance().register_plotter(__FullPlotter())
-    elif plotter_mode == PlotterMode.NONE:    __PlotterRegistry.Instance().register_plotter(__NullPlotter())
+
+    if plotter_mode   == PlotterMode.FULL:         __PlotterRegistry.Instance().register_plotter(__FullPlotter())
+    elif plotter_mode == PlotterMode.DISPLAY_ONLY: __PlotterRegistry.Instance().register_plotter(__DisplayOnlyPlotter())
+    elif plotter_mode == PlotterMode.SAVE_ONLY:    __PlotterRegistry.Instance().register_plotter(__SaveOnlyPlotter())
+    elif plotter_mode == PlotterMode.NONE:         __PlotterRegistry.Instance().register_plotter(__NullPlotter())
 
 def get_registered_plotter_instance():
     return __PlotterRegistry.Instance().get_plotter_instance()

@@ -65,6 +65,49 @@ class FourierTransform:
 # ---------------------------------------------------------------------------
 # MISCELLANEA (FROM WAVEPY)
 
+import os
+from itertools import count
+
+def get_unique_filename(patternforname, extension='txt', width=2, isFolder=False):
+    '''
+    Produce a string in the format `patternforname_XX.extension`, where XX is
+    the smalest number in order that the string is a unique filename.
+
+    Parameters
+    ----------
+
+    patternforname: str
+        Main part of the filename. Accept directories path.
+
+    extension: str
+        Sufix for file name.
+
+
+    Notes
+    -----
+
+    This will just return the filename, it will not create any file.
+
+    '''
+
+    if isFolder:
+        extension = os.sep
+        if os.sep in patternforname[-1]: patternforname = patternforname[:-1]
+    else:
+        if '.' not in extension: extension = '.' + extension
+
+    _Count_fname = count()
+    next(_Count_fname)
+
+    tmp_str = '{:s}_{:0' + str(width) + 'd}'
+    fname = str(tmp_str.format(patternforname, next(_Count_fname)) + extension)
+
+    while os.path.isfile(fname) or os.path.isdir(fname):
+        fname = str(tmp_str.format(patternforname, next(_Count_fname)) + extension)
+
+    return fname
+
+
 def choose_unit(array):
     """
 

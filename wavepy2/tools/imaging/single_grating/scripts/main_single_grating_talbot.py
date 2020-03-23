@@ -60,7 +60,7 @@ from wavepy2.tools.imaging.single_grating.single_grating_talbot import main_sing
 register_logger_single_instance(logger_mode=LoggerMode.FULL)
 register_ini_instance(IniMode.LOCAL_FILE, ini_file_name=".single_grating_talbot.ini")
 register_qt_application_instance(QtApplicationMode.QT)
-register_plotter_instance(plotter_mode=PlotterMode.FULL)
+register_plotter_instance(plotter_mode=PlotterMode.DISPLAY_ONLY)
 
 plotter = get_registered_plotter_instance()
 
@@ -91,10 +91,8 @@ wavelength = hc/phenergy
 kwave = 2*np.pi/wavelength
 
 # calculate the theoretical position of the hamonics
-period_harm_Vert = np.int(pixelsize[0]/gratingPeriod*img.shape[0] /
-                          (sourceDistance + distDet2sample)*sourceDistance)
-period_harm_Hor = np.int(pixelsize[1]/gratingPeriod*img.shape[1] /
-                         (sourceDistance + distDet2sample)*sourceDistance)
+period_harm_Vert = np.int(pixelsize[0]/gratingPeriod*img.shape[0] / (sourceDistance + distDet2sample)*sourceDistance)
+period_harm_Hor  = np.int(pixelsize[1]/gratingPeriod*img.shape[1] / (sourceDistance + distDet2sample)*sourceDistance)
 
 # ==========================================================================
 # %% do the magic
