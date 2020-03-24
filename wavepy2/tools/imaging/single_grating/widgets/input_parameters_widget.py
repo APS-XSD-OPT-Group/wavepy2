@@ -73,7 +73,7 @@ class InputParametersWidget(WavePyInteractiveWidget):
         self.sourceDistance = self.__ini.get_float_from_ini("Parameters", "source distance")
 
     def build_widget(self, **kwargs):
-        main_box = plot_tools.widgetBox(self.get_central_widget(), "", width=400, height=400)
+        main_box = plot_tools.widgetBox(self.get_central_widget(), "", width=800, height=400)
 
         select_file_img_box = plot_tools.widgetBox(main_box, orientation="horizontal")
         self.le_img = plot_tools.lineEdit(select_file_img_box, self, "img", label="Image File", labelWidth=150, valueType=str, orientation="horizontal")
@@ -89,9 +89,9 @@ class InputParametersWidget(WavePyInteractiveWidget):
         self.le_img.setText(plot_tools.selectFileFromDialog(self, self.img, "Open Image File"))
 
     def get_accepted_output(self):
-        img      = read_tiff(self.img),
-        imgRef   = None if (self.mode == 'Relative' or self.imgRef is None) else read_tiff(self.imgRef),
-        imgBlank = None if self.imgBlank is None else read_tiff(self.imgBlank),
+        img      = read_tiff(self.img)
+        imgRef   = None if (self.mode == 'Relative' or self.imgRef is None) else read_tiff(self.imgRef)
+        imgBlank = None if self.imgBlank is None else read_tiff(self.imgBlank)
 
         # calculate the theoretical position of the hamonics
         period_harm_Vert = np.int(self.pixelsize[0] / self.gratingPeriod * img.shape[0] / (self.sourceDistance + self.distDet2sample) * self.sourceDistance)

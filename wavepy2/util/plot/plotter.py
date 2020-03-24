@@ -240,7 +240,7 @@ class __DisplayOnlyPlotter(__AbstractActivePlotter):
 
 class __SaveOnlyPlotter(__AbstractActivePlotter):
     def is_active(self): return False
-    def register_context_window(self, context_key, context_window): pass
+    def register_context_window(self, context_key, context_window=None): pass
     def push_plot_on_context(self, context_key, widget_class, **kwargs): self.save_image(self.build_plot(widget_class, **kwargs))
     def get_context_container_widget(self, context_key): return None
     def get_plots_of_context(self, context_key): pass
@@ -250,7 +250,7 @@ class __SaveOnlyPlotter(__AbstractActivePlotter):
 
 class __NullPlotter(PlotterFacade):
     def is_active(self): return False
-    def register_context_window(self, context_key, context_window): pass
+    def register_context_window(self, context_key, context_window=None): pass
     def push_plot_on_context(self, context_key, widget_class, **kwargs): pass
     def get_context_container_widget(self, context_key): return None
     def get_plots_of_context(self, context_key): pass

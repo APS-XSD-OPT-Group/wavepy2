@@ -85,9 +85,9 @@ def get_initialization_parameters():
         phenergy = ini.get_float_from_ini("Parameters", "photon energy")
         sourceDistance = ini.get_float_from_ini("Parameters", "source distance")
 
-        img = read_tiff(img),
-        imgRef = None if (mode == 'Relative' or imgRef is None) else read_tiff(imgRef),
-        imgBlank = None if imgBlank is None else read_tiff(imgBlank),
+        img = read_tiff(img)
+        imgRef = None if (mode == 'Relative' or imgRef is None) else read_tiff(imgRef)
+        imgBlank = None if imgBlank is None else read_tiff(imgBlank)
 
         # calculate the theoretical position of the hamonics
         period_harm_Vert = np.int(pixelsize[0] / gratingPeriod * img.shape[0] / (sourceDistance + distDet2sample) * sourceDistance)

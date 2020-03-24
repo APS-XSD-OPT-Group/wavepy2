@@ -45,46 +45,45 @@
 import numpy as np
 import sys
 
-from wavepy2.util.ini.initializer import register_ini_instance, IniMode
+from wavepy2.util.common.common_tools import FourierTransform
+from wavepy2.util.ini.initializer import get_registered_ini_instance, register_ini_instance, IniMode
 from wavepy2.util.plot.qt_application import get_registered_qt_application_instance, register_qt_application_instance, QtApplicationMode
-from wavepy2.util.log.logger import register_logger_single_instance, LoggerMode
+from wavepy2.util.log.logger import get_registered_logger_instance, register_logger_single_instance, LoggerMode
 from wavepy2.util.plot.plotter import get_registered_plotter_instance, register_plotter_instance, PlotterMode
+from wavepy2.util.io.read_write_file import read_tiff
 
-from wavepy2.tools.imaging.single_grating.single_grating_talbot import calculate_dpc, get_initialization_parameters
-from wavepy2.tools.imaging.single_grating.single_grating_talbot import CALCULATE_DPC_CONTEXT_KEY
+from wavepy2.core.widgets.grating_interferometry_widgets import *
+from wavepy2.tools.imaging.single_grating.single_grating_talbot import calculate_dpc, hc, CALCULATE_DPC_CONTEXT_KEY
+from wavepy2.tools.common.wavepy_data import WavePyData
 
-LOGGER_MODE   = LoggerMode.WARNING
-INI_MODE      = IniMode.LOCAL_FILE
-INI_FILE_NAME = ".single_grating_talbot.ini"
-PLOTTER_MODE  = PlotterMode.DISPLAY_ONLY
 
-if __name__=="__main__":
-    # ==========================================================================
-    # %% Script initialization
-    # ==========================================================================
+register_logger_single_instance(logger_mode=LoggerMode.WARNING)
+register_ini_instance(IniMode.LOCAL_FILE, ini_file_name=".single_grating_talbot.ini")
+register_qt_application_instance(QtApplicationMode.QT)
+register_plotter_instance(plotter_mode=PlotterMode.DISPLAY_ONLY)
 
-    register_logger_single_instance(logger_mode=LOGGER_MODE)
-    register_ini_instance(INI_MODE, ini_file_name=".single_grating_talbot.ini" if INI_MODE == IniMode.LOCAL_FILE else None)
-    register_plotter_instance(plotter_mode=PLOTTER_MODE)
-    register_qt_application_instance(QtApplicationMode.QT if PLOTTER_MODE in [PlotterMode.FULL, PlotterMode.DISPLAY_ONLY] else QtApplicationMode.NONE)
 
-    # ==========================================================================
-    # %% Experimental parameters
-    # ==========================================================================
 
-    initalization_parameters = get_initialization_parameters()
+# ==========================================================================
+# %% Experimental parameters
+# ==========================================================================
 
-    # ==========================================================================
-    # %% do the magic
-    # ==========================================================================
-    plotter = get_registered_plotter_instance()
+ini = get_registered_ini_instance()
 
-    # for relative mode we need to have imgRef=None,
-    dpc_result = calculate_dpc(initalization_parameters)
+img    = read_tiff(ini.get_string_from_ini("Files", "sample"))
+imgRef = read_tiff(ini.get_string_from_ini("Files", "reference"))
 
-    plotter.show_context_window(CALCULATE_DPC_CONTEXT_KEY)
+pixel          = ini.get_float_from_ini("Parameters", "pixel size")
+pixelsize      = [pixel, pixel]
+gratingPeriod  = ini.get_float_from_ini("Parameters", "checkerboard grating period")
+pattern        = ini.get_string_from_ini("Parameters", "pattern")
+distDet2sample = ini.get_float_from_ini("Parameters", "distance detector to gr")
+phenergy       = ini.get_float_from_ini("Parameters", "photon energy")
+sourceDistance = ini.get_float_from_ini("Parameters", "source distance")
 
-    # integration
+wavelength = hc/phenergy
+kwave = 2*np.pi/wavelength
 
-    get_registered_qt_application_instance().run_qt_application()
-
+# calculate the theoretical position of the hamonics
+period_harm_Vert = np.int(pixelsize[0]/gratingPeriod*img.shape[0] / (sourceDistance + distDet2sample)*sourceDistance)
+period_harm_Hor  = np.int(pixelsize[1]/gratingPeriod*img.shape[1] / (sourceDistance + distDet2sample)*sourceDistance)
