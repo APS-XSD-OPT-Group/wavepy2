@@ -72,8 +72,8 @@ def get_initialization_parameters():
     else:
         ini = get_registered_ini_instance()
 
-        img = ini.get_string_from_ini("Files", "sample")
-        imgRef = ini.get_string_from_ini("Files", "reference")
+        img      = ini.get_string_from_ini("Files", "sample")
+        imgRef   = ini.get_string_from_ini("Files", "reference")
         imgBlank = ini.get_string_from_ini("Files", "blank")
 
         mode = ini.get_string_from_ini("Parameters", "mode")
@@ -85,8 +85,8 @@ def get_initialization_parameters():
         phenergy = ini.get_float_from_ini("Parameters", "photon energy")
         sourceDistance = ini.get_float_from_ini("Parameters", "source distance")
 
-        img = read_tiff(img)
-        imgRef = None if (mode == 'Relative' or imgRef is None) else read_tiff(imgRef)
+        img      = read_tiff(img)
+        imgRef   = None if (mode == InputParametersWidget.MODES[0] or imgRef is None) else read_tiff(imgRef)
         imgBlank = None if imgBlank is None else read_tiff(imgBlank)
 
         # calculate the theoretical position of the hamonics

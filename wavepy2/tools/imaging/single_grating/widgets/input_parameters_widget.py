@@ -43,10 +43,10 @@
 # POSSIBILITY OF SUCH DAMAGE.                                             #
 # #########################################################################
 import numpy as np
+import sys
 
-from wavepy2.util.common import common_tools
 from wavepy2.util.ini.initializer import get_registered_ini_instance
-from wavepy2.util.log.logger import get_registered_logger_instance, LoggerColor
+from wavepy2.util.log.logger import get_registered_logger_instance
 from wavepy2.util.plot import plot_tools
 from wavepy2.util.plot.plotter import WavePyInteractiveWidget
 from wavepy2.util.io.read_write_file import read_tiff
@@ -107,7 +107,7 @@ class InputParametersWidget(WavePyInteractiveWidget):
         self.update()
 
     def set_mode(self):
-        self.select_file_imgRef_box.setEnabled(self.mode == 1)
+        self.select_file_imgRef_box.setEnabled(self.mode == 0)
 
     def selectImgFile(self):
         self.le_img.setText(plot_tools.selectFileFromDialog(self, self.img, "Open Image File"))
@@ -120,7 +120,7 @@ class InputParametersWidget(WavePyInteractiveWidget):
 
     def get_accepted_output(self):
         img      = read_tiff(self.img)
-        imgRef   = None if (self.mode == 0 or self.imgRef is None) else read_tiff(self.imgRef)
+        imgRef   = None if (self.mode == 1 or self.imgRef is None) else read_tiff(self.imgRef)
         imgBlank = None if self.imgBlank is None else read_tiff(self.imgBlank)
 
         pixelsize = [self.pixel, self.pixel]
@@ -143,4 +143,5 @@ class InputParametersWidget(WavePyInteractiveWidget):
                           unwrapFlag     = True)
 
     def get_rejected_output(self):
-        raise ValueError("Initialization Canceled, Program exit")
+        self.__logger.print_error("Initialization Canceled, Program exit")
+        sys.exit(1)

@@ -87,4 +87,3 @@ if __name__=="__main__":
     # integration
 
     get_registered_qt_application_instance().run_qt_application()
-
