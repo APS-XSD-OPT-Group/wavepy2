@@ -54,6 +54,8 @@ from wavepy2.util.io.read_write_file import read_tiff
 from wavepy2.tools.common.wavepy_data import WavePyData
 
 class InputParametersWidget(WavePyInteractiveWidget):
+    MODES    = ["Relative", "Absolute"]
+    PATTERNS = ["Diagonal half pi", "Edge pi"]
 
     def __init__(self, parent):
         super(InputParametersWidget, self).__init__(parent, message="Input Parameters", title="Input Parameters")
@@ -63,47 +65,77 @@ class InputParametersWidget(WavePyInteractiveWidget):
         self.img            = self.__ini.get_string_from_ini("Files", "sample")
         self.imgRef         = self.__ini.get_string_from_ini("Files", "reference")
         self.imgBlank       = self.__ini.get_string_from_ini("Files", "blank")
-        self.mode           = self.__ini.get_string_from_ini("Parameters", "Mode")
-        pixel                 = self.__ini.get_float_from_ini("Parameters", "pixel size")
-        self.pixelsize      = [pixel, pixel]
+        self.mode           = self.MODES.index(self.__ini.get_string_from_ini("Parameters", "Mode"))
+        self.pixel          = self.__ini.get_float_from_ini("Parameters", "pixel size")
         self.gratingPeriod  = self.__ini.get_float_from_ini("Parameters", "checkerboard grating period")
-        self.pattern        = self.__ini.get_string_from_ini("Parameters", "pattern")
+        self.pattern        = self.PATTERNS.index(self.__ini.get_string_from_ini("Parameters", "pattern"))
         self.distDet2sample = self.__ini.get_float_from_ini("Parameters", "distance detector to gr")
         self.phenergy       = self.__ini.get_float_from_ini("Parameters", "photon energy")
         self.sourceDistance = self.__ini.get_float_from_ini("Parameters", "source distance")
 
     def build_widget(self, **kwargs):
-        main_box = plot_tools.widgetBox(self.get_central_widget(), "", width=800, height=400)
+        main_box = plot_tools.widgetBox(self.get_central_widget(), "")
+
+        plot_tools.comboBox(main_box, self, "mode", label="Mode", items=self.MODES, callback=self.set_mode, orientation="horizontal")
 
         select_file_img_box = plot_tools.widgetBox(main_box, orientation="horizontal")
         self.le_img = plot_tools.lineEdit(select_file_img_box, self, "img", label="Image File", labelWidth=150, valueType=str, orientation="horizontal")
         plot_tools.button(select_file_img_box, self, "...", callback=self.selectImgFile)
+
+        self.select_file_imgRef_box = plot_tools.widgetBox(main_box, orientation="horizontal")
+        self.le_imgRef = plot_tools.lineEdit(self.select_file_imgRef_box, self, "imgRef", label="Reference Image File", labelWidth=150, valueType=str, orientation="horizontal")
+        plot_tools.button(self.select_file_imgRef_box, self, "...", callback=self.selectImgRefFile)
+
+        self.select_file_imgBlank_box = plot_tools.widgetBox(main_box, orientation="horizontal")
+        self.le_imgBlank = plot_tools.lineEdit(self.select_file_imgBlank_box, self, "img", label="Blank Image File", labelWidth=150, valueType=str, orientation="horizontal")
+        plot_tools.button(self.select_file_imgBlank_box, self, "...", callback=self.selectImgBlankFile)
+
+        self.set_mode()
+
+        plot_tools.lineEdit(main_box, self, "pixel", label="Pixel Size", labelWidth=150, valueType=float, orientation="horizontal")
+        plot_tools.lineEdit(main_box, self, "gratingPeriod", label="Grating Period", labelWidth=150, valueType=float, orientation="horizontal")
+
+        plot_tools.comboBox(main_box, self, "pattern", label="Pattern", items=self.PATTERNS, orientation="horizontal")
+
+        plot_tools.lineEdit(main_box, self, "distDet2sample", label="Distance Detector to Grating", labelWidth=150, valueType=float, orientation="horizontal")
+        plot_tools.lineEdit(main_box, self, "phenergy", label="Photon Energy", labelWidth=150, valueType=float, orientation="horizontal")
+        plot_tools.lineEdit(main_box, self, "sourceDistance", label="Source Distance", labelWidth=150, valueType=float, orientation="horizontal")
 
         self.setFixedWidth(800)
         self.setFixedHeight(400)
 
         self.update()
 
+    def set_mode(self):
+        self.select_file_imgRef_box.setEnabled(self.mode == 1)
 
     def selectImgFile(self):
         self.le_img.setText(plot_tools.selectFileFromDialog(self, self.img, "Open Image File"))
 
+    def selectImgRefFile(self):
+        self.le_imgRef.setText(plot_tools.selectFileFromDialog(self, self.imgRef, "Open Reference Image File"))
+
+    def selectImgBlankFile(self):
+        self.le_imgBlank.setText(plot_tools.selectFileFromDialog(self, self.imgBlank, "Open Blank Image File"))
+
     def get_accepted_output(self):
         img      = read_tiff(self.img)
-        imgRef   = None if (self.mode == 'Relative' or self.imgRef is None) else read_tiff(self.imgRef)
+        imgRef   = None if (self.mode == 0 or self.imgRef is None) else read_tiff(self.imgRef)
         imgBlank = None if self.imgBlank is None else read_tiff(self.imgBlank)
 
+        pixelsize = [self.pixel, self.pixel]
+
         # calculate the theoretical position of the hamonics
-        period_harm_Vert = np.int(self.pixelsize[0] / self.gratingPeriod * img.shape[0] / (self.sourceDistance + self.distDet2sample) * self.sourceDistance)
-        period_harm_Hor  = np.int(self.pixelsize[1] / self.gratingPeriod * img.shape[1] / (self.sourceDistance + self.distDet2sample) * self.sourceDistance)
+        period_harm_Vert = np.int(pixelsize[0] / self.gratingPeriod * img.shape[0] / (self.sourceDistance + self.distDet2sample) * self.sourceDistance)
+        period_harm_Hor  = np.int(pixelsize[1] / self.gratingPeriod * img.shape[1] / (self.sourceDistance + self.distDet2sample) * self.sourceDistance)
 
         return WavePyData(img            = img,
                           imgRef         = imgRef,
                           imgBlank       = imgBlank,
-                          mode           = self.mode,
-                          pixelsize      = self.pixelsize,
+                          mode           = self.MODES[self.mode],
+                          pixelsize      = pixelsize,
                           gratingPeriod  = self.gratingPeriod,
-                          pattern        = self.pattern,
+                          pattern        = self.PATTERNS[self.pattern],
                           distDet2sample = self.distDet2sample,
                           phenergy       = self.phenergy,
                           sourceDistance = self.sourceDistance,
