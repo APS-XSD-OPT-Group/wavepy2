@@ -42,10 +42,13 @@
 # ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE         #
 # POSSIBILITY OF SUCH DAMAGE.                                             #
 # #########################################################################
+import numpy as np
+from wavepy2.core.widgets.extract_harmonic_plot import ExtractHarmonicPlot
+from wavepy2.core.widgets.harmonic_grid_plot import HarmonicGridPlot
+from wavepy2.core.widgets.single_grating_harmonic_images import SingleGratingHarmonicImages
 from wavepy2.util.log.logger   import get_registered_logger_instance
 from wavepy2.util.plot.plotter import get_registered_plotter_instance
-from wavepy2.util.common.common_tools import FourierTransform, get_idxPeak_ij_exp
-from wavepy2.core.widgets.grating_interferometry_widgets import *
+from wavepy2.util.common.common_tools import FourierTransform, get_idxPeak_ij, get_idxPeak_ij_exp
 
 from skimage.restoration import unwrap_phase
 

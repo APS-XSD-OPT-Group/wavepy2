@@ -43,47 +43,9 @@
 # POSSIBILITY OF SUCH DAMAGE.                                             #
 # #########################################################################
 import numpy as np
-
-from wavepy2.util.common.common_tools import get_idxPeak_ij, extent_func
-from wavepy2.util.plot.plotter import WavePyWidget
-
-from matplotlib.patches import Rectangle
 from matplotlib.figure import Figure
-
-class ExtractHarmonicPlot(WavePyWidget):
-    def get_plot_tab_name(self):
-        return "Extract Harmonic"
-
-    def build_figure(self, **kwargs):
-        intensity = kwargs["intensity"]
-        idxPeak_ij = kwargs["idxPeak_ij"]
-        harmonic_ij = kwargs["harmonic_ij"]
-        nColumns = kwargs["nColumns"]
-        nRows = kwargs["nRows"]
-        periodHor = kwargs["periodHor"]
-        periodVert = kwargs["periodVert"]
-
-        figure = Figure(figsize=(8, 7))
-        ax = figure.subplots(1, 1)
-        ax.imshow(np.log10(intensity), cmap='inferno', extent=extent_func(intensity))
-
-        ax.set_xlabel('Pixels')
-        ax.set_ylabel('Pixels')
-
-        # xo yo are the lower left position of the reangle
-        xo = idxPeak_ij[1] - nColumns // 2 - periodHor // 2
-        yo = nRows // 2 - idxPeak_ij[0] - periodVert // 2
-
-        figure.gca().add_patch(Rectangle((xo, yo),
-                                      periodHor, periodVert,
-                                      lw=2, ls='--', color='red',
-                                      fill=None, alpha=1))
-
-        ax.set_title('Selected Region ' + harmonic_ij[0] + harmonic_ij[1], fontsize=18, weight='bold')
-
-        ax.figure.canvas.draw()
-
-        return figure
+from wavepy2.util.common.common_tools import extent_func, get_idxPeak_ij
+from wavepy2.util.plot.plotter import WavePyWidget
 
 
 class HarmonicGridPlot(WavePyWidget):
@@ -134,87 +96,5 @@ class HarmonicGridPlot(WavePyWidget):
         ax.set_xlim(-nColumns//2, nColumns - nColumns//2)
         ax.set_ylim(-nRows//2, nRows - nRows//2)
         ax.set_title('log scale FFT magnitude, Hamonics Subsets and Indexes', fontsize=16, weight='bold')
-
-        return figure
-
-
-class HarmonicPeakPlot(WavePyWidget):
-    def get_plot_tab_name(self):
-        return "Harmonic Peak"
-
-    def build_figure(self, **kwargs):
-        imgFFT         = kwargs["imgFFT"]
-        harmonicPeriod = kwargs["harmonicPeriod"]
-        fname          = kwargs["fname"]
-
-        (nRows, nColumns) = imgFFT.shape
-
-        periodVert = harmonicPeriod[0]
-        periodHor = harmonicPeriod[1]
-
-        # adjusts for 1D grating
-        if periodVert <= 0 or periodVert is None: periodVert = nRows
-        if periodHor <= 0 or periodHor is None: periodHor = nColumns
-
-        figure = Figure(figsize=(8, 7))
-
-        ax1 = figure.add_subplot(121)
-        ax2 = figure.add_subplot(122)
-
-        idxPeak_ij = get_idxPeak_ij(0, 1, nRows, nColumns, periodVert, periodHor)
-
-        for i in range(-5, 5):
-            ax1.plot(np.abs(imgFFT[idxPeak_ij[0] - 100 : idxPeak_ij[0] + 100, idxPeak_ij[1]-i]), lw=2, label='01 Vert ' + str(i))
-        ax1.grid()
-
-        idxPeak_ij = get_idxPeak_ij(1, 0, nRows, nColumns, periodVert, periodHor)
-
-        for i in range(-5, 5):
-            ax2.plot(np.abs(imgFFT[idxPeak_ij[0]-i, idxPeak_ij[1] - 100 : idxPeak_ij[1] + 100]), lw=2, label='10 Horz ' + str(i))
-        ax2.grid()
-
-        ax1.set_xlabel('Pixels')
-        ax1.set_ylabel(r'$| FFT |$ ')
-        ax1.legend(loc=1, fontsize='xx-small')
-        ax1.title.set_text('Horz')
-
-        ax2.set_xlabel('Pixels')
-        ax2.set_ylabel(r'$| FFT |$ ')
-        ax2.legend(loc=1, fontsize='xx-small')
-        ax2.title.set_text('Vert')
-
-        if fname is not None: figure.savefig(fname, transparent=True)
-
-        return figure
-
-class SingleGratingHarmonicImages(WavePyWidget):
-    def get_plot_tab_name(self):
-        return "Intensity in Fourier Space"
-
-    def build_figure(self, **kwargs):
-        # Intensity is Fourier Space
-        intFFT00 = np.log10(np.abs(kwargs["imgFFT00"]))
-        intFFT01 = np.log10(np.abs(kwargs["imgFFT01"]))
-        intFFT10 = np.log10(np.abs(kwargs["imgFFT10"]))
-
-        figure = Figure(figsize=(14, 5))
-        axes = figure.subplots(nrows=1, ncols=3)
-
-        for dat, ax, textTitle in zip([intFFT00, intFFT01, intFFT10],
-                                      axes.flat,
-                                      ['FFT 00', 'FFT 01', 'FFT 10']):
-
-            # The vmin and vmax arguments specify the color limits
-            im = ax.imshow(dat, cmap='inferno', vmin=np.min(intFFT00),
-                           vmax=np.max(intFFT00),
-                           extent=extent_func(dat))
-
-            ax.set_title(textTitle)
-            if textTitle == 'FFT 00': ax.set_ylabel('Pixels')
-            ax.set_xlabel('Pixels')
-
-        # Make an axis for the colorbar on the right side
-        figure.colorbar(im, cax=figure.add_axes([0.92, 0.1, 0.03, 0.8]))
-        figure.suptitle('FFT subsets - Intensity', fontsize=18, weight='bold')
 
         return figure
