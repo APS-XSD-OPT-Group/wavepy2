@@ -49,7 +49,7 @@ from wavepy2.util.common import common_tools
 from wavepy2.util.ini.initializer import get_registered_ini_instance
 from wavepy2.util.log.logger import get_registered_logger_instance
 from wavepy2.util.plot import plot_tools
-from wavepy2.util.plot.plotter import WavePyInteractiveWidget
+from wavepy2.util.plot.plotter import WavePyInteractiveWidget, get_registered_plotter_instance
 from wavepy2.util.io.read_write_file import read_tiff
 
 from wavepy2.tools.common.wavepy_data import WavePyData
@@ -116,6 +116,8 @@ def generate_initialization_parameters(img_file_name,
     saveFileSuf += '{:.1f}KeV'.format(phenergy * 1e-3)
     saveFileSuf = saveFileSuf.replace('.', 'p')
 
+    get_registered_plotter_instance().register_save_file_prefix(saveFileSuf)
+
     return WavePyData(img=img,
                       imgRef=imgRef,
                       imgBlank=imgBlank,
@@ -130,9 +132,6 @@ def generate_initialization_parameters(img_file_name,
                       saveFileSuf=saveFileSuf)
 
 class InputParametersWidget(WavePyInteractiveWidget):
-    MODES    = ["Relative", "Absolute"]
-    PATTERNS = ["Diagonal half pi", "Edge pi"]
-
     def __init__(self, parent):
         super(InputParametersWidget, self).__init__(parent, message="Input Parameters", title="Input Parameters")
         self.__ini     = get_registered_ini_instance()
@@ -141,10 +140,10 @@ class InputParametersWidget(WavePyInteractiveWidget):
         self.img            = self.__ini.get_string_from_ini("Files", "sample")
         self.imgRef         = self.__ini.get_string_from_ini("Files", "reference")
         self.imgBlank       = self.__ini.get_string_from_ini("Files", "blank")
-        self.mode           = self.MODES.index(self.__ini.get_string_from_ini("Parameters", "Mode"))
+        self.mode           = MODES.index(self.__ini.get_string_from_ini("Parameters", "Mode"))
         self.pixel          = self.__ini.get_float_from_ini("Parameters", "pixel size")
         self.gratingPeriod  = self.__ini.get_float_from_ini("Parameters", "checkerboard grating period")
-        self.pattern        = self.PATTERNS.index(self.__ini.get_string_from_ini("Parameters", "pattern"))
+        self.pattern        = PATTERNS.index(self.__ini.get_string_from_ini("Parameters", "pattern"))
         self.distDet2sample = self.__ini.get_float_from_ini("Parameters", "distance detector to gr")
         self.phenergy       = self.__ini.get_float_from_ini("Parameters", "photon energy")
         self.sourceDistance = self.__ini.get_float_from_ini("Parameters", "source distance")
@@ -152,7 +151,7 @@ class InputParametersWidget(WavePyInteractiveWidget):
     def build_widget(self, **kwargs):
         main_box = plot_tools.widgetBox(self.get_central_widget(), "")
 
-        plot_tools.comboBox(main_box, self, "mode", label="Mode", items=self.MODES, callback=self.set_mode, orientation="horizontal")
+        plot_tools.comboBox(main_box, self, "mode", label="Mode", items=MODES, callback=self.set_mode, orientation="horizontal")
 
         select_file_img_box = plot_tools.widgetBox(main_box, orientation="horizontal")
         self.le_img = plot_tools.lineEdit(select_file_img_box, self, "img", label="Image File", labelWidth=150, valueType=str, orientation="horizontal")
@@ -171,7 +170,7 @@ class InputParametersWidget(WavePyInteractiveWidget):
         plot_tools.lineEdit(main_box, self, "pixel", label="Pixel Size", labelWidth=150, valueType=float, orientation="horizontal")
         plot_tools.lineEdit(main_box, self, "gratingPeriod", label="Grating Period", labelWidth=150, valueType=float, orientation="horizontal")
 
-        plot_tools.comboBox(main_box, self, "pattern", label="Pattern", items=self.PATTERNS, orientation="horizontal")
+        plot_tools.comboBox(main_box, self, "pattern", label="Pattern", items=PATTERNS, orientation="horizontal")
 
         plot_tools.lineEdit(main_box, self, "distDet2sample", label="Distance Detector to Grating", labelWidth=150, valueType=float, orientation="horizontal")
         plot_tools.lineEdit(main_box, self, "phenergy", label="Photon Energy", labelWidth=150, valueType=float, orientation="horizontal")
@@ -195,6 +194,18 @@ class InputParametersWidget(WavePyInteractiveWidget):
         self.le_imgBlank.setText(plot_tools.selectFileFromDialog(self, self.imgBlank, "Open Blank Image File"))
 
     def get_accepted_output(self):
+        self.__ini.set_at_ini('Files',      'sample',                      self.img)
+        self.__ini.set_at_ini('Files',      'reference',                   self.imgRef)
+        self.__ini.set_at_ini('Files',      'blank',                       self.imgBlank)
+        self.__ini.set_at_ini('Parameters', 'Mode',                        MODES[self.mode])
+        self.__ini.set_at_ini('Parameters', 'Pixel Size',                  self.pixel)
+        self.__ini.set_at_ini('Parameters', 'Checkerboard Grating Period', self.gratingPeriod)
+        self.__ini.set_at_ini('Parameters', 'Pattern',                     PATTERNS[self.pattern])
+        self.__ini.set_at_ini('Parameters', 'Distance Detector to Gr',     self.distDet2sample)
+        self.__ini.set_at_ini('Parameters', 'Photon Energy',               self.phenergy)
+        self.__ini.set_at_ini('Parameters', 'Source Distance',             self.sourceDistance)
+        self.__ini.push()
+
         return generate_initialization_parameters(self.img,
                                                   self.imgRef,
                                                   self.imgBlank,

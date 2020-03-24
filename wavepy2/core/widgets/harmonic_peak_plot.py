@@ -48,10 +48,9 @@ from wavepy2.util.common.common_tools import get_idxPeak_ij
 from wavepy2.util.plot.plotter import WavePyWidget
 
 class HarmonicPeakPlot(WavePyWidget):
-    def get_plot_tab_name(self):
-        return "Harmonic Peak"
+    def get_plot_tab_name(self): return "Harmonic Peak"
 
-    def build_figure(self, **kwargs):
+    def build_mpl_figure(self, **kwargs):
         imgFFT         = kwargs["imgFFT"]
         harmonicPeriod = kwargs["harmonicPeriod"]
         fname          = kwargs["fname"]

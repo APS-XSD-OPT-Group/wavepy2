@@ -54,17 +54,26 @@ from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 class WavePyGenericWidget(object):
     def build_widget(self, **kwargs): raise NotImplementedError()
 
-class WavePyWidget(QWidget, WavePyGenericWidget):
+class FigureToSave():
+    def __init__(self, figure_file_name=None, figure=None):
+        self.__figure_file_name = figure_file_name
+        self.__figure           = figure
 
+    def save_figure(self, **kwargs):
+        if not self.__figure is None: self.__figure.savefig(self.__figure_file_name, **kwargs)
+
+
+class WavePyWidget(QWidget, WavePyGenericWidget):
     def get_plot_tab_name(self): raise NotImplementedError()
 
     def build_widget(self, **kwargs):
         layout = QHBoxLayout()
         layout.setAlignment(Qt.AlignCenter)
 
-        figure = self.build_figure(**kwargs)
-        canvas = FigureCanvas(figure)
+        canvas = FigureCanvas(self.build_mpl_figure(**kwargs))
         canvas.setParent(self)
+
+        self.append_mpl_figure_to_save(canvas.figure)
 
         self.setFixedWidth(canvas.get_width_height()[0]*1.1)
         self.setFixedHeight(canvas.get_width_height()[1]*1.1)
@@ -73,9 +82,17 @@ class WavePyWidget(QWidget, WavePyGenericWidget):
 
         self.setLayout(layout)
 
-    def build_figure(self, **kwargs): raise NotImplementedError()
-    def get_save_file_names(self): return []
-    def get_figures_to_save(self): return []
+    def append_mpl_figure_to_save(self, figure_to_save):
+        if not hasattr(self, "__figures_to_save") or self.__figures_to_save is None: self.__figures_to_save = [figure_to_save]
+        else: self.__figures_to_save.append(figure_to_save)
+
+    def build_mpl_figure(self, **kwargs): raise NotImplementedError()
+
+    def get_figures_to_save(self):
+        return [FigureToSave(figure=figure_to_save,
+                             figure_file_name=common_tools.get_unique_filename(get_registered_plotter_instance().get_save_file_prefix(), "png"))
+                for figure_to_save in self.__figures_to_save]
+
 
 class WavePyInteractiveWidget(QDialog, WavePyGenericWidget):
 
@@ -129,9 +146,11 @@ class WavePyInteractiveWidget(QDialog, WavePyGenericWidget):
 class PlotterFacade:
     def is_active(self): raise NotImplementedError()
     def register_context_window(self, context_key, context_window=None): raise NotImplementedError()
+    def register_save_file_prefix(self, save_file_prefix): raise NotImplementedError()
     def push_plot_on_context(self, context_key, widget_class, **kwargs): raise NotImplementedError()
     def get_plots_of_context(self, context_key): raise NotImplementedError()
     def get_context_container_widget(self, context_key): raise  NotImplementedError()
+    def get_save_file_prefix(self): raise NotImplementedError()
     def draw_context_on_widget(self, context_key, container_widget): raise NotImplementedError()
     def show_interactive_plot(self, widget_class, container_widget, **kwargs): raise NotImplementedError()
     def show_context_window(self, context_key): raise NotImplementedError()
@@ -145,12 +164,10 @@ class PlotterMode:
 class __AbstractPlotter(PlotterFacade):
     @classmethod
     def save_images(cls, plot_widget_instance, **kwargs):
-        file_names = plot_widget_instance.get_save_file_names()
-        figures    = plot_widget_instance.get_figures_to_save()
+        figures_to_save = plot_widget_instance.get_figures_to_save()
 
-        if not figures is None:
-            for figure, file_name in zip(figures, file_names):
-                figure.savefig(common_tools.get_unique_filename(file_name, extension=".png"), **kwargs)
+        if not figures_to_save is None:
+            for figure_to_save in figures_to_save: figure_to_save.save_figure(**kwargs)
 
     @classmethod
     def build_plot(cls, widget_class, **kwargs):
@@ -163,6 +180,9 @@ class __AbstractPlotter(PlotterFacade):
             return plot_widget_instance
         except Exception as e:
             raise ValueError("Plot Widget can't be created: " + str(e))
+
+    def register_save_file_prefix(self, save_file_prefix): self.__save_file_prefix = save_file_prefix
+    def get_save_file_prefix(self): return self.__save_file_prefix
 
 from wavepy2.util.plot.plot_tools import DefaultMainWindow
 
@@ -237,13 +257,12 @@ class __FullPlotter(__AbstractActivePlotter):
         self.save_images(plot_widget_instance, **kwargs)
 
 class __DisplayOnlyPlotter(__AbstractActivePlotter):
-    def push_plot_on_context(self, context_key, widget_class, **kwargs):
-        self.register_plot(context_key, self.build_plot(widget_class, **kwargs))
+    def push_plot_on_context(self, context_key, widget_class, **kwargs): self.register_plot(context_key, self.build_plot(widget_class, **kwargs))
 
 class __SaveOnlyPlotter(__AbstractActivePlotter):
     def is_active(self): return False
     def register_context_window(self, context_key, context_window=None): pass
-    def push_plot_on_context(self, context_key, widget_class, **kwargs): self.save_image(self.build_plot(widget_class, **kwargs))
+    def push_plot_on_context(self, context_key, widget_class, **kwargs): self.save_images(self.build_plot(widget_class, **kwargs))
     def get_context_container_widget(self, context_key): return None
     def get_plots_of_context(self, context_key): pass
     def draw_context_on_widget(self, context_key, container_widget): pass

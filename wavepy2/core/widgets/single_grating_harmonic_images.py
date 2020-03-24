@@ -3,12 +3,10 @@ from matplotlib.figure import Figure
 from wavepy2.util.common.common_tools import extent_func
 from wavepy2.util.plot.plotter import WavePyWidget
 
-
 class SingleGratingHarmonicImages(WavePyWidget):
-    def get_plot_tab_name(self):
-        return "Intensity in Fourier Space"
+    def get_plot_tab_name(self): return "Intensity in Fourier Space"
 
-    def build_figure(self, **kwargs):
+    def build_mpl_figure(self, **kwargs):
         # Intensity is Fourier Space
         intFFT00 = np.log10(np.abs(kwargs["imgFFT00"]))
         intFFT01 = np.log10(np.abs(kwargs["imgFFT01"]))

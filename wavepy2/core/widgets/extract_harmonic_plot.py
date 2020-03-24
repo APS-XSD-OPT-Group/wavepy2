@@ -50,10 +50,9 @@ from wavepy2.util.plot.plotter import WavePyWidget
 
 
 class ExtractHarmonicPlot(WavePyWidget):
-    def get_plot_tab_name(self):
-        return "Extract Harmonic " + self.__harmonic_name
+    def get_plot_tab_name(self): return "Extract Harmonic " + self.__harmonic_name
 
-    def build_figure(self, **kwargs):
+    def build_mpl_figure(self, **kwargs):
         intensity = kwargs["intensity"]
         idxPeak_ij = kwargs["idxPeak_ij"]
         harmonic_ij = kwargs["harmonic_ij"]

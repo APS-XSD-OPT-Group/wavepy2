@@ -410,8 +410,7 @@ class GraphicalRoiIdx(QWidget):
 
         self.setLayout(layout)
 
-    def get_image_to_change(self):
-        return self.__image_to_change
+    def get_image_to_change(self): return self.__image_to_change
 
 
 ##########################################################################

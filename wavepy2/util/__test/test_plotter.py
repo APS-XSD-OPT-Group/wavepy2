@@ -12,7 +12,7 @@ class MyWidget(WavePyWidget):
 
     def get_plot_tab_name(self): "TEST"
 
-    def build_figure(self, **kwargs):
+    def build_mpl_figure(self, **kwargs):
         return Figure(figsize=(2, 2))
 
 plotter = get_registered_plotter_instance()

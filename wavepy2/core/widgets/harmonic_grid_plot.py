@@ -45,14 +45,13 @@
 import numpy as np
 from matplotlib.figure import Figure
 from wavepy2.util.common.common_tools import extent_func, get_idxPeak_ij
-from wavepy2.util.plot.plotter import WavePyWidget
+from wavepy2.util.plot.plotter import WavePyWidget, FigureToSave
 
 
 class HarmonicGridPlot(WavePyWidget):
-    def get_plot_tab_name(self):
-        return "Harmonic Grid"
+    def get_plot_tab_name(self): return "Harmonic Grid"
 
-    def build_figure(self, **kwargs):
+    def build_mpl_figure(self, **kwargs):
         imgFFT = kwargs["imgFFT"]
         harmonicPeriod = kwargs["harmonicPeriod"]
 
