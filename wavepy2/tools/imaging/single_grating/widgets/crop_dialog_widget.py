@@ -42,42 +42,13 @@
 # ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE         #
 # POSSIBILITY OF SUCH DAMAGE.                                             #
 # #########################################################################
-import numpy as np
 
-from wavepy2.util.plot.plotter import WavePyWidget, WavePyInteractiveWidget
-from wavepy2.util.log.logger import get_registered_logger_instance, LoggerColor
-from wavepy2.util.ini.initializer import get_registered_ini_instance
-
-from wavepy2.util.plot import plot_tools
 from wavepy2.util.common import common_tools
+from wavepy2.util.ini.initializer import get_registered_ini_instance
+from wavepy2.util.log.logger import get_registered_logger_instance, LoggerColor
+from wavepy2.util.plot import plot_tools
+from wavepy2.util.plot.plotter import WavePyInteractiveWidget
 
-from matplotlib.patches import Rectangle
-from matplotlib.figure import Figure
-from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
-
-from PyQt5.QtWidgets import QHBoxLayout
-from PyQt5.QtCore import Qt
-
-class ShowCroppedFigure(WavePyWidget):
-    def build_widget(self, **kwargs):
-        img         = kwargs["img"]
-        pixelsize   = kwargs["pixelsize"]
-
-        layout = QHBoxLayout()
-        layout.setAlignment(Qt.AlignCenter)
-
-        widget = plot_tools.SimplePlot(self,
-                                       image=img,
-                                       title="Cropped Raw Image",
-                                       xlabel=r'x [$\mu m$ ]',
-                                       ylabel=r'y [$\mu m$ ]',
-                                       extent=common_tools.extent_func(img, pixelsize)*1e6)
-        layout.addWidget(widget)
-
-        self.setLayout(layout)
-
-    def get_plot_tab_name(self):
-        return "Raw Image with New Crop"
 
 class CropDialogPlot(WavePyInteractiveWidget):
 

@@ -86,11 +86,10 @@ class DefaultMainWindow(QMainWindow):
 ##########################################################################
 # COMMON WIDGETS
 
-from PyQt5.QtCore import pyqtSignal
 from PyQt5.QtWidgets import QGridLayout, QWidget
 
 from matplotlib.figure import Figure
-from matplotlib.widgets import Slider, Button, RadioButtons, CheckButtons
+from matplotlib.widgets import Slider
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 
 from wavepy2.util.common import common_tools
@@ -417,6 +416,78 @@ class GraphicalRoiIdx(QWidget):
 
 ##########################################################################
 # WIDGETS UTILS FROM OASYS
+
+from PyQt5.QtWidgets import QMessageBox, QTextEdit, QFileDialog
+
+class ConfirmDialog(QMessageBox):
+    def __init__(self, parent, message, title):
+        super(ConfirmDialog, self).__init__(parent)
+
+        self.setStandardButtons(QMessageBox.Ok | QMessageBox.Cancel)
+        self.setIcon(QMessageBox.Question)
+        self.setText(message)
+        self.setWindowTitle(title)
+
+    @classmethod
+    def confirmed(cls, parent=None, message="Confirm Action?", title="Confirm Action"):
+        return ConfirmDialog(parent, message, title).exec_() == QMessageBox.Ok
+
+class OptionDialog(QMessageBox):
+
+    selection = 0
+
+    def __init__(self, parent, message, title, options, default):
+        super(OptionDialog, self).__init__(parent)
+
+        self.setStandardButtons(QMessageBox.Ok | QMessageBox.Cancel)
+        self.setIcon(QMessageBox.Question)
+        self.setText(message)
+        self.setWindowTitle(title)
+
+        self.selection = default
+
+        box = QWidget()
+        box.setLayout(QGridLayout())
+        box.setFixedHeight(40)
+
+        box_combo = QWidget()
+        combo = QComboBox(box_combo)
+        combo.setEditable(False)
+        combo.box = box_combo
+        for item in options:
+            combo.addItem(str(item))
+        combo.setCurrentIndex(default)
+        combo.currentIndexChanged.connect(self.set_selection)
+
+        box.layout().addWidget(QLabel("Select Option"), 0, 0, 1, 1)
+        box.layout().addWidget(box_combo, 0, 1, 1, 1)
+
+        self.layout().addWidget(box, 1, 1, 1, 2)
+
+    def set_selection(self, index):
+        self.selection = index
+
+    @classmethod
+    def get_option(cls, parent=None, message="Select Option", title="Select Option", option=["No", "Yes"], default=0):
+        dlg = OptionDialog(parent, message, title, option, default)
+        if dlg.exec_() == QMessageBox.Ok:
+            return dlg.selection
+        else:
+            return None
+
+def selectFileFromDialog(widget, previous_file_path="", message="Select File", start_directory=".", file_extension_filter="*.*"):
+    file_path = QFileDialog.getOpenFileName(widget, message, start_directory, file_extension_filter)[0]
+    if not file_path is None and not file_path.strip() == "": return file_path
+    else: return previous_file_path
+
+
+def selectDirectoryFromDialog(widget, previous_directory_path="", message="Select Directory", start_directory="."):
+    directory_path = QFileDialog.getExistingDirectory(widget, message, start_directory)
+    if not directory_path is None and not directory_path.strip() == "": return directory_path
+    else: return previous_directory_path
+
+##########################################################################
+# WIDGETS UTILS FROM OASYS
 #
 # This code has been copied by the original Orange source code:
 # see: www.orange.biolab.si
@@ -426,7 +497,6 @@ class GraphicalRoiIdx(QWidget):
 from PyQt5.QtWidgets import QGroupBox, QTabWidget, QScrollArea, \
     QLayout, QHBoxLayout, QVBoxLayout, QPushButton, QLineEdit, \
     QLabel, QRadioButton, QButtonGroup, QComboBox, QCheckBox
-from PyQt5.QtGui import QIcon, QFont, QPalette
 from PyQt5.QtCore import Qt
 
 def widgetLabel(widget, label="", labelWidth=None, **misc):
@@ -466,10 +536,10 @@ def lineEdit(widget, master, value, label=None, labelWidth=None,
         ledit.enterButton = None
         if b is not widget: b.layout().addWidget(ledit)
 
-    if value:        ledit.setText(str(getdeepattr(master, value)))
+    if value:        ledit.setText(str(__getdeepattr(master, value)))
     if controlWidth: ledit.setFixedWidth(controlWidth)
     if validator:    ledit.setValidator(validator)
-    if value:        ledit.cback = connectControl(master, value,
+    if value:        ledit.cback = __connectControl(master, value,
                                                   callbackOnType and callback, ledit.textChanged[str],
                                                   __CallFrontLineEdit(ledit), fvcb=value and valueType)[1]
 
@@ -496,7 +566,7 @@ def button(widget, master, label, callback=None, width=None, height=None,
         button.setAutoDefault(autoDefault)
 
     if value:
-        button.setChecked(getdeepattr(master, value))
+        button.setChecked(__getdeepattr(master, value))
         __connectControl(master, value, None, button.toggled[bool], __CallFrontButton(button),
                          cfunc=callback and __FunctionCallback(master, callback, widget=button))
     elif callback:
@@ -578,7 +648,7 @@ def checkBox(widget, master, value, label, box=None,
     cbox = QCheckBox(label, b)
 
     if labelWidth: cbox.setFixedSize(labelWidth, cbox.sizeHint().height())
-    cbox.setChecked(getdeepattr(master, value))
+    cbox.setChecked(__getdeepattr(master, value))
 
     __connectControl(master, value, None, cbox.toggled[bool],
                      __CallFrontCheckBox(cbox),
@@ -644,6 +714,24 @@ def separator(widget, width=4, height=4):
     sep.setFixedSize(width, height)
     return sep
 
+def textArea(height=None, width=None, readOnly=True, noWrap=None):
+    area = QTextEdit()
+    area.setReadOnly(readOnly)
+    area.setStyleSheet("background-color: white;")
+    if noWrap is not None:
+        area.setLineWrapMode(QTextEdit.NoWrap)
+
+    if not height is None: area.setFixedHeight(height)
+    if not width is None: area.setFixedWidth(width)
+
+    return area
+
+
+import six, os
+
+def package_dirname(package):
+    if isinstance(package, six.string_types): package = __import__(package, fromlist=[""])
+    return os.path.dirname(package.__file__)
 
 ##########################################################################
 ##########################################################################
@@ -716,6 +804,50 @@ def __appendRadioButton(group, label, insertInto=None,
 
     return w
 
+from PyQt5.QtGui import QIcon
+from PyQt5.QtWidgets import QToolButton
+
+_getdeepattr = __getdeepattr
+
+def _enterButton(parent, control, placeholder=True):
+    """
+    Utility function that returns a button with a symbol for "Enter" and
+    optionally a placeholder to show when the enter button is hidden. Both
+    are inserted into the parent's layout, if it has one. If placeholder is
+    constructed it is shown and the button is hidden.
+
+    The height of the button is the same as the height of the widget passed
+    as argument `control`.
+
+    :param parent: parent widget into which the button is inserted
+    :type parent: PyQt5.QtWidgets.QWidget
+    :param control: a widget for determining the height of the button
+    :type control: PyQt5.QtWidgets.QWidget
+    :param placeholder: a flag telling whether to construct a placeholder
+        (default: True)
+    :type placeholder: bool
+    :return: a tuple with a button and a place holder (or `None`)
+    :rtype: PyQt5.QtWidgets.QToolButton or tuple
+    """
+    global _enter_icon
+    if not _enter_icon:
+        _enter_icon = QIcon(os.path.join(package_dirname("wavepy2.util.plot"), "icons/Dlg_enter.png"))
+    button = QToolButton(parent)
+    height = control.sizeHint().height()
+    button.setFixedSize(height, height)
+    button.setIcon(_enter_icon)
+    if parent.layout() is not None:
+        parent.layout().addWidget(button)
+    if placeholder:
+        button.hide()
+        holder = QWidget(parent)
+        holder.setFixedSize(height, height)
+        if parent.layout() is not None:
+            parent.layout().addWidget(holder)
+    else:
+        holder = None
+    return button, holder
+
 CONTROLLED_ATTRIBUTES = "controlledAttributes"
 DISABLER = 1
 HIDER = 2
@@ -733,7 +865,7 @@ class __Disabler:
         currState = self.widget.isEnabled()
         if currState or not self.propagateState:
             if len(value): disabled = not value[0]
-            else: disabled = not __getdeepattr(self.master, self.valueName)
+            else: disabled = not _getdeepattr(self.master, self.valueName)
         else: disabled = 1
         for w in self.widget.disables:
             if type(w) is tuple:
@@ -760,8 +892,7 @@ class __LineEditWFocusOut(QLineEdit):
             parent.layout().addWidget(self)
         self.callback = callback
         self.focusInCallback = focusInCallback
-        self.enterButton, self.placeHolder = \
-            _enterButton(parent, self, placeholder)
+        self.enterButton, self.placeHolder = _enterButton(parent, self, placeholder)
         self.enterButton.clicked.connect(self.returnPressedHandler)
         self.textChanged[str].connect(self.markChanged)
         self.returnPressed.connect(self.returnPressedHandler)
@@ -842,8 +973,7 @@ class __ValueCallback(__ControlledCallback):
         try:
             self.acyclic_setattr(value)
         except Exception:
-            print("gui.ValueCallback: %s" % value)
-            traceback.print_exception(*sys.exc_info())
+            pass
 
 class __ValueCallbackCombo(__ValueCallback):
     def __init__(self, widget, attribute, f=None, control2attributeDict=None):
@@ -956,7 +1086,7 @@ class __CallFrontCheckBox(__ControlledCallFront):
             self.control.setCheckState(values[value])
 
 def __connectControl(master, value, f, signal, cfront, cback=None, cfunc=None, fvcb=None):
-    cback = cback or value and ValueCallback(master, value, fvcb)
+    cback = cback or value and __ValueCallback(master, value, fvcb)
     if cback:
         if signal:
             signal.connect(cback)

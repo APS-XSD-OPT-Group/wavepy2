@@ -48,20 +48,64 @@ from wavepy2.util.common import common_tools
 from wavepy2.util.common.common_tools import FourierTransform
 from wavepy2.util.log.logger import get_registered_logger_instance
 from wavepy2.util.plot.plotter import get_registered_plotter_instance
-
-from wavepy2.util.ini.initializer import get_registered_ini_instance
 from wavepy2.util.io.read_write_file import read_tiff
+from wavepy2.util.ini.initializer import get_registered_ini_instance
 
 from wavepy2.tools.common.wavepy_data import WavePyData
 
 from wavepy2.core import grating_interferometry
-from wavepy2.tools.imaging.single_grating.widgets.single_grating_talbot_widgets import CropDialogPlot, ShowCroppedFigure
+from wavepy2.tools.imaging.single_grating.widgets.input_parameters_widget import InputParametersWidget
+from wavepy2.tools.imaging.single_grating.widgets.crop_dialog_widget import CropDialogPlot
+from wavepy2.tools.imaging.single_grating.widgets.show_cropped_figure_widget import ShowCroppedFigure
 
 from scipy import constants
 
 hc = constants.value('inverse meter-electron volt relationship')  # hc
 
 CALCULATE_DPC_CONTEXT_KEY = "Calculate DPC"
+
+def get_initialization_parameters():
+    plotter = get_registered_plotter_instance()
+
+    if plotter.is_active():
+        return plotter.show_interactive_plot(InputParametersWidget, container_widget=None)
+    else:
+        ini = get_registered_ini_instance()
+
+        img = ini.get_string_from_ini("Files", "sample")
+        imgRef = ini.get_string_from_ini("Files", "reference")
+        imgBlank = ini.get_string_from_ini("Files", "blank")
+
+        mode = ini.get_string_from_ini("Parameters", "mode")
+        pixel = ini.get_float_from_ini("Parameters", "pixel size")
+        pixelsize = [pixel, pixel]
+        gratingPeriod = ini.get_float_from_ini("Parameters", "checkerboard grating period")
+        pattern = ini.get_string_from_ini("Parameters", "pattern")
+        distDet2sample = ini.get_float_from_ini("Parameters", "distance detector to gr")
+        phenergy = ini.get_float_from_ini("Parameters", "photon energy")
+        sourceDistance = ini.get_float_from_ini("Parameters", "source distance")
+
+        img = read_tiff(img),
+        imgRef = None if (mode == 'Relative' or imgRef is None) else read_tiff(imgRef),
+        imgBlank = None if imgBlank is None else read_tiff(imgBlank),
+
+        # calculate the theoretical position of the hamonics
+        period_harm_Vert = np.int(pixelsize[0] / gratingPeriod * img.shape[0] / (sourceDistance + distDet2sample) * sourceDistance)
+        period_harm_Hor = np.int(pixelsize[1] / gratingPeriod * img.shape[1] / (sourceDistance + distDet2sample) * sourceDistance)
+
+        return WavePyData(img            = img,
+                          imgRef         = imgRef,
+                          imgBlank       = imgBlank,
+                          mode           = mode,
+                          pixelsize      = pixelsize,
+                          gratingPeriod  = gratingPeriod,
+                          pattern        = pattern,
+                          distDet2sample = distDet2sample,
+                          phenergy       = phenergy,
+                          sourceDistance = sourceDistance,
+                          period_harm    = [period_harm_Vert, period_harm_Hor],
+                          unwrapFlag     = True)
+
 
 def calculate_dpc(wavepy_data=WavePyData()):
     img  = wavepy_data.get_parameter("img")
