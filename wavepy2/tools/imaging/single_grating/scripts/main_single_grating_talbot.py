@@ -53,10 +53,10 @@ from wavepy2.util.plot.plotter import get_registered_plotter_instance, register_
 from wavepy2.tools.imaging.single_grating.single_grating_talbot import calculate_dpc, get_initialization_parameters
 from wavepy2.tools.imaging.single_grating.single_grating_talbot import CALCULATE_DPC_CONTEXT_KEY
 
-LOGGER_MODE   = LoggerMode.WARNING
+LOGGER_MODE   = LoggerMode.FULL
 INI_MODE      = IniMode.LOCAL_FILE
 INI_FILE_NAME = ".single_grating_talbot.ini"
-PLOTTER_MODE  = PlotterMode.DISPLAY_ONLY
+PLOTTER_MODE  = PlotterMode.FULL
 
 if __name__=="__main__":
     # ==========================================================================

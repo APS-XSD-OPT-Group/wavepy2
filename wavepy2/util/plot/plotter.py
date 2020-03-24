@@ -74,8 +74,8 @@ class WavePyWidget(QWidget, WavePyGenericWidget):
         self.setLayout(layout)
 
     def build_figure(self, **kwargs): raise NotImplementedError()
-    def get_save_file_name(self): raise NotImplementedError()
-    def get_figure_to_save(self): raise NotImplementedError()
+    def get_save_file_names(self): return []
+    def get_figures_to_save(self): return []
 
 class WavePyInteractiveWidget(QDialog, WavePyGenericWidget):
 
@@ -144,11 +144,13 @@ class PlotterMode:
 
 class __AbstractPlotter(PlotterFacade):
     @classmethod
-    def save_image(cls, plot_widget_instance, **kwargs):
-        file_name = plot_widget_instance.get_save_file_name()
-        figure    = plot_widget_instance.get_figure_to_save()
+    def save_images(cls, plot_widget_instance, **kwargs):
+        file_names = plot_widget_instance.get_save_file_names()
+        figures    = plot_widget_instance.get_figures_to_save()
 
-        if not figure is None: figure.savefig(common_tools.get_unique_filename(file_name, extension=".png"), **kwargs)
+        if not figures is None:
+            for figure, file_name in zip(figures, file_names):
+                figure.savefig(common_tools.get_unique_filename(file_name, extension=".png"), **kwargs)
 
     @classmethod
     def build_plot(cls, widget_class, **kwargs):
@@ -232,7 +234,7 @@ class __FullPlotter(__AbstractActivePlotter):
         plot_widget_instance = self.build_plot(widget_class, **kwargs)
 
         self.register_plot(context_key, plot_widget_instance)
-        self.save_image(plot_widget_instance, **kwargs)
+        self.save_images(plot_widget_instance, **kwargs)
 
 class __DisplayOnlyPlotter(__AbstractActivePlotter):
     def push_plot_on_context(self, context_key, widget_class, **kwargs):

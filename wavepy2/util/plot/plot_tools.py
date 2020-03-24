@@ -129,7 +129,7 @@ class SimplePlot(QWidget):
 
 class ImageToChange(object):
     def __init__(self, mpl_image, mpl_figure):
-        self.__mpl_image = mpl_image
+        self.__mpl_image  = mpl_image
         self.__mpl_figure = mpl_figure
 
         self.__mpl_data = self.__mpl_image.get_array().data.astype(float)
@@ -433,9 +433,6 @@ class ConfirmDialog(QMessageBox):
         return ConfirmDialog(parent, message, title).exec_() == QMessageBox.Ok
 
 class OptionDialog(QMessageBox):
-
-    selection = 0
-
     def __init__(self, parent, message, title, options, default):
         super(OptionDialog, self).__init__(parent)
 
@@ -446,23 +443,7 @@ class OptionDialog(QMessageBox):
 
         self.selection = default
 
-        box = QWidget()
-        box.setLayout(QGridLayout())
-        box.setFixedHeight(40)
-
-        box_combo = QWidget()
-        combo = QComboBox(box_combo)
-        combo.setEditable(False)
-        combo.box = box_combo
-        for item in options:
-            combo.addItem(str(item))
-        combo.setCurrentIndex(default)
-        combo.currentIndexChanged.connect(self.set_selection)
-
-        box.layout().addWidget(QLabel("Select Option"), 0, 0, 1, 1)
-        box.layout().addWidget(box_combo, 0, 1, 1, 1)
-
-        self.layout().addWidget(box, 1, 1, 1, 2)
+        comboBox( widgetBox(self, "", height=40), self, label="Select Option", items=options, callback=self.set_selection, orientation="horizontal")
 
     def set_selection(self, index):
         self.selection = index
@@ -470,10 +451,28 @@ class OptionDialog(QMessageBox):
     @classmethod
     def get_option(cls, parent=None, message="Select Option", title="Select Option", option=["No", "Yes"], default=0):
         dlg = OptionDialog(parent, message, title, option, default)
-        if dlg.exec_() == QMessageBox.Ok:
-            return dlg.selection
-        else:
-            return None
+        if dlg.exec_() == QMessageBox.Ok: return dlg.selection
+        else: return None
+
+class ValueDialog(QMessageBox):
+    def __init__(self, parent, message, title, default):
+        super(ValueDialog, self).__init__(parent)
+
+        self.setStandardButtons(QMessageBox.Ok)
+        self.setIcon(QMessageBox.Question)
+        self.setText(message)
+        self.setWindowTitle(title)
+
+        self.value = default
+
+        lineEdit(widgetBox(self, "", height=40), self, "value", "", orientation="horizontal")
+
+    @classmethod
+    def get_value(cls, parent=None, message="Input Value", title="Input Option", default=0):
+        dlg = ValueDialog(parent, message, title, default)
+        if dlg.exec_() == QMessageBox.Ok: return dlg.value
+        else: return None
+
 
 def selectFileFromDialog(widget, previous_file_path="", message="Select File", start_directory=".", file_extension_filter="*.*"):
     file_path = QFileDialog.getOpenFileName(widget, message, start_directory, file_extension_filter)[0]

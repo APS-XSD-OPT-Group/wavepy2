@@ -47,7 +47,6 @@ from matplotlib.figure import Figure
 from wavepy2.util.common.common_tools import get_idxPeak_ij
 from wavepy2.util.plot.plotter import WavePyWidget
 
-
 class HarmonicPeakPlot(WavePyWidget):
     def get_plot_tab_name(self):
         return "Harmonic Peak"
@@ -73,14 +72,12 @@ class HarmonicPeakPlot(WavePyWidget):
 
         idxPeak_ij = get_idxPeak_ij(0, 1, nRows, nColumns, periodVert, periodHor)
 
-        for i in range(-5, 5):
-            ax1.plot(np.abs(imgFFT[idxPeak_ij[0] - 100 : idxPeak_ij[0] + 100, idxPeak_ij[1]-i]), lw=2, label='01 Vert ' + str(i))
+        for i in range(-5, 5): ax1.plot(np.abs(imgFFT[idxPeak_ij[0] - 100 : idxPeak_ij[0] + 100, idxPeak_ij[1]-i]), lw=2, label='01 Vert ' + str(i))
         ax1.grid()
 
         idxPeak_ij = get_idxPeak_ij(1, 0, nRows, nColumns, periodVert, periodHor)
 
-        for i in range(-5, 5):
-            ax2.plot(np.abs(imgFFT[idxPeak_ij[0]-i, idxPeak_ij[1] - 100 : idxPeak_ij[1] + 100]), lw=2, label='10 Horz ' + str(i))
+        for i in range(-5, 5): ax2.plot(np.abs(imgFFT[idxPeak_ij[0]-i, idxPeak_ij[1] - 100 : idxPeak_ij[1] + 100]), lw=2, label='10 Horz ' + str(i))
         ax2.grid()
 
         ax1.set_xlabel('Pixels')

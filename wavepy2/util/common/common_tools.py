@@ -238,7 +238,6 @@ def extent_func(img, pixelsize=[1, 1]):
 def get_idxPeak_ij(harV, harH, nRows, nColumns, periodVert, periodHor):
     return [nRows // 2 + harV * periodVert, nColumns // 2 + harH * periodHor]
 
-
 def get_idxPeak_ij_exp(imgFFT, harV, harH, periodVert, periodHor, searchRegion):
     (nRows, nColumns) = imgFFT.shape
 
@@ -254,3 +253,9 @@ def get_idxPeak_ij_exp(imgFFT, harV, harH, periodVert, periodHor, searchRegion):
     idxPeak_ij_exp = np.where(intensity * maskSearchRegion == np.max(intensity * maskSearchRegion))
 
     return [idxPeak_ij_exp[0][0], idxPeak_ij_exp[1][0]]
+
+
+def is_empty_file_name(file_name):
+    return file_name is None or \
+            file_name.strip() == "" or \
+            file_name.strip().lower() == "none"

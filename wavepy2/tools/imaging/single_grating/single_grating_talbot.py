@@ -48,13 +48,12 @@ from wavepy2.util.common import common_tools
 from wavepy2.util.common.common_tools import FourierTransform
 from wavepy2.util.log.logger import get_registered_logger_instance
 from wavepy2.util.plot.plotter import get_registered_plotter_instance
-from wavepy2.util.io.read_write_file import read_tiff
 from wavepy2.util.ini.initializer import get_registered_ini_instance
 
 from wavepy2.tools.common.wavepy_data import WavePyData
 
 from wavepy2.core import grating_interferometry
-from wavepy2.tools.imaging.single_grating.widgets.input_parameters_widget import InputParametersWidget
+from wavepy2.tools.imaging.single_grating.widgets.input_parameters_widget import InputParametersWidget, generate_initialization_parameters
 from wavepy2.tools.imaging.single_grating.widgets.crop_dialog_widget import CropDialogPlot
 from wavepy2.tools.imaging.single_grating.widgets.show_cropped_figure_widget import ShowCroppedFigure
 
@@ -72,49 +71,26 @@ def get_initialization_parameters():
     else:
         ini = get_registered_ini_instance()
 
-        img      = ini.get_string_from_ini("Files", "sample")
-        imgRef   = ini.get_string_from_ini("Files", "reference")
-        imgBlank = ini.get_string_from_ini("Files", "blank")
-
-        mode = ini.get_string_from_ini("Parameters", "mode")
-        pixel = ini.get_float_from_ini("Parameters", "pixel size")
-        pixelsize = [pixel, pixel]
-        gratingPeriod = ini.get_float_from_ini("Parameters", "checkerboard grating period")
-        pattern = ini.get_string_from_ini("Parameters", "pattern")
-        distDet2sample = ini.get_float_from_ini("Parameters", "distance detector to gr")
-        phenergy = ini.get_float_from_ini("Parameters", "photon energy")
-        sourceDistance = ini.get_float_from_ini("Parameters", "source distance")
-
-        img      = read_tiff(img)
-        imgRef   = None if (mode == InputParametersWidget.MODES[0] or imgRef is None) else read_tiff(imgRef)
-        imgBlank = None if imgBlank is None else read_tiff(imgBlank)
-
-        # calculate the theoretical position of the hamonics
-        period_harm_Vert = np.int(pixelsize[0] / gratingPeriod * img.shape[0] / (sourceDistance + distDet2sample) * sourceDistance)
-        period_harm_Hor = np.int(pixelsize[1] / gratingPeriod * img.shape[1] / (sourceDistance + distDet2sample) * sourceDistance)
-
-        return WavePyData(img            = img,
-                          imgRef         = imgRef,
-                          imgBlank       = imgBlank,
-                          mode           = mode,
-                          pixelsize      = pixelsize,
-                          gratingPeriod  = gratingPeriod,
-                          pattern        = pattern,
-                          distDet2sample = distDet2sample,
-                          phenergy       = phenergy,
-                          sourceDistance = sourceDistance,
-                          period_harm    = [period_harm_Vert, period_harm_Hor],
-                          unwrapFlag     = True)
-
+        return generate_initialization_parameters(img_file_name      = ini.get_string_from_ini("Files", "sample"),
+                                                  imgRef_file_name   = ini.get_string_from_ini("Files", "reference"),
+                                                  imgBlank_file_name = ini.get_string_from_ini("Files", "blank"),
+                                                  mode               = ini.get_string_from_ini("Parameters", "mode"),
+                                                  pixel              = ini.get_float_from_ini("Parameters", "pixel size"),
+                                                  gratingPeriod      = ini.get_float_from_ini("Parameters", "checkerboard grating period"),
+                                                  pattern            = ini.get_string_from_ini("Parameters", "pattern"),
+                                                  distDet2sample     = ini.get_float_from_ini("Parameters", "distance detector to gr"),
+                                                  phenergy           = ini.get_float_from_ini("Parameters", "photon energy"),
+                                                  sourceDistance     = ini.get_float_from_ini("Parameters", "source distance"))
 
 def calculate_dpc(wavepy_data=WavePyData()):
-    img  = wavepy_data.get_parameter("img")
-    imgRef  = wavepy_data.get_parameter("imgRef")
-    phenergy  = wavepy_data.get_parameter("phenergy")
-    pixelsize  = wavepy_data.get_parameter("pixelsize")
+    img             = wavepy_data.get_parameter("img")
+    imgRef          = wavepy_data.get_parameter("imgRef")
+    phenergy        = wavepy_data.get_parameter("phenergy")
+    pixelsize       = wavepy_data.get_parameter("pixelsize")
     distDet2sample  = wavepy_data.get_parameter("distDet2sample")
-    period_harm  = wavepy_data.get_parameter("period_harm")
-    unwrapFlag  = wavepy_data.get_parameter("unwrapFlag")
+    period_harm     = wavepy_data.get_parameter("period_harm")
+    saveFileSuf     = wavepy_data.get_parameter("saveFileSuf")
+    unwrapFlag      = True
 
     plotter = get_registered_plotter_instance()
     logger = get_registered_logger_instance()
@@ -131,7 +107,7 @@ def calculate_dpc(wavepy_data=WavePyData()):
         img = common_tools.crop_matrix_at_indexes(img, idx4crop)
 
     # Plot Real Image AFTER crop
-    plotter.push_plot_on_context(CALCULATE_DPC_CONTEXT_KEY, ShowCroppedFigure, img=img, pixelsize=pixelsize)
+    plotter.push_plot_on_context(CALCULATE_DPC_CONTEXT_KEY, ShowCroppedFigure, img=img, pixelsize=pixelsize, saveFileSuf=saveFileSuf)
 
     if not imgRef is None: imgRef = common_tools.crop_matrix_at_indexes(imgRef, idx4crop)
 
@@ -139,7 +115,6 @@ def calculate_dpc(wavepy_data=WavePyData()):
     period_harm_Hor_o = int(period_harm[1]*img.shape[1]/img_size_o[1]) + 1
 
     # Obtain harmonic periods from images
-
 
     if imgRef is None:
         harmPeriod = [period_harm_Vert_o, period_harm_Hor_o]

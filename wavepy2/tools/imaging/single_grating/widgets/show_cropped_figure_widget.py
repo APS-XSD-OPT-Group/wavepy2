@@ -51,9 +51,13 @@ from wavepy2.util.plot import plot_tools
 from wavepy2.util.plot.plotter import WavePyWidget
 
 class ShowCroppedFigure(WavePyWidget):
+    def get_save_file_names(self): return [common_tools.get_unique_filename(self.__saveFileSuf, "png")]
+    def get_figures_to_save(self): return [self.__figure_to_save]
+
     def build_widget(self, **kwargs):
         img         = kwargs["img"]
         pixelsize   = kwargs["pixelsize"]
+        self.__saveFileSuf = kwargs["saveFileSuf"]
 
         layout = QHBoxLayout()
         layout.setAlignment(Qt.AlignCenter)
@@ -67,6 +71,8 @@ class ShowCroppedFigure(WavePyWidget):
         layout.addWidget(widget)
 
         self.setLayout(layout)
+
+        self.__figure_to_save = widget.get_image_to_change().get_mpl_figure()
 
     def get_plot_tab_name(self):
         return "Raw Image with New Crop"

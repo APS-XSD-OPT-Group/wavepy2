@@ -76,9 +76,9 @@ class ExtractHarmonicPlot(WavePyWidget):
         yo = nRows // 2 - idxPeak_ij[0] - periodVert // 2
 
         figure.gca().add_patch(Rectangle((xo, yo),
-                                      periodHor, periodVert,
-                                      lw=2, ls='--', color='red',
-                                      fill=None, alpha=1))
+                               periodHor, periodVert,
+                               lw=2, ls='--', color='red',
+                               fill=None, alpha=1))
 
         ax.set_title('Selected Region ' + self.__harmonic_name, fontsize=18, weight='bold')
 

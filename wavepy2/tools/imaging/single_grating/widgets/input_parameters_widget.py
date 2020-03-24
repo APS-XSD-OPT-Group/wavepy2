@@ -43,8 +43,9 @@
 # POSSIBILITY OF SUCH DAMAGE.                                             #
 # #########################################################################
 import numpy as np
-import sys
+import sys, os
 
+from wavepy2.util.common import common_tools
 from wavepy2.util.ini.initializer import get_registered_ini_instance
 from wavepy2.util.log.logger import get_registered_logger_instance
 from wavepy2.util.plot import plot_tools
@@ -52,6 +53,81 @@ from wavepy2.util.plot.plotter import WavePyInteractiveWidget
 from wavepy2.util.io.read_write_file import read_tiff
 
 from wavepy2.tools.common.wavepy_data import WavePyData
+
+MODES    = ["Relative", "Absolute"]
+PATTERNS = ["Diagonal half pi", "Edge pi"]
+
+def generate_initialization_parameters(img_file_name,
+                                       imgRef_file_name,
+                                       imgBlank_file_name,
+                                       mode,
+                                       pixel,
+                                       gratingPeriod,
+                                       pattern,
+                                       distDet2sample,
+                                       phenergy,
+                                       sourceDistance,
+                                       widget=None):
+    img = read_tiff(img_file_name)
+    imgRef = None if (mode == MODES[1] or common_tools.is_empty_file_name(imgRef_file_name)) else read_tiff(imgRef_file_name)
+    imgBlank = None if common_tools.is_empty_file_name(imgBlank_file_name) else read_tiff(imgBlank_file_name)
+
+    pixelsize = [pixel, pixel]
+
+    # calculate the theoretical position of the hamonics
+    period_harm_Vert = np.int(pixelsize[0] / gratingPeriod * img.shape[0] / (sourceDistance + distDet2sample) * sourceDistance)
+    period_harm_Hor = np.int(pixelsize[1] / gratingPeriod * img.shape[1] / (sourceDistance + distDet2sample) * sourceDistance)
+
+    if imgBlank is None:
+        defaultBlankV = np.int(np.mean(img[0:100, 0:100]))
+        defaultBlankV = plot_tools.ValueDialog.get_value(widget,
+                                                         message="No Dark File. Value of Dark [counts]\n(Default is the mean value of the 100x100 pixels top-left corner)",
+                                                         title='Experimental Values',
+                                                         default=defaultBlankV)
+        imgBlank = img * 0.0 + defaultBlankV
+
+    img = img - imgBlank
+
+    if '/' in img_file_name:
+        saveFileSuf = img_file_name.rsplit('/', 1)[0] + '/' + img_file_name.rsplit('/', 1)[1].split('.')[0] + '_output/'
+    else:
+        saveFileSuf = img_file_name.rsplit('/', 1)[1].split('.')[0] + '_output/'
+
+    if os.path.isdir(saveFileSuf): saveFileSuf = common_tools.get_unique_filename(saveFileSuf, isFolder=True)
+
+    os.makedirs(saveFileSuf, exist_ok=True)
+
+    if imgRef is None:
+        saveFileSuf += 'WF_'
+    else:
+        imgRef = imgRef - imgBlank
+        saveFileSuf += 'TalbotImaging_'
+
+    if pattern == PATTERNS[0]:  # 'Diagonal half pi':
+        gratingPeriod *= 1.0 / np.sqrt(2.0)
+        phaseShift = 'halfPi'
+    elif pattern == PATTERNS[1]:  # 'Edge pi':
+        gratingPeriod *= 1.0 / 2.0
+        phaseShift = 'Pi'
+
+    saveFileSuf += 'cb{:.2f}um_'.format(gratingPeriod * 1e6)
+    saveFileSuf += phaseShift
+    saveFileSuf += '_d{:.0f}mm_'.format(distDet2sample * 1e3)
+    saveFileSuf += '{:.1f}KeV'.format(phenergy * 1e-3)
+    saveFileSuf = saveFileSuf.replace('.', 'p')
+
+    return WavePyData(img=img,
+                      imgRef=imgRef,
+                      imgBlank=imgBlank,
+                      mode=mode,
+                      pixelsize=pixelsize,
+                      gratingPeriod=gratingPeriod,
+                      pattern=pattern,
+                      distDet2sample=distDet2sample,
+                      phenergy=phenergy,
+                      sourceDistance=sourceDistance,
+                      period_harm=[period_harm_Vert, period_harm_Hor],
+                      saveFileSuf=saveFileSuf)
 
 class InputParametersWidget(WavePyInteractiveWidget):
     MODES    = ["Relative", "Absolute"]
@@ -119,28 +195,17 @@ class InputParametersWidget(WavePyInteractiveWidget):
         self.le_imgBlank.setText(plot_tools.selectFileFromDialog(self, self.imgBlank, "Open Blank Image File"))
 
     def get_accepted_output(self):
-        img      = read_tiff(self.img)
-        imgRef   = None if (self.mode == 1 or self.imgRef is None) else read_tiff(self.imgRef)
-        imgBlank = None if self.imgBlank is None else read_tiff(self.imgBlank)
-
-        pixelsize = [self.pixel, self.pixel]
-
-        # calculate the theoretical position of the hamonics
-        period_harm_Vert = np.int(pixelsize[0] / self.gratingPeriod * img.shape[0] / (self.sourceDistance + self.distDet2sample) * self.sourceDistance)
-        period_harm_Hor  = np.int(pixelsize[1] / self.gratingPeriod * img.shape[1] / (self.sourceDistance + self.distDet2sample) * self.sourceDistance)
-
-        return WavePyData(img            = img,
-                          imgRef         = imgRef,
-                          imgBlank       = imgBlank,
-                          mode           = self.MODES[self.mode],
-                          pixelsize      = pixelsize,
-                          gratingPeriod  = self.gratingPeriod,
-                          pattern        = self.PATTERNS[self.pattern],
-                          distDet2sample = self.distDet2sample,
-                          phenergy       = self.phenergy,
-                          sourceDistance = self.sourceDistance,
-                          period_harm    = [period_harm_Vert, period_harm_Hor],
-                          unwrapFlag     = True)
+        return generate_initialization_parameters(self.img,
+                                                  self.imgRef,
+                                                  self.imgBlank,
+                                                  MODES[self.mode],
+                                                  self.pixel,
+                                                  self.gratingPeriod,
+                                                  PATTERNS[self.pattern],
+                                                  self.distDet2sample,
+                                                  self.pattern,
+                                                  self.sourceDistance,
+                                                  widget=self)
 
     def get_rejected_output(self):
         self.__logger.print_error("Initialization Canceled, Program exit")
