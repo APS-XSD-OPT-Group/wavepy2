@@ -161,14 +161,14 @@ def extract_harmonic(imgFFT, harmonicPeriod, harmonic_ij='00', searchRegion=10, 
         logger.print_warning("Harmonic Peak " + harmonic_ij[0] + harmonic_ij[1] + " is too far from theoretical value.")
         logger.print_warning("{:d} pixels in vertical,".format(del_i) + "{:d} pixels in hor".format(del_j))
 
-    plotter.push_plot(context_key, ExtractHarmonicPlot,
-                      intensity=intensity,
-                      idxPeak_ij=idxPeak_ij,
-                      harmonic_ij=harmonic_ij,
-                      nColumns=nColumns,
-                      nRows=nRows,
-                      periodVert=periodVert,
-                      periodHor=periodHor)
+    plotter.push_plot_on_context(context_key, ExtractHarmonicPlot,
+                                 intensity=intensity,
+                                 idxPeak_ij=idxPeak_ij,
+                                 harmonic_ij=harmonic_ij,
+                                 nColumns=nColumns,
+                                 nRows=nRows,
+                                 periodVert=periodVert,
+                                 periodHor=periodHor)
 
     return imgFFT[idxPeak_ij[0] - periodVert//2:
                   idxPeak_ij[0] + periodVert//2,
@@ -209,7 +209,7 @@ def single_grating_harmonic_images(img, harmonicPeriod, searchRegion=10, context
 
     imgFFT = FourierTransform.fft(img)
 
-    plotter.push_plot(context_key, HarmonicGridPlot, imgFFT=imgFFT, harmonicPeriod=harmonicPeriod)
+    plotter.push_plot_on_context(context_key, HarmonicGridPlot, imgFFT=imgFFT, harmonicPeriod=harmonicPeriod)
 
     imgFFT00 = extract_harmonic(imgFFT,
                                 harmonicPeriod=harmonicPeriod,
@@ -229,7 +229,7 @@ def single_grating_harmonic_images(img, harmonicPeriod, searchRegion=10, context
                                 searchRegion=searchRegion,
                                 context_key=context_key)
 
-    plotter.push_plot(context_key, SingleGratingHarmonicImages, imgFFT00=imgFFT00, imgFFT01=imgFFT01, imgFFT10=imgFFT10)
+    plotter.push_plot_on_context(context_key, SingleGratingHarmonicImages, imgFFT00=imgFFT00, imgFFT01=imgFFT01, imgFFT10=imgFFT10)
 
     img00 = FourierTransform.ifft(imgFFT00)
 

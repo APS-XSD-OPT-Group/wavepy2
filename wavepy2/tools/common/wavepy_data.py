@@ -42,70 +42,15 @@
 # ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE         #
 # POSSIBILITY OF SUCH DAMAGE.                                             #
 # #########################################################################
-import numpy as np
-import sys
 
-from wavepy2.util.common.common_tools import FourierTransform
-from wavepy2.util.ini.initializer import get_registered_ini_instance, register_ini_instance, IniMode
-from wavepy2.util.plot.qt_application import get_registered_qt_application_instance, register_qt_application_instance, QtApplicationMode
-from wavepy2.util.log.logger import get_registered_logger_instance, register_logger_single_instance, LoggerMode
-from wavepy2.util.plot.plotter import get_registered_plotter_instance, register_plotter_instance, PlotterMode
-from wavepy2.util.io.read_write_file import read_tiff
+class WavePyData():
+    def __init__(self, **parameters):
+        self.__parameters = parameters
 
-from wavepy2.core.widgets.grating_interferometry_widgets import *
-from wavepy2.tools.imaging.single_grating.single_grating_talbot import calculate_dpc, hc, CALCULATE_DPC_CONTEXT_KEY
-from wavepy2.tools.common.wavepy_data import WavePyData
+    def get_parameters(self):
+        return self.__parameters
 
-register_logger_single_instance(logger_mode=LoggerMode.WARNING)
-register_ini_instance(IniMode.LOCAL_FILE, ini_file_name=".single_grating_talbot.ini")
-register_qt_application_instance(QtApplicationMode.QT)
-register_plotter_instance(plotter_mode=PlotterMode.DISPLAY_ONLY)
+    def get_parameter(self, parameter_name):
+        return self.__parameters[parameter_name]
 
-# ==========================================================================
-# %% Experimental parameters
-# ==========================================================================
-
-ini = get_registered_ini_instance()
-
-img    = read_tiff(ini.get_string_from_ini("Files", "sample"))
-imgRef = read_tiff(ini.get_string_from_ini("Files", "reference"))
-
-pixel          = ini.get_float_from_ini("Parameters", "pixel size")
-pixelsize      = [pixel, pixel]
-gratingPeriod  = ini.get_float_from_ini("Parameters", "checkerboard grating period")
-pattern        = ini.get_string_from_ini("Parameters", "pattern")
-distDet2sample = ini.get_float_from_ini("Parameters", "distance detector to gr")
-phenergy       = ini.get_float_from_ini("Parameters", "photon energy")
-sourceDistance = ini.get_float_from_ini("Parameters", "source distance")
-
-wavelength = hc/phenergy
-kwave = 2*np.pi/wavelength
-
-# calculate the theoretical position of the hamonics
-period_harm_Vert = np.int(pixelsize[0]/gratingPeriod*img.shape[0] / (sourceDistance + distDet2sample)*sourceDistance)
-period_harm_Hor  = np.int(pixelsize[1]/gratingPeriod*img.shape[1] / (sourceDistance + distDet2sample)*sourceDistance)
-
-# ==========================================================================
-# %% do the magic
-# ==========================================================================
-
-plotter = get_registered_plotter_instance()
-
-# for relative mode we need to have imgRef=None,
-result = calculate_dpc(WavePyData(img=img,
-                                  imgRef=imgRef,
-                                  phenergy=phenergy,
-                                  pixelsize=pixelsize,
-                                  distDet2sample=distDet2sample,
-                                  period_harm=[period_harm_Vert, period_harm_Hor],
-                                  unwrapFlag=True))
-
-
-plotter.show_context_window(CALCULATE_DPC_CONTEXT_KEY)
-
-# integration
-
-
-
-get_registered_qt_application_instance().run_qt_application()
 

@@ -17,7 +17,7 @@ class MyWidget(WavePyWidget):
 
 plotter = get_registered_plotter_instance()
 
-plotter.push_plot("CONTEXT1", MyWidget)
+plotter.push_plot_on_context("CONTEXT1", MyWidget)
 
 container=QWidget()
 

@@ -128,10 +128,13 @@ class WavePyInteractiveWidget(QDialog, WavePyGenericWidget):
 
 class PlotterFacade:
     def is_active(self): raise NotImplementedError()
-    def push_plot(self, context_key, widget_class, **kwargs): raise NotImplementedError()
-    def get_context_plots(self, context_key): raise NotImplementedError()
+    def register_context_window(self, context_key, context_window=None): raise NotImplementedError()
+    def push_plot_on_context(self, context_key, widget_class, **kwargs): raise NotImplementedError()
+    def get_plots_of_context(self, context_key): raise NotImplementedError()
+    def get_context_container_widget(self, context_key): raise  NotImplementedError()
     def draw_context_on_widget(self, context_key, container_widget): raise NotImplementedError()
     def show_interactive_plot(self, widget_class, container_widget, **kwargs): raise NotImplementedError()
+    def show_context_window(self, context_key): raise NotImplementedError()
 
 class PlotterMode:
     FULL         = 0
@@ -159,24 +162,32 @@ class __AbstractPlotter(PlotterFacade):
         except Exception as e:
             raise ValueError("Plot Widget can't be created: " + str(e))
 
+from wavepy2.util.plot.plot_tools import DefaultMainWindow
+
 class __AbstractActivePlotter(__AbstractPlotter):
     def __init__(self):
-        self.__plot_dictionary = {}
+        self.__plot_registry = {}
+        self.__context_window_registry = {}
 
     def is_active(self): return True
 
-    def get_plot_dictionary(self):
-        return self.__plot_dictionary
+    def register_plot(self, context_key, plot_widget):
+        if context_key in self.__plot_registry and not self.__plot_registry[context_key] is None:
+            self.__plot_registry[context_key].append(plot_widget)
+        else:
+            self.__plot_registry[context_key] = [plot_widget]
 
-    def get_context_plots(self, context_key):
-        if context_key in self.__plot_dictionary: return self.__plot_dictionary[context_key]
+    def register_context_window(self, context_key, context_window=None):
+        if context_window is None: context_window = DefaultMainWindow(context_key)
+        self.__context_window_registry[context_key] = context_window
+
+    def get_plots_of_context(self, context_key):
+        if context_key in self.__plot_registry: return self.__plot_registry[context_key]
         else: return None
 
-    def register_plot(self, context_key, plot_widget_instance):
-        if context_key in self.__plot_dictionary and not self.__plot_dictionary[context_key] is None:
-            self.__plot_dictionary[context_key].append(plot_widget_instance)
-        else:
-            self.__plot_dictionary[context_key] = [plot_widget_instance]
+    def get_context_container_widget(self, context_key):
+        if context_key in self.__context_window_registry: return self.__context_window_registry[context_key].get_container_widget()
+        else: return None
 
     def draw_context_on_widget(self, context_key, container_widget):
         main_box = plot_tools.widgetBox(container_widget, context_key, orientation="horizontal")
@@ -186,8 +197,8 @@ class __AbstractActivePlotter(__AbstractPlotter):
         widths  = []
         heights = []
 
-        if context_key in self.__plot_dictionary:
-            for plot_widget_instance in self.__plot_dictionary[context_key]:
+        if context_key in self.__plot_registry:
+            for plot_widget_instance in self.__plot_registry[context_key]:
                 tab = plot_tools.createTabPage(tab_widget, plot_widget_instance.get_plot_tab_name())
                 tab.layout().setAlignment(Qt.AlignCenter)
                 tab.layout().addWidget(plot_widget_instance)
@@ -212,30 +223,40 @@ class __AbstractActivePlotter(__AbstractPlotter):
 
         return widget_class.get_output(interactive_widget_instance)
 
+    def show_context_window(self, context_key):
+        if context_key in self.__context_window_registry: self.__context_window_registry[context_key].show()
+        else: pass
+
 class __FullPlotter(__AbstractActivePlotter):
-    def push_plot(self, context_key, widget_class, **kwargs):
+    def push_plot_on_context(self, context_key, widget_class, **kwargs):
         plot_widget_instance = self.build_plot(widget_class, **kwargs)
 
         self.register_plot(context_key, plot_widget_instance)
         self.save_image(plot_widget_instance, **kwargs)
 
 class __DisplayOnlyPlotter(__AbstractActivePlotter):
-    def push_plot(self, context_key, widget_class, **kwargs):
+    def push_plot_on_context(self, context_key, widget_class, **kwargs):
         self.register_plot(context_key, self.build_plot(widget_class, **kwargs))
 
 class __SaveOnlyPlotter(__AbstractActivePlotter):
     def is_active(self): return False
-    def push_plot(self, context_key, widget_class, **kwargs): self.save_image(self.build_plot(widget_class, **kwargs))
-    def get_context_plots(self, context_key): pass
+    def register_context_window(self, context_key, context_window): pass
+    def push_plot_on_context(self, context_key, widget_class, **kwargs): self.save_image(self.build_plot(widget_class, **kwargs))
+    def get_context_container_widget(self, context_key): return None
+    def get_plots_of_context(self, context_key): pass
     def draw_context_on_widget(self, context_key, container_widget): pass
     def show_interactive_plot(self, widget_class, container_widget, **kwargs): pass
+    def show_context_window(self, context_key): pass
 
 class __NullPlotter(PlotterFacade):
     def is_active(self): return False
-    def push_plot(self, context_key, widget_class, **kwargs): pass
-    def get_context_plots(self, context_key): pass
+    def register_context_window(self, context_key, context_window): pass
+    def push_plot_on_context(self, context_key, widget_class, **kwargs): pass
+    def get_context_container_widget(self, context_key): return None
+    def get_plots_of_context(self, context_key): pass
     def draw_context_on_widget(self, context_key, container_widget): pass
     def show_interactive_plot(self, widget_class, container_widget, **kwargs): pass
+    def show_context_window(self, context_key): pass
 
 @Singleton
 class __PlotterRegistry:

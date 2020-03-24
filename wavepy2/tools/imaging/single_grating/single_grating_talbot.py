@@ -46,26 +46,37 @@ import numpy as np
 
 from wavepy2.util.common import common_tools
 from wavepy2.util.common.common_tools import FourierTransform
-from wavepy2.util.log.logger import get_registered_logger_instance, LoggerMode
-from wavepy2.util.plot.plotter import get_registered_plotter_instance, PlotterMode
-from wavepy2.util.ini.initializer import get_registered_ini_instance, IniMode
+from wavepy2.util.log.logger import get_registered_logger_instance
+from wavepy2.util.plot.plotter import get_registered_plotter_instance
+
+from wavepy2.util.ini.initializer import get_registered_ini_instance
 from wavepy2.util.io.read_write_file import read_tiff
+
+from wavepy2.tools.common.wavepy_data import WavePyData
 
 from wavepy2.core import grating_interferometry
 from wavepy2.tools.imaging.single_grating.widgets.single_grating_talbot_widgets import CropDialogPlot, ShowCroppedFigure
 
 from scipy import constants
+
 hc = constants.value('inverse meter-electron volt relationship')  # hc
 
-def main_single_gr_Talbot(img, imgRef,
-                          phenergy, pixelsize, distDet2sample,
-                          period_harm,
-                          unwrapFlag=True,
-                          context_key="main_single_gr_Talbot"):
+CALCULATE_DPC_CONTEXT_KEY = "Calculate DPC"
+
+def calculate_dpc(wavepy_data=WavePyData()):
+    img  = wavepy_data.get_parameter("img")
+    imgRef  = wavepy_data.get_parameter("imgRef")
+    phenergy  = wavepy_data.get_parameter("phenergy")
+    pixelsize  = wavepy_data.get_parameter("pixelsize")
+    distDet2sample  = wavepy_data.get_parameter("distDet2sample")
+    period_harm  = wavepy_data.get_parameter("period_harm")
+    unwrapFlag  = wavepy_data.get_parameter("unwrapFlag")
 
     plotter = get_registered_plotter_instance()
     logger = get_registered_logger_instance()
     ini = get_registered_ini_instance()
+
+    plotter.register_context_window(CALCULATE_DPC_CONTEXT_KEY)
 
     img_size_o = np.shape(img)
 
@@ -76,7 +87,7 @@ def main_single_gr_Talbot(img, imgRef,
         img = common_tools.crop_matrix_at_indexes(img, idx4crop)
 
     # Plot Real Image AFTER crop
-    plotter.push_plot(context_key, ShowCroppedFigure, img=img, pixelsize=pixelsize)
+    plotter.push_plot_on_context(CALCULATE_DPC_CONTEXT_KEY, ShowCroppedFigure, img=img, pixelsize=pixelsize)
 
     if not imgRef is None: imgRef = common_tools.crop_matrix_at_indexes(imgRef, idx4crop)
 
@@ -85,12 +96,13 @@ def main_single_gr_Talbot(img, imgRef,
 
     # Obtain harmonic periods from images
 
-    logger.print_message('Obtain harmonic 01 exprimentally')
 
     if imgRef is None:
         harmPeriod = [period_harm_Vert_o, period_harm_Hor_o]
     else:
         imgRefFFT = FourierTransform.fft(imgRef)
+
+        logger.print_message('Obtain harmonic 01 exprimentally')
 
         (_, period_harm_Hor) = grating_interferometry.exp_harm_period(imgRefFFT, [period_harm_Vert_o, period_harm_Hor_o], harmonic_ij=['0', '1'], searchRegion=30)
 
@@ -109,7 +121,7 @@ def main_single_gr_Talbot(img, imgRef,
                                                                      img_ref=imgRef,
                                                                      harmonicPeriod=harmPeriod,
                                                                      unwrapFlag=unwrapFlag,
-                                                                     context_key=context_key)
+                                                                     context_key=CALCULATE_DPC_CONTEXT_KEY)
 
     virtual_pixelsize = [0, 0]
     virtual_pixelsize[0] = pixelsize[0]*img.shape[0]/int00.shape[0]
@@ -119,7 +131,13 @@ def main_single_gr_Talbot(img, imgRef,
     diffPhase10 = -phaseFFT_10*virtual_pixelsize[0]/distDet2sample/hc*phenergy
     # Note: the signals above were defined base in experimental data
 
-    return [int00, int01, int10,
-            darkField01, darkField10,
-            diffPhase01, diffPhase10,
-            virtual_pixelsize]
+    plotter.draw_context_on_widget(CALCULATE_DPC_CONTEXT_KEY, container_widget=plotter.get_context_container_widget(CALCULATE_DPC_CONTEXT_KEY))
+
+    return WavePyData(int00=int00,
+                      int01=int01,
+                      int10=int10,
+                      darkField01=darkField01,
+                      darkField10=darkField10,
+                      diffPhase01=diffPhase01,
+                      diffPhase10=diffPhase10,
+                      virtual_pixelsize=virtual_pixelsize)
