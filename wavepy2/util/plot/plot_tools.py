@@ -361,11 +361,8 @@ class GraphicalRoiIdx(QWidget):
                 ROI_i_lim = np.sort([eclick.ydata, erelease.ydata]).astype(int).tolist()
                 # this round method has an error of +-1pixel
 
-                delROIx = ROI_j_lim[1] - ROI_j_lim[0]
-                delROIy = ROI_i_lim[1] - ROI_i_lim[0]
-
-                ax.set_xlim(ROI_j_lim[0] - .2 * delROIx, ROI_j_lim[1] + .2 * delROIx)
-                ax.set_ylim(ROI_i_lim[1] + .2 * delROIy, ROI_i_lim[0] - .2 * delROIy)
+                ax.set_xlim(ROI_j_lim[0] - 1, ROI_j_lim[1] + 1)
+                ax.set_ylim(ROI_i_lim[1] + 1, ROI_i_lim[0] - 1)
 
                 logger.print('\nSelecting ROI:')
                 logger.print(' lower position : (%d, %d)' % (ROI_j_lim[0], ROI_i_lim[0]))

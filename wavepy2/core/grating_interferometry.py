@@ -162,7 +162,7 @@ def extract_harmonic(imgFFT, harmonicPeriod, harmonic_ij='00', searchRegion=10, 
 
     if ((np.abs(del_i) > searchRegion // 2) or (np.abs(del_j) > searchRegion // 2)):
         logger.print_warning("Harmonic Peak " + harmonic_ij[0] + harmonic_ij[1] + " is too far from theoretical value.")
-        logger.print_warning("{:d} pixels in vertical,".format(del_i) + "{:d} pixels in hor".format(del_j))
+        logger.print_warning("{:d} pixels in vertical, {:d} pixels in hor".format(del_i, del_j))
 
     plotter.push_plot_on_context(context_key, ExtractHarmonicPlot,
                                  intensity=intensity,

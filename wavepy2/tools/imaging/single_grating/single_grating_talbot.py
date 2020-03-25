@@ -129,11 +129,11 @@ def calculate_dpc(wavepy_data=WavePyData()):
     else:
         imgRefFFT = FourierTransform.fft(imgRef)
 
-        main_logger.print_message('Obtain harmonic 01 exprimentally')
+        main_logger.print_message('Obtain harmonic 01 experimentally')
 
         (_, period_harm_Hor) = grating_interferometry.exp_harm_period(imgRefFFT, [period_harm_Vert_o, period_harm_Hor_o], harmonic_ij=['0', '1'], searchRegion=30)
 
-        main_logger.print_message('MESSAGE: Obtain harmonic 10 exprimentally')
+        main_logger.print_message('MESSAGE: Obtain harmonic 10 experimentally')
 
         (period_harm_Vert, _) = grating_interferometry.exp_harm_period(imgRefFFT, [period_harm_Vert_o, period_harm_Hor_o], harmonic_ij=['1', '0'], searchRegion=30)
 
