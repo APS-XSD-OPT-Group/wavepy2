@@ -54,6 +54,8 @@ from wavepy2.util.io.read_write_file import read_tiff
 
 from wavepy2.tools.common.wavepy_data import WavePyData
 
+from PyQt5.QtWidgets import QWidget
+
 MODES    = ["Relative", "Absolute"]
 PATTERNS = ["Diagonal half pi", "Edge pi"]
 
@@ -67,6 +69,13 @@ def generate_initialization_parameters(img_file_name,
                                        distDet2sample,
                                        phenergy,
                                        sourceDistance,
+                                       correct_pi_jump,
+                                       remove_mean,
+                                       remove_linear,
+                                       do_integration,
+                                       calc_thickness,
+                                       remove_2nd_order,
+                                       material_idx,
                                        widget=None):
     img = read_tiff(img_file_name)
     imgRef = None if (mode == MODES[1] or common_tools.is_empty_file_name(imgRef_file_name)) else read_tiff(imgRef_file_name)
@@ -129,27 +138,60 @@ def generate_initialization_parameters(img_file_name,
                       phenergy=phenergy,
                       sourceDistance=sourceDistance,
                       period_harm=[period_harm_Vert, period_harm_Hor],
-                      saveFileSuf=saveFileSuf)
+                      saveFileSuf=saveFileSuf,
+                      correct_pi_jump =correct_pi_jump,
+                      remove_mean=remove_mean,
+                      remove_linear=remove_linear,
+                      do_integration=do_integration,
+                      calc_thickness=calc_thickness,
+                      remove_2nd_order=remove_2nd_order,
+                      material_idx=material_idx)
 
 class InputParametersWidget(WavePyInteractiveWidget):
+    WIDTH  = 800
+    HEIGHT = 430
+
     def __init__(self, parent):
         super(InputParametersWidget, self).__init__(parent, message="Input Parameters", title="Input Parameters")
         self.__ini     = get_registered_ini_instance()
         self.__logger  = get_registered_logger_instance()
 
-        self.img            = self.__ini.get_string_from_ini("Files", "sample")
-        self.imgRef         = self.__ini.get_string_from_ini("Files", "reference")
-        self.imgBlank       = self.__ini.get_string_from_ini("Files", "blank")
-        self.mode           = MODES.index(self.__ini.get_string_from_ini("Parameters", "Mode"))
-        self.pixel          = self.__ini.get_float_from_ini("Parameters", "pixel size")
-        self.gratingPeriod  = self.__ini.get_float_from_ini("Parameters", "checkerboard grating period")
-        self.pattern        = PATTERNS.index(self.__ini.get_string_from_ini("Parameters", "pattern"))
-        self.distDet2sample = self.__ini.get_float_from_ini("Parameters", "distance detector to gr")
-        self.phenergy       = self.__ini.get_float_from_ini("Parameters", "photon energy")
-        self.sourceDistance = self.__ini.get_float_from_ini("Parameters", "source distance")
+        self.img              = self.__ini.get_string_from_ini("Files", "sample")
+        self.imgRef           = self.__ini.get_string_from_ini("Files", "reference")
+        self.imgBlank         = self.__ini.get_string_from_ini("Files", "blank")
+        self.mode             = MODES.index(self.__ini.get_string_from_ini("Parameters", "Mode"))
+        self.pixel            = self.__ini.get_float_from_ini("Parameters", "pixel size")
+        self.gratingPeriod    = self.__ini.get_float_from_ini("Parameters", "checkerboard grating period")
+        self.pattern          = PATTERNS.index(self.__ini.get_string_from_ini("Parameters", "pattern"))
+        self.distDet2sample   = self.__ini.get_float_from_ini("Parameters", "distance detector to gr")
+        self.phenergy         = self.__ini.get_float_from_ini("Parameters", "photon energy")
+        self.sourceDistance   = self.__ini.get_float_from_ini("Parameters", "source distance")
+        self.correct_pi_jump  = self.__ini.get_boolean_from_ini("Runtime", "correct pi jump")
+        self.remove_mean      = self.__ini.get_boolean_from_ini("Runtime", "remove mean")
+        self.remove_linear    = self.__ini.get_boolean_from_ini("Runtime", "remove linear")
+        self.do_integration   = self.__ini.get_boolean_from_ini("Runtime", "do integration")
+        self.calc_thickness   = self.__ini.get_boolean_from_ini("Runtime", "calc thickness")
+        self.remove_2nd_order = self.__ini.get_boolean_from_ini("Runtime", "remove 2nd order")
+        self.material_idx     = self.__ini.get_int_from_ini("Runtime", "material idx")
+
 
     def build_widget(self, **kwargs):
-        main_box = plot_tools.widgetBox(self.get_central_widget(), "")
+        self.setFixedWidth(self.WIDTH)
+        self.setFixedHeight(self.HEIGHT)
+
+        tabs = plot_tools.tabWidget(self.get_central_widget())
+
+        ini_widget = QWidget()
+        ini_widget.setFixedHeight(self.HEIGHT-10)
+        ini_widget.setFixedWidth(self.WIDTH-10)
+        runtime_widget = QWidget()
+        runtime_widget.setFixedHeight(self.HEIGHT-10)
+        runtime_widget.setFixedWidth(self.WIDTH-10)
+
+        plot_tools.createTabPage(tabs, "Initialization Parameter", widgetToAdd=ini_widget)
+        plot_tools.createTabPage(tabs, "Runtime Parameter", widgetToAdd=runtime_widget)
+
+        main_box = plot_tools.widgetBox(ini_widget, "", width=self.WIDTH-70, height=self.HEIGHT-50)
 
         plot_tools.comboBox(main_box, self, "mode", label="Mode", items=MODES, callback=self.set_mode, orientation="horizontal")
 
@@ -167,17 +209,25 @@ class InputParametersWidget(WavePyInteractiveWidget):
 
         self.set_mode()
 
-        plot_tools.lineEdit(main_box, self, "pixel", label="Pixel Size", labelWidth=150, valueType=float, orientation="horizontal")
-        plot_tools.lineEdit(main_box, self, "gratingPeriod", label="Grating Period", labelWidth=150, valueType=float, orientation="horizontal")
+        plot_tools.lineEdit(main_box, self, "pixel", label="Pixel Size", labelWidth=250, valueType=float, orientation="horizontal")
+        plot_tools.lineEdit(main_box, self, "gratingPeriod", label="Grating Period", labelWidth=250, valueType=float, orientation="horizontal")
 
         plot_tools.comboBox(main_box, self, "pattern", label="Pattern", items=PATTERNS, orientation="horizontal")
 
-        plot_tools.lineEdit(main_box, self, "distDet2sample", label="Distance Detector to Grating", labelWidth=150, valueType=float, orientation="horizontal")
-        plot_tools.lineEdit(main_box, self, "phenergy", label="Photon Energy", labelWidth=150, valueType=float, orientation="horizontal")
-        plot_tools.lineEdit(main_box, self, "sourceDistance", label="Source Distance", labelWidth=150, valueType=float, orientation="horizontal")
+        plot_tools.lineEdit(main_box, self, "distDet2sample", label="Distance Detector to Grating", labelWidth=250, valueType=float, orientation="horizontal")
+        plot_tools.lineEdit(main_box, self, "phenergy", label="Photon Energy", labelWidth=250, valueType=float, orientation="horizontal")
+        plot_tools.lineEdit(main_box, self, "sourceDistance", label="Source Distance", labelWidth=250, valueType=float, orientation="horizontal")
 
-        self.setFixedWidth(800)
-        self.setFixedHeight(400)
+        #--------------------------------------------------
+        main_box = plot_tools.widgetBox(runtime_widget, "", width=self.WIDTH-70, height=self.HEIGHT-50)
+
+        plot_tools.checkBox(main_box, self, "correct_pi_jump", "Correct pi jump in DPC signal")
+        plot_tools.checkBox(main_box, self, "remove_mean", "Remove mean DPC")
+        plot_tools.checkBox(main_box, self, "remove_linear", "Remove 2D linear fit from DPC")
+        plot_tools.checkBox(main_box, self, "do_integration", "Calculate Frankot-Chellappa integration")
+        plot_tools.checkBox(main_box, self, "calc_thickness", "Convert phase to thickness")
+        plot_tools.checkBox(main_box, self, "remove_2nd_order", "Remove 2nd order polynomial from integrated Phase")
+        plot_tools.comboBox(main_box, self, "material_idx", items=["Diamond", "Beryllium"], label="Material", labelWidth=200, orientation="horizontal")
 
         self.update()
 
@@ -194,16 +244,24 @@ class InputParametersWidget(WavePyInteractiveWidget):
         self.le_imgBlank.setText(plot_tools.selectFileFromDialog(self, self.imgBlank, "Open Blank Image File"))
 
     def get_accepted_output(self):
-        self.__ini.set_at_ini('Files',      'sample',                      self.img)
-        self.__ini.set_at_ini('Files',      'reference',                   self.imgRef)
-        self.__ini.set_at_ini('Files',      'blank',                       self.imgBlank)
-        self.__ini.set_at_ini('Parameters', 'Mode',                        MODES[self.mode])
-        self.__ini.set_at_ini('Parameters', 'Pixel Size',                  self.pixel)
-        self.__ini.set_at_ini('Parameters', 'Checkerboard Grating Period', self.gratingPeriod)
-        self.__ini.set_at_ini('Parameters', 'Pattern',                     PATTERNS[self.pattern])
-        self.__ini.set_at_ini('Parameters', 'Distance Detector to Gr',     self.distDet2sample)
-        self.__ini.set_at_ini('Parameters', 'Photon Energy',               self.phenergy)
-        self.__ini.set_at_ini('Parameters', 'Source Distance',             self.sourceDistance)
+        self.__ini.set_value_at_ini('Files', 'sample', self.img)
+        self.__ini.set_value_at_ini('Files', 'reference', self.imgRef)
+        self.__ini.set_value_at_ini('Files', 'blank', self.imgBlank)
+        self.__ini.set_value_at_ini('Parameters', 'Mode', MODES[self.mode])
+        self.__ini.set_value_at_ini('Parameters', 'Pixel Size', self.pixel)
+        self.__ini.set_value_at_ini('Parameters', 'Checkerboard Grating Period', self.gratingPeriod)
+        self.__ini.set_value_at_ini('Parameters', 'Pattern', PATTERNS[self.pattern])
+        self.__ini.set_value_at_ini('Parameters', 'Distance Detector to Gr', self.distDet2sample)
+        self.__ini.set_value_at_ini('Parameters', 'Photon Energy', self.phenergy)
+        self.__ini.set_value_at_ini('Parameters', 'Source Distance', self.sourceDistance)
+        self.__ini.set_value_at_ini("Runtime", "correct pi jump", self.correct_pi_jump)
+        self.__ini.set_value_at_ini("Runtime", "remove mean", self.remove_mean)
+        self.__ini.set_value_at_ini("Runtime", "remove linear", self.remove_linear)
+        self.__ini.set_value_at_ini("Runtime", "do integration", self.do_integration)
+        self.__ini.set_value_at_ini("Runtime", "calc thickness", self.calc_thickness)
+        self.__ini.set_value_at_ini("Runtime", "remove 2nd order", self.remove_2nd_order)
+        self.__ini.set_value_at_ini("Runtime", "material idx", self.material_idx)
+
         self.__ini.push()
 
         return generate_initialization_parameters(self.img,
@@ -214,8 +272,15 @@ class InputParametersWidget(WavePyInteractiveWidget):
                                                   self.gratingPeriod,
                                                   PATTERNS[self.pattern],
                                                   self.distDet2sample,
-                                                  self.pattern,
+                                                  self.phenergy,
                                                   self.sourceDistance,
+                                                  self.correct_pi_jump,
+                                                  self.remove_mean,
+                                                  self.remove_linear,
+                                                  self.do_integration,
+                                                  self.calc_thickness,
+                                                  self.remove_2nd_order,
+                                                  self.material_idx,
                                                   widget=self)
 
     def get_rejected_output(self):

@@ -45,7 +45,7 @@
 from wavepy2.util import Singleton, synchronized_method
 
 import os
-from configparser import ConfigParser
+from configparser import ConfigParser, NoSectionError, NoOptionError
 
 from wavepy2.util.log.logger import get_registered_logger_instance
 
@@ -57,15 +57,23 @@ class IniMode:
     NONE = 99
 
 class IniFacade:
-    def load_ini(self): raise NotImplementedError()
-    def get_from_ini(self, section, key): raise NotImplementedError()
-    def set_at_ini(self, section, key, value): raise NotImplementedError()
+    def set_value_at_ini(self, section, key, value): raise NotImplementedError()
+    def set_list_at_ini(self, section, key, values_list=[]): raise NotImplementedError()
+    def get_string_from_ini(self, section, key, default=None): raise NotImplementedError()
+    def get_int_from_ini(self, section, key, default=None): raise NotImplementedError()
+    def get_float_from_ini(self, section, key, default=None): raise NotImplementedError()
+    def get_boolean_from_ini(self, section, key, default=False): raise NotImplementedError()
+    def get_list_from_ini(self, section, key, default=None): raise NotImplementedError()
     def push(self): raise NotImplementedError()
 
 class __NullIni(IniFacade):
-    def load_ini(self): return None
-    def get_from_ini(self, section, key): return None
-    def set_at_ini(self, section, key, value): pass
+    def set_value_at_ini(self, section, key, value): pass
+    def set_list_at_ini(self, section, key, values_list=[]): pass
+    def get_string_from_ini(self, section, key, default=None): pass
+    def get_int_from_ini(self, section, key, default=None): pass
+    def get_float_from_ini(self, section, key, default=None): pass
+    def get_boolean_from_ini(self, section, key, default=False): pass
+    def get_list_from_ini(self, section, key, default=None): pass
     def push(self): pass
 
 class __LocalIniFile(IniFacade):
@@ -79,37 +87,49 @@ class __LocalIniFile(IniFacade):
         self.__config_parser = ConfigParser()
         self.__config_parser.read(self.__ini_file_name)
 
-    def load_ini(self):
-        return None
+    def __get_from_ini(self, section, key, default):
+        try:
+            value = self.__config_parser[section][key]
+            value = value.strip()
+            return None if value.lower() == "none" else value
+        except:
+            return str(default)
 
-    def get_from_ini(self, section, key):
-        return self.__config_parser[section][key]
+    def set_value_at_ini(self, section, key, value):
+        try:
+            self.__config_parser[section][key] = "None" if value is None else str(value)
+        except:
+            if not self.__config_parser.has_section(section): self.__config_parser.add_section(section)
+            if not self.__config_parser.has_option(section, key): self.__config_parser.set(section, key, "None" if value is None else str(value))
 
-    def set_at_ini(self, section, key, value):
-        self.__config_parser[section][key] = str(value)
+    def get_string_from_ini(self, section, key, default="None"):
+        value = self.__get_from_ini(section, key, default)
+        return str(default) if value is None else value.strip()
 
-    def get_string_from_ini(self, section ,key):
-        value = self.get_from_ini(section, key)
-        return None if value is None else value.strip()
+    def get_int_from_ini(self, section, key, default=0):
+        value = self.__get_from_ini(section, key, default)
+        return int(default) if value is None else int(value.strip())
 
-    def get_int_from_ini(self, section ,key):
-        value = self.get_from_ini(section, key)
-        return None if value is None else int(value.strip())
+    def get_float_from_ini(self, section, key, default=0.0):
+        value = self.__get_from_ini(section, key, default)
+        return float(default) if value is None else float(value.strip())
 
-    def get_float_from_ini(self, section ,key):
-        value = self.get_from_ini(section, key)
-        return None if value is None else float(value.strip())
+    def get_list_from_ini(self, section, key, default=[]):
+        value = self.__get_from_ini(section, key, default)
+        return default if value is None else list(map(int, self.__get_from_ini(section, key, default).split(',')))
 
-    def get_list_from_ini(self, section,key):
-        value = self.get_from_ini(section, key)
-        return None if value is None else list(map(int, self.get_from_ini(section, key).split(',')))
+    def get_boolean_from_ini(self, section, key, default=False):
+        value = self.__get_from_ini(section, key, default)
+        return default if value is None else (True if value.strip().lower() == "true" else False)
 
     def set_list_at_ini(self, section, key, values_list=[]):
-        if not values_list is None:
+        if values_list is None: values_string = "None"
+        else:
             values_string = ""
             for value in values_list: values_string += str(value) + ", "
-            values_string = values_string[:, -2]
-            self.set_at_ini(section, key, values_string)
+            values_string = values_string[:-2]
+
+        self.set_value_at_ini(section, key, values_string)
 
     def push(self):
         with open(self.__ini_file_name, "w") as ini_file: self.__config_parser.write(ini_file)

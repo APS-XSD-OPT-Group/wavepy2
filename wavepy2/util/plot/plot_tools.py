@@ -359,31 +359,20 @@ class GraphicalRoiIdx(QWidget):
             elif eclick.button == 1:
                 ROI_j_lim = np.sort([eclick.xdata, erelease.xdata]).astype(int).tolist()
                 ROI_i_lim = np.sort([eclick.ydata, erelease.ydata]).astype(int).tolist()
-
-                idx4crop = [0, 0, 0, 0]
-
                 # this round method has an error of +-1pixel
-                if ROI_j_lim[0] <= ROI_j_lim[1]:
-                    idx4crop[0] = ROI_j_lim[0] - 1
-                    idx4crop[1] = ROI_j_lim[1] + 1
-                else:
-                    idx4crop[0] = ROI_j_lim[1] - 1
-                    idx4crop[1] = ROI_j_lim[0] + 1
 
-                if ROI_i_lim[0] <= ROI_i_lim[1]:
-                    idx4crop[2] = ROI_i_lim[0] + 1
-                    idx4crop[3] = ROI_i_lim[1] - 1
-                else:
-                    idx4crop[2] = ROI_i_lim[1] - 1
-                    idx4crop[3] = ROI_i_lim[0] + 1
+                delROIx = ROI_j_lim[1] - ROI_j_lim[0]
+                delROIy = ROI_i_lim[1] - ROI_i_lim[0]
+
+                ax.set_xlim(ROI_j_lim[0] - .2 * delROIx, ROI_j_lim[1] + .2 * delROIx)
+                ax.set_ylim(ROI_i_lim[1] + .2 * delROIy, ROI_i_lim[0] - .2 * delROIy)
 
                 logger.print('\nSelecting ROI:')
                 logger.print(' lower position : (%d, %d)' % (ROI_j_lim[0], ROI_i_lim[0]))
                 logger.print(' higher position   : (%d, %d)' % (ROI_j_lim[1], ROI_i_lim[1]))
                 logger.print(' width x and y: (%d, %d)' % (ROI_j_lim[1] - ROI_j_lim[0], ROI_i_lim[1] - ROI_i_lim[0]))
 
-                ax.set_xlim(idx4crop[0], idx4crop[1])
-                ax.set_ylim(idx4crop[3], idx4crop[2])
+                set_crop_output_listener(ROI_i_lim + ROI_j_lim)
 
         def toggle_selector(event):
             logger.print(' Key pressed.')

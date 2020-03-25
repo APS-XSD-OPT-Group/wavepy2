@@ -98,8 +98,6 @@ class LoggerAttributes:
     CONCEALED = "concealed"
 
 class __FullLogger(LoggerFacade):
-
-
     def __init__(self, stream=DEFAULT_STREAM):
         self.__stream = stream
 
@@ -176,8 +174,13 @@ class __LoggerPool(LoggerFacade):
             logger.print_error(message)
 
 
+class __AbstractLoggerRegistry:
+    def register_logger(self, logger_facade_instance = None): raise NotImplementedError()
+    def reset(self): NotImplementedError()
+    def get_logger_instance(self): NotImplementedError()
+        
 @Singleton
-class __LoggerRegistry:
+class __LoggerRegistry(__AbstractLoggerRegistry):
 
     def __init__(self):
         self.__logger_instance = None
@@ -196,6 +199,30 @@ class __LoggerRegistry:
 
     def get_logger_instance(self):
         return self.__logger_instance
+
+SECONDARY_LOGGER = "Secondary_Logger"
+
+@Singleton
+class __SecondaryLoggerRegistry(__AbstractLoggerRegistry):
+    def __init__(self):
+        self.__logger_instances = {}
+
+    @synchronized_method
+    def register_logger(self, logger_facade_instance = None, logger_name=SECONDARY_LOGGER):
+        if logger_facade_instance is None: raise ValueError("Logger Instance is None")
+        if not isinstance(logger_facade_instance, LoggerFacade): raise ValueError("Logger Instance do not implement Logger Facade")
+
+        if self.__logger_instances is None: self.__logger_instances = {logger_name : logger_facade_instance}
+        else: self.__logger_instances[logger_name] = logger_facade_instance
+
+    @synchronized_method
+    def reset(self):
+        self.__logger_instances = {}
+
+    def get_logger_instance(self, logger_name=SECONDARY_LOGGER):
+        return self.__logger_instances[logger_name]
+
+
 
 # -----------------------------------------------------
 # Factory Methods
@@ -219,3 +246,12 @@ def register_logger_single_instance(stream=DEFAULT_STREAM, logger_mode=LoggerMod
 def get_registered_logger_instance():
     return __LoggerRegistry.Instance().get_logger_instance()
 
+def register_secondary_logger(stream=DEFAULT_STREAM, logger_mode=LoggerMode.FULL, logger_name=SECONDARY_LOGGER):
+    if logger_mode==LoggerMode.FULL:      __SecondaryLoggerRegistry.Instance().register_logger(__FullLogger(stream), logger_name)
+    elif logger_mode==LoggerMode.NONE:    __SecondaryLoggerRegistry.Instance().register_logger(__NullLogger(stream), logger_name)
+    elif logger_mode==LoggerMode.WARNING: __SecondaryLoggerRegistry.Instance().register_logger(__WarningLogger(stream), logger_name)
+    elif logger_mode==LoggerMode.ERROR:   __SecondaryLoggerRegistry.Instance().register_logger(__ErrorLogger(stream), logger_name)
+    
+def get_registered_secondary_logger(logger_name=SECONDARY_LOGGER):
+    return __SecondaryLoggerRegistry.Instance().get_logger_instance(logger_name)
+    

@@ -254,8 +254,21 @@ def get_idxPeak_ij_exp(imgFFT, harV, harH, periodVert, periodHor, searchRegion):
 
     return [idxPeak_ij_exp[0][0], idxPeak_ij_exp[1][0]]
 
+from time import strftime
+
+# time functions
+def datetime_now_str():
+    return strftime("%Y%m%d_%H%M%S")
+
+def time_now_str():
+    return strftime("%H%M%S")
+
+def date_now_str():
+    return strftime("%Y%m%d")
+
 
 def is_empty_file_name(file_name):
     return file_name is None or \
             file_name.strip() == "" or \
             file_name.strip().lower() == "none"
+

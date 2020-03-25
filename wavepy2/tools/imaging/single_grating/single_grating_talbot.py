@@ -46,7 +46,7 @@ import numpy as np
 
 from wavepy2.util.common import common_tools
 from wavepy2.util.common.common_tools import FourierTransform
-from wavepy2.util.log.logger import get_registered_logger_instance
+from wavepy2.util.log.logger import get_registered_logger_instance, get_registered_secondary_logger
 from wavepy2.util.plot.plotter import get_registered_plotter_instance
 from wavepy2.util.ini.initializer import get_registered_ini_instance
 
@@ -80,7 +80,14 @@ def get_initialization_parameters():
                                                   pattern            = ini.get_string_from_ini("Parameters", "pattern"),
                                                   distDet2sample     = ini.get_float_from_ini("Parameters", "distance detector to gr"),
                                                   phenergy           = ini.get_float_from_ini("Parameters", "photon energy"),
-                                                  sourceDistance     = ini.get_float_from_ini("Parameters", "source distance"))
+                                                  sourceDistance     = ini.get_float_from_ini("Parameters", "source distance"),
+                                                  correct_pi_jump    = ini.get_boolean_from_ini("Runtime", "correct pi jump"),
+                                                  remove_mean        = ini.get_boolean_from_ini("Runtime", "remove mean"),
+                                                  remove_linear      = ini.get_boolean_from_ini("Runtime", "remove linear"),
+                                                  do_integration     = ini.get_boolean_from_ini("Runtime", "do integration"),
+                                                  calc_thickness     = ini.get_boolean_from_ini("Runtime", "calc thickness"),
+                                                  remove_2nd_order   = ini.get_boolean_from_ini("Runtime", "remove 2nd order"),
+                                                  material_idx       = ini.get_int_from_ini("Runtime", "material idx"))
 
 def calculate_dpc(wavepy_data=WavePyData()):
     img             = wavepy_data.get_parameter("img")
@@ -93,7 +100,8 @@ def calculate_dpc(wavepy_data=WavePyData()):
     unwrapFlag      = True
 
     plotter = get_registered_plotter_instance()
-    logger = get_registered_logger_instance()
+    main_logger   = get_registered_logger_instance()
+    script_logger = get_registered_secondary_logger()
     ini = get_registered_ini_instance()
 
     plotter.register_context_window(CALCULATE_DPC_CONTEXT_KEY)
@@ -121,11 +129,11 @@ def calculate_dpc(wavepy_data=WavePyData()):
     else:
         imgRefFFT = FourierTransform.fft(imgRef)
 
-        logger.print_message('Obtain harmonic 01 exprimentally')
+        main_logger.print_message('Obtain harmonic 01 exprimentally')
 
         (_, period_harm_Hor) = grating_interferometry.exp_harm_period(imgRefFFT, [period_harm_Vert_o, period_harm_Hor_o], harmonic_ij=['0', '1'], searchRegion=30)
 
-        logger.print_message('MESSAGE: Obtain harmonic 10 exprimentally')
+        main_logger.print_message('MESSAGE: Obtain harmonic 10 exprimentally')
 
         (period_harm_Vert, _) = grating_interferometry.exp_harm_period(imgRefFFT, [period_harm_Vert_o, period_harm_Hor_o], harmonic_ij=['1', '0'], searchRegion=30)
 
@@ -151,6 +159,21 @@ def calculate_dpc(wavepy_data=WavePyData()):
     # Note: the signals above were defined base in experimental data
 
     plotter.draw_context_on_widget(CALCULATE_DPC_CONTEXT_KEY, container_widget=plotter.get_context_container_widget(CALCULATE_DPC_CONTEXT_KEY))
+
+    main_logger.print_message('VALUES: virtual pixelsize i, j: {:.4f}um, {:.4f}um'.format(virtual_pixelsize[0]*1e6, virtual_pixelsize[1]*1e6))
+
+    script_logger.print('\nvirtual_pixelsize = ' + str(virtual_pixelsize))
+
+    wavelength = hc / phenergy
+
+    script_logger.print('wavelength [m] = ' + str('{:.5g}'.format(wavelength)))
+
+    lengthSensitivy100 = virtual_pixelsize[0]**2/distDet2sample/100
+
+    # the 100 means that I arbitrarylly assumed the angular error in
+    #  fringe displacement to be 2pi/100 = 3.6 deg
+    script_logger.print('WF Length Sensitivy 100 [m] = ' + str('{:.5g}'.format(lengthSensitivy100)))
+    script_logger.print('WF Length Sensitivy 100 [1/lambda] = ' + str('{:.5g}'.format(lengthSensitivy100/wavelength)) + '\n')
 
     return WavePyData(int00=int00,
                       int01=int01,

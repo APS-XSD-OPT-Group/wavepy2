@@ -45,15 +45,18 @@
 import numpy as np
 import sys
 
+from wavepy2.util.common import common_tools
 from wavepy2.util.ini.initializer import get_registered_ini_instance, register_ini_instance, IniMode
 from wavepy2.util.plot.qt_application import get_registered_qt_application_instance, register_qt_application_instance, QtApplicationMode
-from wavepy2.util.log.logger import register_logger_single_instance, LoggerMode
+from wavepy2.util.log.logger import register_logger_single_instance, register_secondary_logger, LoggerMode
 from wavepy2.util.plot.plotter import get_registered_plotter_instance, register_plotter_instance, PlotterMode
 
 from wavepy2.tools.imaging.single_grating.single_grating_talbot import calculate_dpc, get_initialization_parameters
 from wavepy2.tools.imaging.single_grating.single_grating_talbot import CALCULATE_DPC_CONTEXT_KEY
 
-LOGGER_MODE   = LoggerMode.FULL
+MAIN_LOGGER_MODE   = LoggerMode.FULL
+SCRIPT_LOGGER_MODE = LoggerMode.FULL
+
 INI_MODE      = IniMode.LOCAL_FILE
 INI_FILE_NAME = ".single_grating_talbot.ini"
 PLOTTER_MODE  = PlotterMode.DISPLAY_ONLY
@@ -63,7 +66,7 @@ if __name__=="__main__":
     # %% Script initialization
     # ==========================================================================
 
-    register_logger_single_instance(logger_mode=LOGGER_MODE)
+    register_logger_single_instance(logger_mode=MAIN_LOGGER_MODE)
     register_ini_instance(INI_MODE, ini_file_name=".single_grating_talbot.ini" if INI_MODE == IniMode.LOCAL_FILE else None)
     register_plotter_instance(plotter_mode=PLOTTER_MODE)
     register_qt_application_instance(QtApplicationMode.QT if PLOTTER_MODE in [PlotterMode.FULL, PlotterMode.DISPLAY_ONLY, PlotterMode.SAVE_ONLY] else QtApplicationMode.NONE)
@@ -78,6 +81,9 @@ if __name__=="__main__":
     # %% do the magic
     # ==========================================================================
     plotter = get_registered_plotter_instance()
+
+    register_secondary_logger(stream=open(plotter.get_save_file_prefix() + "_" + common_tools.datetime_now_str() + ".log", "wt"),
+                              logger_mode=SCRIPT_LOGGER_MODE)
 
     dpc_result = calculate_dpc(initialization_parameters)
 

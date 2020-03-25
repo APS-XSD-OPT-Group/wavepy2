@@ -51,6 +51,7 @@ from wavepy2.util.plot.plotter import WavePyInteractiveWidget
 
 
 class CropDialogPlot(WavePyInteractiveWidget):
+    __initialized = False
 
     def __init__(self, parent):
         super(CropDialogPlot, self).__init__(parent, message="New Crop?", title="Crop Image")
@@ -63,9 +64,7 @@ class CropDialogPlot(WavePyInteractiveWidget):
 
         idx4crop = self.__ini.get_list_from_ini("Parameters", "Crop")
 
-        self.__init_output(img, idx4crop)
-        self.create_cropped_output(idx4crop)
-        self.__set_original()
+        self.__initialize(img, idx4crop)
 
         self.__logger.print_other(idx4crop, "Stored Crop Indexes: ", color=LoggerColor.RED)
 
@@ -100,19 +99,26 @@ class CropDialogPlot(WavePyInteractiveWidget):
         self.update()
 
     def get_accepted_output(self):
+        if self.__initialized: self.__ini.set_list_at_ini('Parameters', 'Crop', self.__idx4crop)
+
         return self.__img, self.__idx4crop
 
     def get_rejected_output(self):
+        if self.__initialized: self.__ini.set_list_at_ini('Parameters', 'Crop', self.__initial_idx4crop)
+
         return self.__img_original , self.__idx4crop_original
 
     def create_cropped_output(self, idx4crop):
-        self.__img      = common_tools.crop_matrix_at_indexes(self.__img, idx4crop)
+        self.__img      = common_tools.crop_matrix_at_indexes(self.__initial_img, idx4crop)
         self.__idx4crop = idx4crop
 
-    def __init_output(self, img, idx4crop):
-        self.__img      = img
-        self.__idx4crop = idx4crop
+    def __initialize(self, img, idx4crop):
+        self.__initial_img = img
+        self.__initial_idx4crop = idx4crop
 
-    def __set_original(self):
+        self.create_cropped_output(idx4crop)
+
         self.__img_original      = self.__img
         self.__idx4crop_original = self.__idx4crop
+
+        self.__initialized = True
