@@ -90,14 +90,15 @@ def __error_harmonic_peak(imgFFT, harV, harH, periodVert, periodHor, searchRegio
 
     return del_i, del_j
 
-def exp_harm_period(imgFFT, harmonicPeriod, harmonic_ij='00', searchRegion=10):
+
+def exp_harm_period(img, harmonicPeriod, harmonic_ij='00', searchRegion=10, isFFT=True):
     """
     Function to obtain the position (in pixels) in the reciprocal space
     of the first harmonic ().
     """
     logger = get_registered_logger_instance()
 
-    (nRows, nColumns) = imgFFT.shape
+    (nRows, nColumns) = img.shape
 
     harV = int(harmonic_ij[0])
     harH = int(harmonic_ij[1])
@@ -114,9 +115,13 @@ def exp_harm_period(imgFFT, harmonicPeriod, harmonic_ij='00', searchRegion=10):
         periodHor = nColumns
         logger.print_message("Assuming Vertical 1D Grating")
 
+    if isFFT: imgFFT = img
+    else: imgFFT = FourierTransform.fft(img)
+
+
     del_i, del_j = __error_harmonic_peak(imgFFT, harV, harH,
-                                        periodVert, periodHor,
-                                        searchRegion)
+                                         periodVert, periodHor,
+                                         searchRegion)
 
     logger.print_message("Error experimental harmonics vertical: {:d}".format(del_i))
     logger.print_message("Error experimental harmonics horizontal: {:d}".format(del_j))

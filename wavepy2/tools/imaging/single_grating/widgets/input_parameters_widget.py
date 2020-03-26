@@ -83,10 +83,6 @@ def generate_initialization_parameters(img_file_name,
 
     pixelsize = [pixel, pixel]
 
-    # calculate the theoretical position of the hamonics
-    period_harm_Vert = np.int(pixelsize[0] / gratingPeriod * img.shape[0] / (sourceDistance + distDet2sample) * sourceDistance)
-    period_harm_Hor = np.int(pixelsize[1] / gratingPeriod * img.shape[1] / (sourceDistance + distDet2sample) * sourceDistance)
-
     if imgBlank is None:
         defaultBlankV = np.int(np.mean(img[0:100, 0:100]))
         defaultBlankV = plot_tools.ValueDialog.get_value(widget,
@@ -126,6 +122,10 @@ def generate_initialization_parameters(img_file_name,
     saveFileSuf = saveFileSuf.replace('.', 'p')
 
     get_registered_plotter_instance().register_save_file_prefix(saveFileSuf)
+
+    # calculate the theoretical position of the hamonics
+    period_harm_Vert = np.int(pixelsize[0] / gratingPeriod * img.shape[0] / (sourceDistance + distDet2sample) * sourceDistance)
+    period_harm_Hor = np.int(pixelsize[1] / gratingPeriod * img.shape[1] / (sourceDistance + distDet2sample) * sourceDistance)
 
     return WavePyData(img=img,
                       imgRef=imgRef,

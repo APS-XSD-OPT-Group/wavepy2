@@ -45,7 +45,6 @@
 import numpy as np
 
 from wavepy2.util.common import common_tools
-from wavepy2.util.common.common_tools import FourierTransform
 from wavepy2.util.log.logger import get_registered_logger_instance, get_registered_secondary_logger
 from wavepy2.util.plot.plotter import get_registered_plotter_instance
 from wavepy2.util.ini.initializer import get_registered_ini_instance
@@ -53,15 +52,19 @@ from wavepy2.util.ini.initializer import get_registered_ini_instance
 from wavepy2.tools.common.wavepy_data import WavePyData
 
 from wavepy2.core import grating_interferometry
+from wavepy2.core.widgets.plot_intensities_harms import PlotIntensitiesHarms
+from wavepy2.core.widgets.plot_dark_field import PlotDarkField
 from wavepy2.tools.imaging.single_grating.widgets.input_parameters_widget import InputParametersWidget, generate_initialization_parameters
 from wavepy2.tools.imaging.single_grating.widgets.crop_dialog_widget import CropDialogPlot
 from wavepy2.tools.imaging.single_grating.widgets.show_cropped_figure_widget import ShowCroppedFigure
+
 
 from scipy import constants
 
 hc = constants.value('inverse meter-electron volt relationship')  # hc
 
 CALCULATE_DPC_CONTEXT_KEY = "Calculate DPC"
+RECROP_DPC_CONTEXT_KEY = "Recrop DPC"
 
 def get_initialization_parameters():
     plotter = get_registered_plotter_instance()
@@ -89,14 +92,13 @@ def get_initialization_parameters():
                                                   remove_2nd_order   = ini.get_boolean_from_ini("Runtime", "remove 2nd order"),
                                                   material_idx       = ini.get_int_from_ini("Runtime", "material idx"))
 
-def calculate_dpc(wavepy_data=WavePyData()):
-    img             = wavepy_data.get_parameter("img")
-    imgRef          = wavepy_data.get_parameter("imgRef")
-    phenergy        = wavepy_data.get_parameter("phenergy")
-    pixelsize       = wavepy_data.get_parameter("pixelsize")
-    distDet2sample  = wavepy_data.get_parameter("distDet2sample")
-    period_harm     = wavepy_data.get_parameter("period_harm")
-    saveFileSuf     = wavepy_data.get_parameter("saveFileSuf")
+def calculate_dpc(initialization_parameters):
+    img             = initialization_parameters.get_parameter("img")
+    imgRef          = initialization_parameters.get_parameter("imgRef")
+    phenergy        = initialization_parameters.get_parameter("phenergy")
+    pixelsize       = initialization_parameters.get_parameter("pixelsize")
+    distDet2sample  = initialization_parameters.get_parameter("distDet2sample")
+    period_harm     = initialization_parameters.get_parameter("period_harm")
     unwrapFlag      = True
 
     plotter = get_registered_plotter_instance()
@@ -115,7 +117,7 @@ def calculate_dpc(wavepy_data=WavePyData()):
         img = common_tools.crop_matrix_at_indexes(img, idx4crop)
 
     # Plot Real Image AFTER crop
-    plotter.push_plot_on_context(CALCULATE_DPC_CONTEXT_KEY, ShowCroppedFigure, img=img, pixelsize=pixelsize, saveFileSuf=saveFileSuf)
+    plotter.push_plot_on_context(CALCULATE_DPC_CONTEXT_KEY, ShowCroppedFigure, img=img, pixelsize=pixelsize)
 
     if not imgRef is None: imgRef = common_tools.crop_matrix_at_indexes(imgRef, idx4crop)
 
@@ -127,15 +129,19 @@ def calculate_dpc(wavepy_data=WavePyData()):
     if imgRef is None:
         harmPeriod = [period_harm_Vert_o, period_harm_Hor_o]
     else:
-        imgRefFFT = FourierTransform.fft(imgRef)
-
         main_logger.print_message('Obtain harmonic 01 experimentally')
 
-        (_, period_harm_Hor) = grating_interferometry.exp_harm_period(imgRefFFT, [period_harm_Vert_o, period_harm_Hor_o], harmonic_ij=['0', '1'], searchRegion=30)
+        (_, period_harm_Hor) = grating_interferometry.exp_harm_period(imgRef, [period_harm_Vert_o, period_harm_Hor_o],
+                                                                      harmonic_ij=['0', '1'],
+                                                                      searchRegion=30,
+                                                                      isFFT=False)
 
         main_logger.print_message('MESSAGE: Obtain harmonic 10 experimentally')
 
-        (period_harm_Vert, _) = grating_interferometry.exp_harm_period(imgRefFFT, [period_harm_Vert_o, period_harm_Hor_o], harmonic_ij=['1', '0'], searchRegion=30)
+        (period_harm_Vert, _) = grating_interferometry.exp_harm_period(imgRef, [period_harm_Vert_o, period_harm_Hor_o],
+                                                                       harmonic_ij=['1', '0'],
+                                                                       searchRegion=30,
+                                                                       isFFT=False)
 
         harmPeriod = [period_harm_Vert, period_harm_Hor]
 
@@ -161,19 +167,92 @@ def calculate_dpc(wavepy_data=WavePyData()):
     plotter.draw_context_on_widget(CALCULATE_DPC_CONTEXT_KEY, container_widget=plotter.get_context_container_widget(CALCULATE_DPC_CONTEXT_KEY))
 
     main_logger.print_message('VALUES: virtual pixelsize i, j: {:.4f}um, {:.4f}um'.format(virtual_pixelsize[0]*1e6, virtual_pixelsize[1]*1e6))
-
     script_logger.print('\nvirtual_pixelsize = ' + str(virtual_pixelsize))
 
     wavelength = hc / phenergy
 
+    main_logger.print_message('wavelength [m] = ' + str('{:.5g}'.format(wavelength)))
     script_logger.print('wavelength [m] = ' + str('{:.5g}'.format(wavelength)))
 
     lengthSensitivy100 = virtual_pixelsize[0]**2/distDet2sample/100
 
     # the 100 means that I arbitrarylly assumed the angular error in
     #  fringe displacement to be 2pi/100 = 3.6 deg
+
+    main_logger.print_message('WF Length Sensitivy 100 [m] = ' + str('{:.5g}'.format(lengthSensitivy100)))
+    main_logger.print_message('WF Length Sensitivy 100 [1/lambda] = ' + str('{:.5g}'.format(lengthSensitivy100/wavelength)) + '\n')
+
     script_logger.print('WF Length Sensitivy 100 [m] = ' + str('{:.5g}'.format(lengthSensitivy100)))
     script_logger.print('WF Length Sensitivy 100 [1/lambda] = ' + str('{:.5g}'.format(lengthSensitivy100/wavelength)) + '\n')
+
+    return WavePyData(int00=int00,
+                      int01=int01,
+                      int10=int10,
+                      darkField01=darkField01,
+                      darkField10=darkField10,
+                      diffPhase01=diffPhase01,
+                      diffPhase10=diffPhase10,
+                      virtual_pixelsize=virtual_pixelsize)
+
+def recrop_dpc(dpc_result, initialization_parameters):
+    img             = initialization_parameters.get_parameter("img")
+    imgRef          = initialization_parameters.get_parameter("imgRef")
+    pixelsize       = initialization_parameters.get_parameter("pixelsize")
+
+    int00             = dpc_result.get_parameter("int00")
+    int01             = dpc_result.get_parameter("int01")
+    int10             = dpc_result.get_parameter("int10")
+    darkField01       = dpc_result.get_parameter("darkField01")
+    darkField10       = dpc_result.get_parameter("darkField10")
+    diffPhase01       = dpc_result.get_parameter("diffPhase01")
+    diffPhase10       = dpc_result.get_parameter("diffPhase10")
+    virtual_pixelsize = dpc_result.get_parameter("virtual_pixelsize")
+
+    plotter = get_registered_plotter_instance()
+    main_logger   = get_registered_logger_instance()
+    ini = get_registered_ini_instance()
+
+    plotter.register_context_window(RECROP_DPC_CONTEXT_KEY)
+
+    img_to_crop = np.sqrt((diffPhase01 - diffPhase01.mean())**2 + diffPhase10 - diffPhase10.mean())**2
+
+    if plotter.is_active(): _, idx2ndCrop = plotter.show_interactive_plot(CropDialogPlot, container_widget=None, img=img_to_crop, pixelsize=pixelsize)
+    else: idx2ndCrop = ini.get_list_from_ini("Parameters", "Crop")
+
+    if idx2ndCrop != [0, -1, 0, -1]:
+        int00 = common_tools.crop_matrix_at_indexes(int00, idx2ndCrop)
+        int01 = common_tools.crop_matrix_at_indexes(int01, idx2ndCrop)
+        int10 = common_tools.crop_matrix_at_indexes(int10, idx2ndCrop)
+        darkField01 = common_tools.crop_matrix_at_indexes(darkField01, idx2ndCrop)
+        darkField10 = common_tools.crop_matrix_at_indexes(darkField10, idx2ndCrop)
+        diffPhase01 = common_tools.crop_matrix_at_indexes(diffPhase01, idx2ndCrop)
+        diffPhase10 = common_tools.crop_matrix_at_indexes(diffPhase10, idx2ndCrop)
+
+        factor_i = virtual_pixelsize[0]/pixelsize[0]
+        factor_j = virtual_pixelsize[1]/pixelsize[1]
+
+        idx1stCrop = ini.get_list_from_ini("Parameters", "Crop")
+
+        idx4crop = [0, -1, 0, -1]
+        idx4crop[0] = int(np.rint(idx1stCrop[0] + idx2ndCrop[0]*factor_i))
+        idx4crop[1] = int(np.rint(idx1stCrop[0] + idx2ndCrop[1]*factor_i))
+        idx4crop[2] = int(np.rint(idx1stCrop[2] + idx2ndCrop[2]*factor_j))
+        idx4crop[3] = int(np.rint(idx1stCrop[2] + idx2ndCrop[3]*factor_j))
+
+        main_logger.print('New Crop: {}, {}, {}, {}'.format(idx4crop[0], idx4crop[1], idx4crop[2], idx4crop[3]))
+
+        ini.set_list_at_ini("Parameters", "Crop", idx4crop)
+
+        # Plot Real Image AFTER crop
+        plotter.push_plot_on_context(RECROP_DPC_CONTEXT_KEY, ShowCroppedFigure, img=common_tools.crop_matrix_at_indexes(img, idx4crop), pixelsize=pixelsize, title="Raw Image with 2nd Crop")
+
+        ini.push()
+
+    if not imgRef is None:
+        plotter.push_plot_on_context(RECROP_DPC_CONTEXT_KEY, PlotIntensitiesHarms, int00=int00, int01=int01, int10=int10, pixelsize=virtual_pixelsize, titleStr='Intensity')
+        plotter.push_plot_on_context(RECROP_DPC_CONTEXT_KEY, PlotDarkField, darkField01=darkField01, darkField10=darkField10, pixelsize=virtual_pixelsize)
+
+    plotter.draw_context_on_widget(RECROP_DPC_CONTEXT_KEY, container_widget=plotter.get_context_container_widget(RECROP_DPC_CONTEXT_KEY))
 
     return WavePyData(int00=int00,
                       int01=int01,

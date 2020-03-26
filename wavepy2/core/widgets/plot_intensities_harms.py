@@ -43,58 +43,45 @@
 # POSSIBILITY OF SUCH DAMAGE.                                             #
 # #########################################################################
 import numpy as np
-import sys
-
+from matplotlib.figure import Figure
 from wavepy2.util.common import common_tools
-from wavepy2.util.ini.initializer import get_registered_ini_instance, register_ini_instance, IniMode
-from wavepy2.util.plot.qt_application import get_registered_qt_application_instance, register_qt_application_instance, QtApplicationMode
-from wavepy2.util.log.logger import register_logger_single_instance, register_secondary_logger, LoggerMode
-from wavepy2.util.plot.plotter import get_registered_plotter_instance, register_plotter_instance, PlotterMode
+from wavepy2.util.plot.plotter import WavePyWidget
 
-from wavepy2.tools.imaging.single_grating.single_grating_talbot import get_initialization_parameters, calculate_dpc, recrop_dpc
-from wavepy2.tools.imaging.single_grating.single_grating_talbot import CALCULATE_DPC_CONTEXT_KEY, RECROP_DPC_CONTEXT_KEY
+from warnings import filterwarnings
+filterwarnings("ignore")
 
-MAIN_LOGGER_MODE   = LoggerMode.FULL
-SCRIPT_LOGGER_MODE = LoggerMode.FULL
+class PlotIntensitiesHarms(WavePyWidget):
+    def get_plot_tab_name(self): return 'Absorption obtained from the Harmonics' + self.__title
 
-INI_MODE      = IniMode.LOCAL_FILE
-INI_FILE_NAME = ".single_grating_talbot.ini"
-PLOTTER_MODE  = PlotterMode.DISPLAY_ONLY
+    def build_mpl_figure(self, **kwargs):
+        int00     = kwargs["int00"]
+        int01     = kwargs["int01"]
+        int10     = kwargs["int10"]
+        pixelsize = kwargs["pixelsize"]
+        titleStr  = kwargs["titleStr"]
 
-if __name__=="__main__":
-    # ==========================================================================
-    # %% Script initialization
-    # ==========================================================================
+        if not common_tools.is_empty_string(titleStr): self.__title = ', ' + titleStr
+        else: self.__title = ""
 
-    register_logger_single_instance(logger_mode=MAIN_LOGGER_MODE)
-    register_ini_instance(INI_MODE, ini_file_name=".single_grating_talbot.ini" if INI_MODE == IniMode.LOCAL_FILE else None)
-    register_plotter_instance(plotter_mode=PLOTTER_MODE)
-    register_qt_application_instance(QtApplicationMode.QT if PLOTTER_MODE in [PlotterMode.FULL, PlotterMode.DISPLAY_ONLY, PlotterMode.SAVE_ONLY] else QtApplicationMode.NONE)
+        factor, unit_xy = common_tools.choose_unit(np.sqrt(int00.size)*pixelsize[0])
 
-    # ==========================================================================
-    # %% Experimental parameters
-    # ==========================================================================
+        figure = Figure(figsize=(14, 6))
 
-    initialization_parameters = get_initialization_parameters()
+        def create_plot(spl, img, title):
+            ax = figure.subplots(spl)[0]
+            im = ax.imshow(img, cmap='viridis',
+                       vmax=common_tools.mean_plus_n_sigma(img, 4),
+                       extent=common_tools.extent_func(img, pixelsize)*factor)
+            ax.set_xlabel(r'$[{0} m]$'.format(unit_xy))
+            ax.set_ylabel(r'$[{0} m]$'.format(unit_xy))
+            figure.colorbar(im, shrink=0.5)
+            ax.set_title(title, fontsize=18, weight='bold')
 
+        create_plot(131, int00, "00")
+        create_plot(132, int01, "01")
+        create_plot(133, int10, "10")
 
-    # ==========================================================================
-    # %% do the magic
-    # ==========================================================================
-    plotter = get_registered_plotter_instance()
+        figure.suptitle('Absorption obtained from the Harmonics' + titleStr, fontsize=18, weight='bold')
+        figure.tight_layout(rect=[0, 0, 1, 1])
 
-    register_secondary_logger(stream=open(plotter.get_save_file_prefix() + "_" + common_tools.datetime_now_str() + ".log", "wt"),
-                              logger_mode=SCRIPT_LOGGER_MODE)
-
-    dpc_result = calculate_dpc(initialization_parameters)
-    plotter.show_context_window(CALCULATE_DPC_CONTEXT_KEY)
-
-
-    #recrop_result = recrop_dpc(dpc_result, initialization_parameters)
-    #plotter.show_context_window(RECROP_DPC_CONTEXT_KEY)
-
-    # integration
-
-    get_registered_ini_instance().push()
-
-    get_registered_qt_application_instance().run_qt_application()
+        return figure

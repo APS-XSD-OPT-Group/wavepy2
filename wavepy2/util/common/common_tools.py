@@ -266,9 +266,9 @@ def time_now_str():
 def date_now_str():
     return strftime("%Y%m%d")
 
+def is_empty_string(string):
+    return string is None or string.strip() == ""
 
 def is_empty_file_name(file_name):
-    return file_name is None or \
-            file_name.strip() == "" or \
-            file_name.strip().lower() == "none"
+    return is_empty_string(file_name) or file_name.strip().lower() == "none"
 
