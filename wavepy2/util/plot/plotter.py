@@ -278,6 +278,8 @@ class __NullPlotter(PlotterFacade):
     def draw_context_on_widget(self, context_key, container_widget): pass
     def show_interactive_plot(self, widget_class, container_widget, **kwargs): pass
     def show_context_window(self, context_key): pass
+    def register_save_file_prefix(self, save_file_prefix): pass
+    def get_save_file_prefix(self): pass
 
 @Singleton
 class __PlotterRegistry:

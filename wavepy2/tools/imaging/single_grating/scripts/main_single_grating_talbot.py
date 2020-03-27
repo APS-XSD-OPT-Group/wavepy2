@@ -45,14 +45,13 @@
 import numpy as np
 import sys
 
+from wavepy2.tools.imaging.single_grating.single_grating_talbot import *
+
 from wavepy2.util.common import common_tools
 from wavepy2.util.ini.initializer import get_registered_ini_instance, register_ini_instance, IniMode
 from wavepy2.util.plot.qt_application import get_registered_qt_application_instance, register_qt_application_instance, QtApplicationMode
 from wavepy2.util.log.logger import register_logger_single_instance, register_secondary_logger, LoggerMode
 from wavepy2.util.plot.plotter import get_registered_plotter_instance, register_plotter_instance, PlotterMode
-
-from wavepy2.tools.imaging.single_grating.single_grating_talbot import get_initialization_parameters, calculate_dpc, recrop_dpc, correct_zero_dpc
-from wavepy2.tools.imaging.single_grating.single_grating_talbot import CALCULATE_DPC_CONTEXT_KEY, RECROP_DPC_CONTEXT_KEY, CORRECT_ZERO_DPC
 
 MAIN_LOGGER_MODE   = LoggerMode.FULL
 SCRIPT_LOGGER_MODE = LoggerMode.FULL
@@ -99,6 +98,10 @@ if __name__=="__main__":
     correct_zero_dpc_result = correct_zero_dpc(recrop_dpc_result, initialization_parameters)
     plotter.show_context_window(CORRECT_ZERO_DPC)
 
+    # ==========================================================================
+
+    remove_linear_fit_result = remove_linear_fit(correct_zero_dpc_result, recrop_dpc_result, initialization_parameters)
+    plotter.show_context_window(REMOVE_LINEAR_FIT)
 
     # integration
 

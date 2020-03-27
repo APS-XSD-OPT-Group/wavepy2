@@ -44,6 +44,10 @@
 # #########################################################################
 import numpy as np
 from matplotlib.figure import Figure
+from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
+
+from wavepy2.util.common import common_tools
+from wavepy2.util.plot import plot_tools
 from wavepy2.util.plot.plotter import WavePyWidget, WavePyInteractiveWidget
 
 
@@ -71,11 +75,12 @@ class CorrectDPC(WavePyWidget):
 
         return figure
 
-class CorrectDPCSubtractMean(WavePyWidget):
-    def get_plot_tab_name(self): return "Correct DPC"
+class CorrectDPCHistos(WavePyWidget):
+    def get_plot_tab_name(self): return "Correct DPC" if common_tools.is_empty_string(self.__title) else self.__title
 
     def build_mpl_figure(self, **kwargs):
         angle   = kwargs["angle"]
+        self.__title = kwargs["title"]
 
         figure = Figure()
 
@@ -88,29 +93,68 @@ class CorrectDPCSubtractMean(WavePyWidget):
 
         return figure
 
+from wavepy2.util.log.logger import get_registered_logger_instance, LoggerColor
 from wavepy2.util.plot.plot_tools import WIDGET_FIXED_WIDTH
 from wavepy2.util.plot.widgets.graphical_select_point_idx import GraphicalSelectPointIdx
 
-class CorrectZeroFromUnwrap(WavePyInteractiveWidget):
+class CorrectDPCCenter(WavePyInteractiveWidget):
     def __init__(self, parent):
-        super(CorrectZeroFromUnwrap, self).__init__(parent, message="Correct Zero", title="Correct Zero")
+        super(CorrectDPCCenter, self).__init__(parent, message="Correct DPC Center", title="Correct DPC Center")
+
+        self.__logger  = get_registered_logger_instance()
 
     def build_widget(self, **kwargs):
-        angleArray = kwargs["angleArray"]
+        self.__initialize(kwargs["angleArray"])
+        self.__harmonic = kwargs["harmonic"]
 
-        self.__initialize(angleArray)
+        self.__tab_widget = plot_tools.tabWidget(self.get_central_widget())
 
-        self.get_central_widget().layout().addWidget(GraphicalSelectPointIdx(self, image=self.__pi_jump, selection_listener=self.set_selection))
+        self.__result_canvas_histo = FigureCanvas(Figure())
+        self.__result_canvas       = FigureCanvas(Figure())
+
+        self.__update_result_figures()
+        
+        plot_tools.createTabPage(self.__tab_widget, "Correct Zero",  GraphicalSelectPointIdx(self, image=self.__pi_jump, selection_listener=self.set_selection))
+        plot_tools.createTabPage(self.__tab_widget, "Angle Displacement of Fringes",   self.__result_canvas_histo)
+        plot_tools.createTabPage(self.__tab_widget, "DPC Center",   self.__result_canvas)
 
         self.setFixedWidth(WIDGET_FIXED_WIDTH*1.1)
 
         self.update()
 
+    def __update_result_figures(self):
+        figure = self.__result_canvas_histo.figure
+        figure.clear()
+
+        figure.gca().hist(self.__angle_array.flatten() / np.pi, 101, histtype='step', linewidth=2)
+        figure.gca().set_title(r'Angle displacement of fringes [\u03c0 rad]')
+
+        self.__result_canvas_histo.draw()
+
+        #if saveFigFlag:
+        #    wpu.save_figs_with_idx(saveFileSuf)
+
+        figure = self.__result_canvas.figure
+        figure.clear()
+
+        vlim = np.max((np.abs(common_tools.mean_plus_n_sigma(self.__angle_array / np.pi, -5)),
+                       np.abs(common_tools.mean_plus_n_sigma(self.__angle_array / np.pi, 5))))
+
+        im = figure.gca().imshow(self.__angle_array / np.pi, cmap='RdGy', vmin=-vlim, vmax=vlim)
+        figure.colorbar(im)
+        figure.gca().set_title("Angle displacement of fringes " + self.__harmonic + r' [$\pi$ rad],')
+        figure.gca().set_xlabel('Pixels')
+        figure.gca().set_ylabel('Pixels')
+
+        self.__result_canvas.draw()
+
+        self.__tab_widget.setCurrentIndex(1)
+
     def get_accepted_output(self):
-        return self.__angle_array, self.__pi_jump_i
+        return self.__angle_array
 
     def get_rejected_output(self):
-        return self.__angle_array_initial, None
+        return self.__angle_array_initial
 
     def set_selection(self, xo, yo):
         j_o, i_o = int(xo), int(yo)
@@ -120,6 +164,10 @@ class CorrectZeroFromUnwrap(WavePyInteractiveWidget):
             self.__pi_jump_i = self.__pi_jump[i_o, j_o]
         else:
             self.__pi_jump_i = None
+
+        self.__logger.print_other("MESSAGE: pi jump " + self.__harmonic + ": {:} pi".format(self.__pi_jump_i), color=LoggerColor.BLUE)
+
+        self.__update_result_figures()
 
     def __initialize(self, angleArray):
         self.__angle_array = angleArray

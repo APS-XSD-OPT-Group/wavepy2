@@ -86,7 +86,7 @@ class PlotDPC(WavePyWidget):
         create_plot(figure.add_subplot(1, 2, 1), dpc01_plot, vlim01, 'DPC - Horizontal')
         create_plot(figure.add_subplot(1, 2, 2), dpc10_plot, vlim10, 'DPC - Vertical')
 
-        figure.suptitle('Differential Phase ' + r'[$\pi$ rad]' + titleStr, fontsize=18, weight='bold')
+        figure.suptitle('Differential Phase ' + r'[$\pi$ rad]' + self.__title, fontsize=18, weight='bold')
         figure.tight_layout(rect=[0, 0, 1, 1])
 
         return figure

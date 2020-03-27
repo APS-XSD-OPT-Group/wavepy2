@@ -272,3 +272,28 @@ def is_empty_string(string):
 def is_empty_file_name(file_name):
     return is_empty_string(file_name) or file_name.strip().lower() == "none"
 
+def realcoordvec(npoints, delta):
+    return (np.linspace(1, npoints, npoints) - npoints//2 - 1) * delta
+
+def realcoordmatrix_fromvec(xvec, yvec):
+    return np.meshgrid(xvec, yvec)
+
+def realcoordmatrix(npointsx, deltax, npointsy, deltay):
+    return realcoordmatrix_fromvec(realcoordvec(npointsx, deltax), realcoordvec(npointsy, deltay))
+
+def grid_coord(array2D, pixelsize):
+    if isinstance(pixelsize, float): pixelsize = [pixelsize, pixelsize]
+    return realcoordmatrix(array2D.shape[1], pixelsize[1], array2D.shape[0], pixelsize[0])
+
+def reciprocalcoordvec(npoints, delta):
+    return (np.linspace(0, 1, npoints, endpoint=False) - .5)/delta
+
+def reciprocalcoordmatrix(npointsx, deltax, npointsy, deltay):
+    return np.meshgrid(reciprocalcoordvec(npointsx, deltax), reciprocalcoordvec(npointsy, deltay))
+
+def fouriercoordvec(npoints, delta):
+    return reciprocalcoordvec(npoints, delta)
+
+def fouriercoordmatrix(npointsx, deltax, npointsy, deltay):
+    return reciprocalcoordmatrix(npointsx, deltax, npointsy, deltay)
+

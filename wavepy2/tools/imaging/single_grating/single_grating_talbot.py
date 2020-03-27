@@ -60,7 +60,7 @@ from wavepy2.tools.imaging.single_grating.widgets.input_parameters_widget import
 from wavepy2.tools.imaging.single_grating.widgets.crop_dialog_widget import CropDialogPlot
 from wavepy2.tools.imaging.single_grating.widgets.second_crop_dialog_widget import SecondCropDialogPlot
 from wavepy2.tools.imaging.single_grating.widgets.show_cropped_figure_widget import ShowCroppedFigure
-from wavepy2.tools.imaging.single_grating.widgets.correct_DPC import CorrectDPC, CorrectDPCSubtractMean, CorrectZeroFromUnwrap
+from wavepy2.tools.imaging.single_grating.widgets.correct_DPC import CorrectDPC, CorrectDPCHistos, CorrectDPCCenter
 
 
 from scipy import constants
@@ -70,6 +70,7 @@ hc = constants.value('inverse meter-electron volt relationship')  # hc
 CALCULATE_DPC_CONTEXT_KEY = "Calculate DPC"
 RECROP_DPC_CONTEXT_KEY = "Recrop DPC"
 CORRECT_ZERO_DPC = "Correct Zero DPC"
+REMOVE_LINEAR_FIT = "Remove Linear Fit"
 
 def get_initialization_parameters():
     plotter = get_registered_plotter_instance()
@@ -278,7 +279,6 @@ def recrop_dpc(dpc_result, initialization_parameters):
 #--------------------------------------------------------------------------------
 
 def correct_zero_dpc(dpc_result, initialization_parameters):
-
     dpc01              = dpc_result.get_parameter("diffPhase01")
     dpc10              = dpc_result.get_parameter("diffPhase10")
     virtual_pixelsize  = dpc_result.get_parameter("virtual_pixelsize")
@@ -293,31 +293,30 @@ def correct_zero_dpc(dpc_result, initialization_parameters):
     plotter       = get_registered_plotter_instance()
     main_logger   = get_registered_logger_instance()
     script_logger = get_registered_secondary_logger()
-    ini           = get_registered_ini_instance()
 
     plotter.register_context_window(CORRECT_ZERO_DPC)
 
-    factor = distDet2sample*hc/phenergy
+    def __get_pi_jump(angle_i):
+        return int(np.round(np.mean(angle_i / np.pi)))
 
+    factor = distDet2sample*hc/phenergy
     angle = [dpc01/pixelsize[1]*factor, dpc10/pixelsize[0]*factor]
-    dpc   = [dpc01, dpc10]
+    pi_jump = [__get_pi_jump(angle[0]), __get_pi_jump(angle[1])]
 
     script_logger.print('Initial Hrz Mean angle/pi : {:} pi'.format(np.mean(angle[0]/np.pi)))
     script_logger.print('Initial Vt Mean angle/pi : {:} pi'.format(np.mean(angle[1]/np.pi)))
 
-    pi_jump = [int(np.round(np.mean(angle[0] / np.pi))),
-               int(np.round(np.mean(angle[1] / np.pi)))]
-
     plotter.push_plot_on_context(CORRECT_ZERO_DPC, CorrectDPC, angle=angle, pi_jump=pi_jump)
+
+    def __get_dpc(angle_i, pixelsize_i):
+        return angle_i * pixelsize_i / factor
 
     if not sum(pi_jump) == 0 and correct_pi_jump:
         angle[0] -= pi_jump[0] * np.pi
         angle[1] -= pi_jump[1] * np.pi
 
-        dpc01 = angle[0] * pixelsize[0] / factor
-        dpc10 = angle[1] * pixelsize[1] / factor
-
-        dpc = [dpc01, dpc10]
+        dpc01 = __get_dpc(angle[0], pixelsize[0])
+        dpc10 = __get_dpc(angle[1], pixelsize[1])
 
         plotter.push_plot_on_context(CORRECT_ZERO_DPC, PlotDPC, dpc01=dpc01, dpc10=dpc10, pixelsize=virtual_pixelsize, titleStr="Correct \u03c0 jump")
 
@@ -330,197 +329,192 @@ def correct_zero_dpc(dpc_result, initialization_parameters):
         angle[0] -= np.mean(angle[0])
         angle[1] -= np.mean(angle[1])
 
-        dpc01 = angle[0]*pixelsize[0]/factor
-        dpc10 = angle[1]*pixelsize[1]/factor
+        dpc01 = __get_dpc(angle[0], pixelsize[0])
+        dpc10 = __get_dpc(angle[1], pixelsize[1])
 
-        dpc = [dpc01, dpc10]
-
-        plotter.push_plot_on_context(CORRECT_ZERO_DPC, CorrectDPCSubtractMean, angle=angle)
+        plotter.push_plot_on_context(CORRECT_ZERO_DPC, CorrectDPCHistos, angle=angle, title="Remove mean")
         plotter.push_plot_on_context(CORRECT_ZERO_DPC, PlotDPC, dpc01=dpc01, dpc10=dpc10, pixelsize=virtual_pixelsize, titleStr="Remove Mean")
 
     if correct_dpc_center and plotter.is_active():
-        for i in [0, 1]:
-            iamhappy = False
-            while not iamhappy:
-                angle[i], pi_jump[i] = plotter.show_interactive_plot(CorrectZeroFromUnwrap, container_widget=None, angleArray=angle[i])
+        angle[0] = plotter.show_interactive_plot(CorrectDPCCenter, container_widget=None, angleArray=angle[0], harmonic="01")
+        angle[1] = plotter.show_interactive_plot(CorrectDPCCenter, container_widget=None, angleArray=angle[1], harmonic="10")
 
-                #iamhappy = plotter.show_interactive_plot(CorrectDPCCenter, container_widget=None, angle=angle[i], pi_jump=pi_jump[i])
+        dpc01 = __get_dpc(angle[0], pixelsize[0])
+        dpc10 = __get_dpc(angle[1], pixelsize[1])
+
+        plotter.push_plot_on_context(CORRECT_ZERO_DPC, CorrectDPCHistos, angle=angle, title="Correct DPC Center")
+        plotter.push_plot_on_context(CORRECT_ZERO_DPC, PlotDPC, dpc01=dpc01, dpc10=dpc10, pixelsize=virtual_pixelsize, titleStr="Correct DPC Center")
 
     plotter.draw_context_on_widget(CORRECT_ZERO_DPC, container_widget=plotter.get_context_container_widget(CORRECT_ZERO_DPC))
 
-    return WavePyData(dpc=dpc)
+    return WavePyData(diffPhase01=dpc01, diffPhase10=dpc10, virtual_pixelsize=virtual_pixelsize)
+
+#--------------------------------------------------------------------------------
+
+def remove_linear_fit(correct_zero_dpc_result, initialization_parameters):
+    diffPhase01        = correct_zero_dpc_result.get_parameter("diffPhase01")
+    diffPhase10        = correct_zero_dpc_result.get_parameter("diffPhase10")
+    virtual_pixelsize  = correct_zero_dpc_result.get_parameter("virtual_pixelsize")
+
+    remove_linear      = initialization_parameters.get_parameter("remove_linear")
+
+    plotter = get_registered_plotter_instance()
+    ini     = get_registered_ini_instance()
+
+    plotter.register_context_window(REMOVE_LINEAR_FIT)
+
+    if not remove_linear:
+        diffPhase01_2save = diffPhase01
+        diffPhase10_2save = diffPhase10
+    else:
+        def __fit_lin_surfaceH(zz, pixelsize):
+            xx, yy = common_tools.grid_coord(zz, pixelsize)
+            argNotNAN = np.isfinite(zz)
+            f = zz[argNotNAN].flatten()
+            x = xx[argNotNAN].flatten()
+            X_matrix = np.vstack([x, x * 0.0 + 1]).T
+            beta_matrix = np.linalg.lstsq(X_matrix, f)[0]
+            fit = (beta_matrix[0] * xx + beta_matrix[1])
+            mask = zz * 0.0 + 1.0
+            mask[~argNotNAN] = np.nan
+
+            return fit * mask, beta_matrix
+
+        def __fit_lin_surfaceV(zz, pixelsize):
+            xx, yy = common_tools.grid_coord(zz, pixelsize)
+            argNotNAN = np.isfinite(zz)
+            f = zz[argNotNAN].flatten()
+            y = yy[argNotNAN].flatten()
+            X_matrix = np.vstack([y, y * 0.0 + 1]).T
+            beta_matrix = np.linalg.lstsq(X_matrix, f)[0]
+            fit = (beta_matrix[0] * yy + beta_matrix[1])
+            mask = zz * 0.0 + 1.0
+            mask[~argNotNAN] = np.nan
+
+            return fit * mask, beta_matrix
+
+        linfitDPC01, cH = __fit_lin_surfaceH(diffPhase01, virtual_pixelsize)
+        linfitDPC10, cV = __fit_lin_surfaceV(diffPhase10, virtual_pixelsize)
+
+        ini.set_list_at_ini('Parameters','lin fitting coef cH', cH)
+        ini.set_list_at_ini('Parameters','lin fitting coef cV', cV)
+        ini.push()
+
+        diffPhase01_2save = diffPhase01 - linfitDPC01
+        diffPhase10_2save = diffPhase10 - linfitDPC10
+
+        plotter.push_plot_on_context(REMOVE_LINEAR_FIT, PlotDPC, dpc01=linfitDPC01,       dpc10=linfitDPC10,       pixelsize=virtual_pixelsize, titleStr="Linear DPC Component")
+        plotter.push_plot_on_context(REMOVE_LINEAR_FIT, PlotDPC, dpc01=diffPhase01_2save, dpc10=diffPhase10_2save, pixelsize=virtual_pixelsize, titleStr="(removed linear DPC component)")
+
+    plotter.draw_context_on_widget(REMOVE_LINEAR_FIT, container_widget=plotter.get_context_container_widget(REMOVE_LINEAR_FIT))
+
+    return WavePyData(diffPhase01=diffPhase01_2save, diffPhase10=diffPhase10_2save, virtual_pixelsize=virtual_pixelsize)
+
+
+def dpc_profile_analysis(remove_linear_fit_result, initialization_parameters):
+    pass
 
 '''
-def correct_zero_DPC(dpc01, dpc10,
-                     pixelsize, distDet2sample, phenergy, saveFileSuf,
-                     correct_pi_jump=False, remove_mean=False,
-                     saveFigFlag=True):
+        fnameH = wpu.get_unique_filename(saveFileSuf + '_dpc_X', 'sdf')
+        fnameV = wpu.get_unique_filename(saveFileSuf + '_dpc_Y', 'sdf')
 
-    title = ['Angle displacement of fringes 01',
-             'Angle displacement of fringes 10']
+        wpu.save_sdf_file(diffPhase01_2save, virtual_pixelsize,
+                          fnameH, {'Title': 'DPC 01', 'Zunit': 'rad'})
 
-    factor = distDet2sample*hc/phenergy
+        wpu.save_sdf_file(diffPhase10_2save, virtual_pixelsize,
+                          fnameV, {'Title': 'DPC 10', 'Zunit': 'rad'})
 
-    angle = [dpc01/pixelsize[1]*factor, dpc10/pixelsize[0]*factor]
-    dpc   = [dpc01, dpc10]
+        projectionFromDiv = 1.0
+        wpu.log_this('projectionFromDiv : ' + str('{:.4f}'.format(projectionFromDiv)))
 
-    wpu.log_this('Initial Hrz Mean angle/pi ' +
-                 ': {:} pi'.format(np.mean(angle[0]/np.pi)))
+        # remove2ndOrder = False #easyqt.get_yes_or_no('Remove 2nd Order for Profile?')
 
-    wpu.log_this('Initial Vt Mean angle/pi ' +
-                 ': {:} pi'.format(np.mean(angle[1]/np.pi)))
+        # WG: note that the function dpc_profile_analysis is in defined in
+        # the file dpc_profile_analysis.py, which need to be in the same folder
+        # than this script
 
-    while True:
+        dpc_profile_analysis(None, fnameV,
+                             phenergy, grazing_angle=0,
+                             projectionFromDiv=projectionFromDiv,
+                             remove1stOrderDPC=False,
+                             remove2ndOrder=False,
+                             nprofiles=5, filter_width=50)
+'''
 
-        pi_jump = [0, 0]
+def fit_radius_dpc(correct_zero_dpc_result, initialization_parameters):
+    pass
 
-        pi_jump[0] = int(np.round(np.mean(angle[0]/np.pi)))
-        pi_jump[1] = int(np.round(np.mean(angle[1]/np.pi)))
+'''
+def fit_radius_dpc(dpx, dpy, pixelsize, kwave,
+                   saveFigFlag=False, str4title=''):
 
-        plt.figure()
-        h1 = plt.hist(angle[0].flatten()/np.pi, 201,
-                      histtype='step', linewidth=2)
-        h2 = plt.hist(angle[1].flatten()/np.pi, 201,
-                      histtype='step', linewidth=2)
+    xVec = wpu.realcoordvec(dpx.shape[1], pixelsize[1])
+    yVec = wpu.realcoordvec(dpx.shape[0], pixelsize[0])
 
-        plt.xlabel(r'Angle [$\pi$rad]')
-        if pi_jump == [0, 0]:
-            lim = np.ceil(np.abs((h1[1][0], h1[1][-1],
-                                  h2[1][0], h2[1][-1])).max())
-            plt.xlim([-lim, lim])
+    xmatrix, ymatrix = np.meshgrid(xVec, yVec)
 
-        plt.title('Correct DPC\n' +
-                  r'Angle displacement of fringes $[\pi$ rad]' +
-                  '\n' + r'Calculated jumps $x$ and $y$ : ' +
-                  '{:d}, {:d} $\pi$'.format(pi_jump[0], pi_jump[1]))
+    fig = plt.figure(figsize=(14, 5))
+    fig.suptitle(str4title + 'Phase [rad]', fontsize=14)
 
-        plt.legend(('DPC x', 'DPC y'))
-        plt.tight_layout()
-        if saveFigFlag:
-                    wpu.save_figs_with_idx(saveFileSuf)
-        plt.show(block=False)
-        plt.pause(.5)
+    ax1 = plt.subplot(121)
+    ax2 = plt.subplot(122, sharex=ax1, sharey=ax1)
 
-        if pi_jump == [0, 0]:
-            break
+    ax1.plot(xVec*1e6, dpx[dpx.shape[0]//4, :],
+             '-ob', label='1/4')
+    ax1.plot(xVec*1e6, dpx[dpx.shape[0]//4*3, :],
+             '-og', label='3/4')
+    ax1.plot(xVec*1e6, dpx[dpx.shape[0]//2, :],
+             '-or', label='1/2')
 
-        if (gui_mode and easyqt.get_yes_or_no('Subtract pi jump of DPC?') or
-           correct_pi_jump):
+    lin_fitx = np.polyfit(xVec,
+                          dpx[dpx.shape[0]//2, :], 1)
+    lin_funcx = np.poly1d(lin_fitx)
+    ax1.plot(xVec*1e6, lin_funcx(xVec),
+             '--c', lw=2,
+             label='Fit 1/2')
+    curvrad_x = kwave/(lin_fitx[0])
 
-            angle[0] -= pi_jump[0]*np.pi
-            angle[1] -= pi_jump[1]*np.pi
+    wpu.print_blue('lin_fitx[0] x: {:.3g} m'.format(lin_fitx[0]))
+    wpu.print_blue('lin_fitx[1] x: {:.3g} m'.format(lin_fitx[1]))
 
-            dpc01 = angle[0]*pixelsize[0]/factor
-            dpc10 = angle[1]*pixelsize[1]/factor
-            dpc = [dpc01, dpc10]
+    wpu.print_blue('Curvature Radius of WF x: {:.3g} m'.format(curvrad_x))
 
-            wgi.plot_DPC(dpc01, dpc10,
-                         virtual_pixelsize, saveFigFlag=saveFigFlag,
-                         saveFileSuf=saveFileSuf)
-            plt.show(block=False)
+    ax1.ticklabel_format(style='sci', axis='y', scilimits=(0, 1))
+    ax1.set_xlabel(r'[$\mu m$]')
+    ax1.set_ylabel('dpx [radians]')
+    ax1.legend(loc=0, fontsize='small')
+    ax1.set_title('Curvature Radius of WF {:.3g} m'.format(curvrad_x),
+                  fontsize=16)
+    # ax1.set_adjustable('box-forced')
+    ax1.set_adjustable('box')
 
-        else:
-            break
+    ax2.plot(yVec*1e6, dpy[:, dpy.shape[1]//4],
+             '-ob', label='1/4')
+    ax2.plot(yVec*1e6, dpy[:, dpy.shape[1]//4*3],
+             '-og', label='3/4')
+    ax2.plot(yVec*1e6, dpy[:, dpy.shape[1]//2],
+             '-or', label='1/2')
 
-    wpu.print_blue('MESSAGE: mean angle/pi ' +
-                   '0: {:} pi'.format(np.mean(angle[0]/np.pi)))
-    wpu.print_blue('MESSAGE: mean angle/pi ' +
-                   '1: {:} pi'.format(np.mean(angle[1]/np.pi)))
+    lin_fity = np.polyfit(yVec,
+                          dpy[:, dpy.shape[1]//2], 1)
+    lin_funcy = np.poly1d(lin_fity)
+    ax2.plot(yVec*1e6, lin_funcy(yVec),
+             '--c', lw=2,
+             label='Fit 1/2')
+    curvrad_y = kwave/(lin_fity[0])
+    wpu.print_blue('Curvature Radius of WF y: {:.3g} m'.format(curvrad_y))
 
-    wpu.log_this('Horz Mean angle/pi ' +
-                 ': {:} pi'.format(np.mean(angle[0]/np.pi)))
+    ax2.ticklabel_format(style='sci', axis='y', scilimits=(0, 1))
+    ax2.set_xlabel(r'[$\mu m$]')
+    ax2.set_ylabel('dpy [radians]')
+    ax2.legend(loc=0, fontsize='small')
+    ax2.set_title('Curvature Radius of WF {:.3g} m'.format(curvrad_y),
+                  fontsize=16)
+    # ax2.set_adjustable('box-forced')
+    ax2.set_adjustable('box')
 
-    wpu.log_this('Vert Mean angle/pi ' +
-                 ': {:} pi'.format(np.mean(angle[1]/np.pi)))
-
-    #    if easyqt.get_yes_or_no('Subtract mean of DPC?'):
-    if (gui_mode and easyqt.get_yes_or_no('Subtract mean of DPC?') or
-       remove_mean):
-
-        wpu.log_this('%%% COMMENT: Subtrated mean value of DPC',
-                     saveFileSuf)
-
-        angle[0] -= np.mean(angle[0])
-        angle[1] -= np.mean(angle[1])
-
-        dpc01 = angle[0]*pixelsize[0]/factor
-        dpc10 = angle[1]*pixelsize[1]/factor
-        dpc = [dpc01, dpc10]
-
-        plt.figure()
-        plt.hist(angle[0].flatten()/np.pi, 201,
-                 histtype='step', linewidth=2)
-        plt.hist(angle[1].flatten()/np.pi, 201,
-                 histtype='step', linewidth=2)
-
-        plt.xlabel(r'Angle [$\pi$rad]')
-
-        plt.title('Correct DPC\n' +
-                  r'Angle displacement of fringes $[\pi$ rad]')
-
-        plt.legend(('DPC x', 'DPC y'))
-        plt.tight_layout()
-        if saveFigFlag:
-                    wpu.save_figs_with_idx(saveFileSuf)
-        plt.show(block=False)
-        plt.pause(.5)
-
-        wgi.plot_DPC(dpc01, dpc10,
-                     virtual_pixelsize, saveFigFlag=saveFigFlag,
-                     saveFileSuf=saveFileSuf)
-        plt.show(block=True)
-        plt.pause(.1)
-    else:
-        pass
-
-    if gui_mode and easyqt.get_yes_or_no('Correct DPC center?'):
-
-        wpu.log_this('%%% COMMENT: DCP center is corrected',
-                     saveFileSuf)
-
-        for i in [0, 1]:
-
-            iamhappy = False
-            while not iamhappy:
-
-                angle[i], pi_jump[i] = correct_zero_from_unwrap(angle[i])
-
-                wpu.print_blue('MESSAGE: pi jump ' +
-                               '{:}: {:} pi'.format(i, pi_jump[i]))
-                wpu.print_blue('MESSAGE: mean angle/pi ' +
-                               '{:}: {:} pi'.format(i, np.mean(angle[i]/np.pi)))
-                plt.figure()
-                plt.hist(angle[i].flatten() / np.pi, 101,
-                         histtype='step', linewidth=2)
-                plt.title(r'Angle displacement of fringes $[\pi$ rad]')
-
-                if saveFigFlag:
-                    wpu.save_figs_with_idx(saveFileSuf)
-                plt.show()
-
-                plt.figure()
-
-                vlim = np.max((np.abs(wpu.mean_plus_n_sigma(angle[i]/np.pi,
-                                                            -5)),
-                               np.abs(wpu.mean_plus_n_sigma(angle[i]/np.pi,
-                                                            5))))
-
-                plt.imshow(angle[i] / np.pi,
-                           cmap='RdGy',
-                           vmin=-vlim, vmax=vlim)
-
-                plt.colorbar()
-                plt.title(title[i] + r' [$\pi$ rad],')
-                plt.xlabel('Pixels')
-                plt.ylabel('Pixels')
-
-                plt.pause(.1)
-
-                iamhappy = easyqt.get_yes_or_no('Happy?')
-
-            dpc[i] = angle[i]*pixelsize[i]/factor
-
-    return dpc
-
+    if saveFigFlag:
+        wpu.save_figs_with_idx(saveFileSuf, extension='png')
+    plt.show(block=True)
 
 '''
