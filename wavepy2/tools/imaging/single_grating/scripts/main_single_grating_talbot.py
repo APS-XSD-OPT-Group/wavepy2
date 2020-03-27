@@ -100,7 +100,7 @@ if __name__=="__main__":
 
     # ==========================================================================
 
-    remove_linear_fit_result = remove_linear_fit(correct_zero_dpc_result, recrop_dpc_result, initialization_parameters)
+    remove_linear_fit_result = remove_linear_fit(correct_zero_dpc_result, initialization_parameters)
     plotter.show_context_window(REMOVE_LINEAR_FIT)
 
     # integration
