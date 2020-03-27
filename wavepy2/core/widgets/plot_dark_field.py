@@ -62,18 +62,18 @@ class PlotDarkField(WavePyWidget):
 
         figure = Figure(figsize=(14, 6))
 
-        def create_plot(spl, img, title):
-            ax = figure.subplots(spl)[0]
-            im = ax.imshow(img, cmap='viridis',
-                       vmax=common_tools.mean_plus_n_sigma(img, 4),
-                       extent=common_tools.extent_func(img, pixelsize)*factor)
+        def create_plot(ax, img, title):
+            im = ax.imshow(img,
+                           cmap='viridis',
+                           vmax=common_tools.mean_plus_n_sigma(img, 4),
+                           extent=common_tools.extent_func(img, pixelsize) * factor)
             ax.set_xlabel(r'$[{0} m]$'.format(unit_xy))
             ax.set_ylabel(r'$[{0} m]$'.format(unit_xy))
             figure.colorbar(im, shrink=0.5)
             ax.set_title(title, fontsize=18, weight='bold')
 
-        create_plot(121, darkField01, "Horizontal")
-        create_plot(122, darkField10, "Vertical")
+        create_plot(figure.add_subplot(1, 2, 1), darkField01, "Horizontal")
+        create_plot(figure.add_subplot(1, 2, 2), darkField10, "Vertical")
 
         figure.suptitle('Dark Field', fontsize=18, weight='bold')
         figure.tight_layout(rect=[0, 0, 1, 1])

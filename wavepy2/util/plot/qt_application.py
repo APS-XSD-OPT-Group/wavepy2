@@ -46,6 +46,7 @@ from wavepy2.util import Singleton, synchronized_method
 
 import sys
 from PyQt5.Qt import QApplication
+from PyQt5.QtWidgets import QStyleFactory
 
 class QtApplicationMode:
     QT = 0
@@ -60,7 +61,8 @@ class __NullQtApplication(QtApplicationFacade):
 class __QtApplication(QtApplicationFacade):
     def __init__(self):
         self.__qt_application = QApplication(sys.argv)
-    
+        self.__qt_application.setStyle(QStyleFactory.create('Windows'))
+
     def run_qt_application(self): 
         self.__qt_application.exec_()
 

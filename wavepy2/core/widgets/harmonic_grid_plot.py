@@ -44,16 +44,19 @@
 # #########################################################################
 import numpy as np
 from matplotlib.figure import Figure
-from wavepy2.util.common.common_tools import extent_func, get_idxPeak_ij
+from wavepy2.util.common.common_tools import extent_func, get_idxPeak_ij, is_empty_string
 from wavepy2.util.plot.plotter import WavePyWidget, FigureToSave
 
 
 class HarmonicGridPlot(WavePyWidget):
-    def get_plot_tab_name(self): return "Harmonic Grid"
+    def get_plot_tab_name(self): return self.__image_name + "Harmonic Grid"
 
     def build_mpl_figure(self, **kwargs):
-        imgFFT = kwargs["imgFFT"]
+        imgFFT         = kwargs["imgFFT"]
         harmonicPeriod = kwargs["harmonicPeriod"]
+        image_name     = kwargs["image_name"]
+
+        self.__image_name = "" if is_empty_string(image_name) else image_name + ": "
 
         (nRows, nColumns) = imgFFT.shape
 
@@ -94,6 +97,6 @@ class HarmonicGridPlot(WavePyWidget):
 
         ax.set_xlim(-nColumns//2, nColumns - nColumns//2)
         ax.set_ylim(-nRows//2, nRows - nRows//2)
-        ax.set_title('log scale FFT magnitude, Hamonics Subsets and Indexes', fontsize=16, weight='bold')
+        ax.set_title('log scale FFT magnitude, Harmonics Subsets and Indexes', fontsize=16, weight='bold')
 
         return figure

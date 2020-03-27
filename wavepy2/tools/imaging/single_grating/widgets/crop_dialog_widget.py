@@ -106,7 +106,7 @@ class CropDialogPlot(WavePyInteractiveWidget):
     def get_rejected_output(self):
         if self.__initialized: self.__ini.set_list_at_ini('Parameters', 'Crop', self.__initial_idx4crop)
 
-        return self.__img_original , self.__idx4crop_original
+        return self.__initial_img , self.__initial_idx4crop
 
     def create_cropped_output(self, idx4crop):
         self.__img      = common_tools.crop_matrix_at_indexes(self.__initial_img, idx4crop)
@@ -117,8 +117,5 @@ class CropDialogPlot(WavePyInteractiveWidget):
         self.__initial_idx4crop = idx4crop
 
         self.create_cropped_output(idx4crop)
-
-        self.__img_original      = self.__img
-        self.__idx4crop_original = self.__idx4crop
 
         self.__initialized = True

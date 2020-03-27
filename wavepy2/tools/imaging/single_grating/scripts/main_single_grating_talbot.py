@@ -90,8 +90,8 @@ if __name__=="__main__":
     plotter.show_context_window(CALCULATE_DPC_CONTEXT_KEY)
 
 
-    #recrop_result = recrop_dpc(dpc_result, initialization_parameters)
-    #plotter.show_context_window(RECROP_DPC_CONTEXT_KEY)
+    recrop_result = recrop_dpc(dpc_result, initialization_parameters)
+    plotter.show_context_window(RECROP_DPC_CONTEXT_KEY)
 
     # integration
 

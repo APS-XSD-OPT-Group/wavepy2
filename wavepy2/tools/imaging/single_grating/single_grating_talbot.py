@@ -56,6 +56,7 @@ from wavepy2.core.widgets.plot_intensities_harms import PlotIntensitiesHarms
 from wavepy2.core.widgets.plot_dark_field import PlotDarkField
 from wavepy2.tools.imaging.single_grating.widgets.input_parameters_widget import InputParametersWidget, generate_initialization_parameters
 from wavepy2.tools.imaging.single_grating.widgets.crop_dialog_widget import CropDialogPlot
+from wavepy2.tools.imaging.single_grating.widgets.second_crop_dialog_widget import SecondCropDialogPlot
 from wavepy2.tools.imaging.single_grating.widgets.show_cropped_figure_widget import ShowCroppedFigure
 
 
@@ -214,9 +215,9 @@ def recrop_dpc(dpc_result, initialization_parameters):
 
     plotter.register_context_window(RECROP_DPC_CONTEXT_KEY)
 
-    img_to_crop = np.sqrt((diffPhase01 - diffPhase01.mean())**2 + diffPhase10 - diffPhase10.mean())**2
+    img_to_crop = np.sqrt((diffPhase01 - diffPhase01.mean())**2 + (diffPhase10 - diffPhase10.mean())**2)
 
-    if plotter.is_active(): _, idx2ndCrop = plotter.show_interactive_plot(CropDialogPlot, container_widget=None, img=img_to_crop, pixelsize=pixelsize)
+    if plotter.is_active(): _, idx2ndCrop = plotter.show_interactive_plot(SecondCropDialogPlot, container_widget=None, img=img_to_crop, pixelsize=pixelsize)
     else: idx2ndCrop = ini.get_list_from_ini("Parameters", "Crop")
 
     if idx2ndCrop != [0, -1, 0, -1]:

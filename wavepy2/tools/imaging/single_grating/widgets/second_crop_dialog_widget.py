@@ -42,51 +42,51 @@
 # ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE         #
 # POSSIBILITY OF SUCH DAMAGE.                                             #
 # #########################################################################
-import numpy as np
-from matplotlib.figure import Figure
+
 from wavepy2.util.common import common_tools
-from wavepy2.util.plot.plotter import WavePyWidget
+from wavepy2.util.ini.initializer import get_registered_ini_instance
+from wavepy2.util.log.logger import get_registered_logger_instance, LoggerColor
+from wavepy2.util.plot import plot_tools
+from wavepy2.util.plot.plotter import WavePyInteractiveWidget
 
-from warnings import filterwarnings
-filterwarnings("ignore")
+FIXED_WIDTH=800
 
-class PlotDPC(WavePyWidget):
-    def get_plot_tab_name(self): return 'Differential Phase ' + r'[$\pi$ rad]' + self.__title
+class SecondCropDialogPlot(WavePyInteractiveWidget):
+    __initialized = False
 
-    def build_mpl_figure(self, **kwargs):
-        dpc01 = kwargs["dpc01"]
-        dpc10 = kwargs["dpc10"]
-        pixelsize = kwargs["pixelsize"]
-        titleStr  = kwargs["titleStr"]
+    def __init__(self, parent):
+        super(SecondCropDialogPlot, self).__init__(parent, message="New Crop?", title="Crop Image")
+        self.__logger  = get_registered_logger_instance()
 
-        if not common_tools.is_empty_string(titleStr): self.__title = ', ' + titleStr
-        else: self.__title = ""
+    def build_widget(self, **kwargs):
+        img         = kwargs["img"]
 
-        factor, unit_xy = common_tools.choose_unit(np.sqrt(dpc01.size)*pixelsize[0])
+        self.__initialize(img)
 
-        dpc01_plot = dpc01*pixelsize[1]/np.pi
-        dpc10_plot = dpc10*pixelsize[0]/np.pi
+        crop_image = plot_tools.GraphicalRoiIdx(self,
+                                                image=img,
+                                                set_crop_output_listener=self.create_cropped_output)
 
-        vlim01 = np.max((np.abs(common_tools.mean_plus_n_sigma(dpc01_plot, -5)),
-                         np.abs(common_tools.mean_plus_n_sigma(dpc01_plot, 5))))
-        vlim10 = np.max((np.abs(common_tools.mean_plus_n_sigma(dpc10_plot, -5)),
-                         np.abs(common_tools.mean_plus_n_sigma(dpc10_plot, 5))))
+        tab_widget = plot_tools.tabWidget(self.get_central_widget())
 
-        figure = Figure(figsize=(12, 6))
+        plot_tools.createTabPage(tab_widget, "Crop Image", crop_image)
 
-        def create_plot(ax, img, vlim, title):
-            im = ax.imshow(img, cmap='RdGy_r',
-                      vmin=-vlim, vmax=vlim,
-                      extent=common_tools.extent_func(img, pixelsize)*factor)
-            ax.set_xlabel(r'$[{0} m]$'.format(unit_xy))
-            ax.set_ylabel(r'$[{0} m]$'.format(unit_xy))
-            figure.colorbar(im, shrink=0.5)
-            ax.set_title(title, fontsize=18, weight='bold')
+        self.setFixedWidth(FIXED_WIDTH)
 
-        create_plot(figure.add_subplot(1, 2, 1), dpc01_plot, vlim01, 'DPC - Horizontal')
-        create_plot(figure.add_subplot(1, 2, 2), dpc10_plot, vlim10, 'DPC - Vertical')
+        self.update()
 
-        figure.suptitle('Differential Phase ' + r'[$\pi$ rad]' + titleStr, fontsize=18, weight='bold')
-        figure.tight_layout(rect=[0, 0, 1, 1])
+    def get_accepted_output(self):
+        return self.__img, self.__idx4crop
 
-        return figure
+    def get_rejected_output(self):
+        return self.__initial_img , self.__initial_idx4crop
+
+    def create_cropped_output(self, idx4crop):
+        self.__img      = common_tools.crop_matrix_at_indexes(self.__initial_img, idx4crop)
+        self.__idx4crop = idx4crop
+
+    def __initialize(self, img):
+        self.__initial_img      = img
+        self.__initial_idx4crop = [0, -1, 0, -1]
+        self.__img      = self.__initial_img
+        self.__idx4crop = self.__initial_idx4crop

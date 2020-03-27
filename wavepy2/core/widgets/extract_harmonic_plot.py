@@ -45,23 +45,25 @@
 import numpy as np
 from matplotlib.figure import Figure
 from matplotlib.patches import Rectangle
-from wavepy2.util.common.common_tools import extent_func
+from wavepy2.util.common.common_tools import extent_func, is_empty_string
 from wavepy2.util.plot.plotter import WavePyWidget
 
 
 class ExtractHarmonicPlot(WavePyWidget):
-    def get_plot_tab_name(self): return "Extract Harmonic " + self.__harmonic_name
+    def get_plot_tab_name(self): return self.__image_name + "Extract Harmonic " + self.__harmonic_name
 
     def build_mpl_figure(self, **kwargs):
-        intensity = kwargs["intensity"]
-        idxPeak_ij = kwargs["idxPeak_ij"]
+        intensity   = kwargs["intensity"]
+        idxPeak_ij  = kwargs["idxPeak_ij"]
         harmonic_ij = kwargs["harmonic_ij"]
-        nColumns = kwargs["nColumns"]
-        nRows = kwargs["nRows"]
-        periodHor = kwargs["periodHor"]
-        periodVert = kwargs["periodVert"]
+        nColumns    = kwargs["nColumns"]
+        nRows       = kwargs["nRows"]
+        periodHor   = kwargs["periodHor"]
+        periodVert  = kwargs["periodVert"]
+        image_name  = kwargs["image_name"]
 
         self.__harmonic_name = harmonic_ij[0] + harmonic_ij[1]
+        self.__image_name = "" if is_empty_string(image_name) else image_name + ": "
 
         figure = Figure(figsize=(8, 7))
         ax = figure.subplots(1, 1)

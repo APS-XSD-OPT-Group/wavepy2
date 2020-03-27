@@ -67,8 +67,7 @@ class PlotIntensitiesHarms(WavePyWidget):
 
         figure = Figure(figsize=(14, 6))
 
-        def create_plot(spl, img, title):
-            ax = figure.subplots(spl)[0]
+        def create_plot(ax, img, title):
             im = ax.imshow(img, cmap='viridis',
                        vmax=common_tools.mean_plus_n_sigma(img, 4),
                        extent=common_tools.extent_func(img, pixelsize)*factor)
@@ -77,11 +76,11 @@ class PlotIntensitiesHarms(WavePyWidget):
             figure.colorbar(im, shrink=0.5)
             ax.set_title(title, fontsize=18, weight='bold')
 
-        create_plot(131, int00, "00")
-        create_plot(132, int01, "01")
-        create_plot(133, int10, "10")
+        create_plot(figure.add_subplot(1, 3, 1), int00, "00")
+        create_plot(figure.add_subplot(1, 3, 2), int01, "01")
+        create_plot(figure.add_subplot(1, 3, 3), int10, "10")
 
-        figure.suptitle('Absorption obtained from the Harmonics' + titleStr, fontsize=18, weight='bold')
+        figure.suptitle('Absorption obtained from the Harmonics' + self.__title, fontsize=18, weight='bold')
         figure.tight_layout(rect=[0, 0, 1, 1])
 
         return figure
