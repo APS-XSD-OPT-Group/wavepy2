@@ -42,51 +42,43 @@
 # ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE         #
 # POSSIBILITY OF SUCH DAMAGE.                                             #
 # #########################################################################
-import wavepy2.util.plot.widgets.graphical_roi_idx
-from wavepy2.util.common import common_tools
-from wavepy2.util.ini.initializer import get_registered_ini_instance
-from wavepy2.util.log.logger import get_registered_logger_instance, LoggerColor
-from wavepy2.util.plot import plot_tools
-from wavepy2.util.plot.plotter import WavePyInteractiveWidget
 
-FIXED_WIDTH=800
+from PyQt5.QtCore import Qt
+from PyQt5.QtWidgets import QWidget, QVBoxLayout
+from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
+from matplotlib.figure import Figure
 
-class SecondCropDialogPlot(WavePyInteractiveWidget):
-    __initialized = False
+from wavepy2.util.plot.plot_tools import WIDGET_FIXED_WIDTH
+from wavepy2.util.plot.widgets.image_to_change import ImageToChange
 
-    def __init__(self, parent):
-        super(SecondCropDialogPlot, self).__init__(parent, message="New Crop?", title="Crop Image")
-        self.__logger  = get_registered_logger_instance()
 
-    def build_widget(self, **kwargs):
-        img         = kwargs["img"]
+class SimplePlot(QWidget):
+    def __init__(self, parent, image, title='', xlabel='', ylabel='', **kwargs4imshow):
+        super(SimplePlot, self).__init__(parent)
 
-        self.__initialize(img)
+        self.setFixedWidth(WIDGET_FIXED_WIDTH)
 
-        crop_image = wavepy2.util.plot.widgets.graphical_roi_idx.GraphicalRoiIdx(self,
-                                                                                 image=img,
-                                                                                 set_crop_output_listener=self.create_cropped_output)
+        figure_canvas = FigureCanvas(Figure())
+        mpl_figure = figure_canvas.figure
 
-        tab_widget = plot_tools.tabWidget(self.get_central_widget())
+        ax = mpl_figure.subplots(1, 1)
+        mpl_image = ax.imshow(image, cmap='viridis', **kwargs4imshow)
+        mpl_image.cmap.set_over('#FF0000')  # Red
+        mpl_image.cmap.set_under('#8B008B')  # Light Cyan
 
-        plot_tools.createTabPage(tab_widget, "Crop Image", crop_image)
+        ax.set_title(title, fontsize=18, weight='bold')
+        ax.set_xlabel(xlabel)
+        ax.set_ylabel(ylabel)
 
-        self.setFixedWidth(FIXED_WIDTH)
+        mpl_figure.colorbar(mpl_image, ax=ax, orientation="vertical")
 
-        self.update()
+        self.__image_to_change = ImageToChange(mpl_image=mpl_image, mpl_figure=mpl_figure)
 
-    def get_accepted_output(self):
-        return self.__img, self.__idx4crop
+        layout = QVBoxLayout()
+        layout.addWidget(figure_canvas)
+        layout.setAlignment(Qt.AlignCenter)
 
-    def get_rejected_output(self):
-        return self.__initial_img , self.__initial_idx4crop
+        self.setLayout(layout)
 
-    def create_cropped_output(self, idx4crop):
-        self.__img      = common_tools.crop_matrix_at_indexes(self.__initial_img, idx4crop)
-        self.__idx4crop = idx4crop
-
-    def __initialize(self, img):
-        self.__initial_img      = img
-        self.__initial_idx4crop = [0, -1, 0, -1]
-        self.__img      = self.__initial_img
-        self.__idx4crop = self.__initial_idx4crop
+    def get_image_to_change(self):
+        return self.__image_to_change

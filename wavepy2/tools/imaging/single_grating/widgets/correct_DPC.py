@@ -42,51 +42,88 @@
 # ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE         #
 # POSSIBILITY OF SUCH DAMAGE.                                             #
 # #########################################################################
-import wavepy2.util.plot.widgets.graphical_roi_idx
-from wavepy2.util.common import common_tools
-from wavepy2.util.ini.initializer import get_registered_ini_instance
-from wavepy2.util.log.logger import get_registered_logger_instance, LoggerColor
-from wavepy2.util.plot import plot_tools
-from wavepy2.util.plot.plotter import WavePyInteractiveWidget
+import numpy as np
+from matplotlib.figure import Figure
+from wavepy2.util.plot.plotter import WavePyWidget, WavePyInteractiveWidget
 
-FIXED_WIDTH=800
 
-class SecondCropDialogPlot(WavePyInteractiveWidget):
-    __initialized = False
+class CorrectDPC(WavePyWidget):
+    def get_plot_tab_name(self): return "Correct DPC"
 
+    def build_mpl_figure(self, **kwargs):
+        angle   = kwargs["angle"]
+        pi_jump   = kwargs["pi_jump"]
+
+        figure = Figure()
+        h1 = figure.gca().hist(angle[0].flatten()/np.pi, 201, histtype='step', linewidth=2)
+        h2 = figure.gca().hist(angle[1].flatten()/np.pi, 201, histtype='step', linewidth=2)
+
+        figure.gca().set_xlabel(r'Angle [$\pi$rad]')
+        if pi_jump == [0, 0]:
+            lim = np.ceil(np.abs((h1[1][0], h1[1][-1], h2[1][0], h2[1][-1])).max())
+            figure.gca().set_xlim([-lim, lim])
+
+        figure.gca().set_title('Correct DPC\n' + 'Angle displacement of fringes [\u03c0 rad]\n' +
+                               'Calculated jumps x and y : {:d}, {:d} \u03c0'.format(pi_jump[0], pi_jump[1]))
+
+        figure.gca().legend(('DPC x', 'DPC y'))
+        figure.tight_layout()
+
+        return figure
+
+class CorrectDPCSubtractMean(WavePyWidget):
+    def get_plot_tab_name(self): return "Correct DPC"
+
+    def build_mpl_figure(self, **kwargs):
+        angle   = kwargs["angle"]
+
+        figure = Figure()
+
+        figure.gca().hist(angle[0].flatten()/np.pi, 201, histtype='step', linewidth=2)
+        figure.gca().hist(angle[1].flatten()/np.pi, 201, histtype='step', linewidth=2)
+        figure.gca().set_xlabel(r'Angle [$\pi$rad]')
+        figure.gca().set_title('Correct DPC\nAngle displacement of fringes [\u03c0 rad]')
+        figure.gca().legend(('DPC x', 'DPC y'))
+        figure.tight_layout()
+
+        return figure
+
+from wavepy2.util.plot.plot_tools import WIDGET_FIXED_WIDTH
+from wavepy2.util.plot.widgets.graphical_select_point_idx import GraphicalSelectPointIdx
+
+class CorrectZeroFromUnwrap(WavePyInteractiveWidget):
     def __init__(self, parent):
-        super(SecondCropDialogPlot, self).__init__(parent, message="New Crop?", title="Crop Image")
-        self.__logger  = get_registered_logger_instance()
+        super(CorrectZeroFromUnwrap, self).__init__(parent, message="Correct Zero", title="Correct Zero")
 
     def build_widget(self, **kwargs):
-        img         = kwargs["img"]
+        angleArray = kwargs["angleArray"]
 
-        self.__initialize(img)
+        self.__initialize(angleArray)
 
-        crop_image = wavepy2.util.plot.widgets.graphical_roi_idx.GraphicalRoiIdx(self,
-                                                                                 image=img,
-                                                                                 set_crop_output_listener=self.create_cropped_output)
+        self.get_central_widget().layout().addWidget(GraphicalSelectPointIdx(self, image=self.__pi_jump, selection_listener=self.set_selection))
 
-        tab_widget = plot_tools.tabWidget(self.get_central_widget())
-
-        plot_tools.createTabPage(tab_widget, "Crop Image", crop_image)
-
-        self.setFixedWidth(FIXED_WIDTH)
+        self.setFixedWidth(WIDGET_FIXED_WIDTH*1.1)
 
         self.update()
 
     def get_accepted_output(self):
-        return self.__img, self.__idx4crop
+        return self.__angle_array, self.__pi_jump_i
 
     def get_rejected_output(self):
-        return self.__initial_img , self.__initial_idx4crop
+        return self.__angle_array_initial, None
 
-    def create_cropped_output(self, idx4crop):
-        self.__img      = common_tools.crop_matrix_at_indexes(self.__initial_img, idx4crop)
-        self.__idx4crop = idx4crop
+    def set_selection(self, xo, yo):
+        j_o, i_o = int(xo), int(yo)
 
-    def __initialize(self, img):
-        self.__initial_img      = img
-        self.__initial_idx4crop = [0, -1, 0, -1]
-        self.__img      = self.__initial_img
-        self.__idx4crop = self.__initial_idx4crop
+        if not j_o is None:
+            self.__angle_array -= self.__pi_jump[i_o, j_o] * np.pi
+            self.__pi_jump_i = self.__pi_jump[i_o, j_o]
+        else:
+            self.__pi_jump_i = None
+
+    def __initialize(self, angleArray):
+        self.__angle_array = angleArray
+        self.__pi_jump     = np.round(self.__angle_array / np.pi)
+        self.__pi_jump_i   = None
+
+        self.__angle_array_initial = angleArray

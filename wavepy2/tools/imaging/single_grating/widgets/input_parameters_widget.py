@@ -71,6 +71,7 @@ def generate_initialization_parameters(img_file_name,
                                        sourceDistance,
                                        correct_pi_jump,
                                        remove_mean,
+                                       correct_dpc_center,
                                        remove_linear,
                                        do_integration,
                                        calc_thickness,
@@ -141,6 +142,7 @@ def generate_initialization_parameters(img_file_name,
                       saveFileSuf=saveFileSuf,
                       correct_pi_jump =correct_pi_jump,
                       remove_mean=remove_mean,
+                      correct_dpc_center=correct_dpc_center,
                       remove_linear=remove_linear,
                       do_integration=do_integration,
                       calc_thickness=calc_thickness,
@@ -156,23 +158,25 @@ class InputParametersWidget(WavePyInteractiveWidget):
         self.__ini     = get_registered_ini_instance()
         self.__logger  = get_registered_logger_instance()
 
-        self.img              = self.__ini.get_string_from_ini("Files", "sample")
-        self.imgRef           = self.__ini.get_string_from_ini("Files", "reference")
-        self.imgBlank         = self.__ini.get_string_from_ini("Files", "blank")
-        self.mode             = MODES.index(self.__ini.get_string_from_ini("Parameters", "Mode"))
-        self.pixel            = self.__ini.get_float_from_ini("Parameters", "pixel size")
-        self.gratingPeriod    = self.__ini.get_float_from_ini("Parameters", "checkerboard grating period")
-        self.pattern          = PATTERNS.index(self.__ini.get_string_from_ini("Parameters", "pattern"))
-        self.distDet2sample   = self.__ini.get_float_from_ini("Parameters", "distance detector to gr")
-        self.phenergy         = self.__ini.get_float_from_ini("Parameters", "photon energy")
-        self.sourceDistance   = self.__ini.get_float_from_ini("Parameters", "source distance")
-        self.correct_pi_jump  = self.__ini.get_boolean_from_ini("Runtime", "correct pi jump")
-        self.remove_mean      = self.__ini.get_boolean_from_ini("Runtime", "remove mean")
-        self.remove_linear    = self.__ini.get_boolean_from_ini("Runtime", "remove linear")
-        self.do_integration   = self.__ini.get_boolean_from_ini("Runtime", "do integration")
-        self.calc_thickness   = self.__ini.get_boolean_from_ini("Runtime", "calc thickness")
-        self.remove_2nd_order = self.__ini.get_boolean_from_ini("Runtime", "remove 2nd order")
-        self.material_idx     = self.__ini.get_int_from_ini("Runtime", "material idx")
+        self.img                = self.__ini.get_string_from_ini("Files", "sample")
+        self.imgRef             = self.__ini.get_string_from_ini("Files", "reference")
+        self.imgBlank           = self.__ini.get_string_from_ini("Files", "blank")
+        self.mode               = MODES.index(self.__ini.get_string_from_ini("Parameters", "Mode"))
+        self.pixel              = self.__ini.get_float_from_ini("Parameters", "pixel size")
+        self.gratingPeriod      = self.__ini.get_float_from_ini("Parameters", "checkerboard grating period")
+        self.pattern            = PATTERNS.index(self.__ini.get_string_from_ini("Parameters", "pattern"))
+        self.distDet2sample     = self.__ini.get_float_from_ini("Parameters", "distance detector to gr")
+        self.phenergy           = self.__ini.get_float_from_ini("Parameters", "photon energy")
+        self.sourceDistance     = self.__ini.get_float_from_ini("Parameters", "source distance")
+
+        self.correct_pi_jump    = self.__ini.get_boolean_from_ini("Runtime", "correct pi jump")
+        self.remove_mean        = self.__ini.get_boolean_from_ini("Runtime", "remove mean")
+        self.correct_dpc_center = self.__ini.get_boolean_from_ini("Runtime", "correct dpc center")
+        self.remove_linear      = self.__ini.get_boolean_from_ini("Runtime", "remove linear")
+        self.do_integration     = self.__ini.get_boolean_from_ini("Runtime", "do integration")
+        self.calc_thickness     = self.__ini.get_boolean_from_ini("Runtime", "calc thickness")
+        self.remove_2nd_order   = self.__ini.get_boolean_from_ini("Runtime", "remove 2nd order")
+        self.material_idx       = self.__ini.get_int_from_ini("Runtime", "material idx")
 
 
     def build_widget(self, **kwargs):
@@ -223,6 +227,7 @@ class InputParametersWidget(WavePyInteractiveWidget):
 
         plot_tools.checkBox(main_box, self, "correct_pi_jump", "Correct pi jump in DPC signal")
         plot_tools.checkBox(main_box, self, "remove_mean", "Remove mean DPC")
+        plot_tools.checkBox(main_box, self, "correct_dpc_center", "Correct DPC center")
         plot_tools.checkBox(main_box, self, "remove_linear", "Remove 2D linear fit from DPC")
         plot_tools.checkBox(main_box, self, "do_integration", "Calculate Frankot-Chellappa integration")
         plot_tools.checkBox(main_box, self, "calc_thickness", "Convert phase to thickness")
@@ -256,6 +261,7 @@ class InputParametersWidget(WavePyInteractiveWidget):
         self.__ini.set_value_at_ini('Parameters', 'Source Distance', self.sourceDistance)
         self.__ini.set_value_at_ini("Runtime", "correct pi jump", self.correct_pi_jump)
         self.__ini.set_value_at_ini("Runtime", "remove mean", self.remove_mean)
+        self.__ini.set_value_at_ini("Runtime", "correct dpc center", self.correct_dpc_center)
         self.__ini.set_value_at_ini("Runtime", "remove linear", self.remove_linear)
         self.__ini.set_value_at_ini("Runtime", "do integration", self.do_integration)
         self.__ini.set_value_at_ini("Runtime", "calc thickness", self.calc_thickness)
@@ -276,6 +282,7 @@ class InputParametersWidget(WavePyInteractiveWidget):
                                                   self.sourceDistance,
                                                   self.correct_pi_jump,
                                                   self.remove_mean,
+                                                  self.correct_dpc_center,
                                                   self.remove_linear,
                                                   self.do_integration,
                                                   self.calc_thickness,

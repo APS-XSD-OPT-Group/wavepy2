@@ -54,11 +54,13 @@ from wavepy2.tools.common.wavepy_data import WavePyData
 from wavepy2.core import grating_interferometry
 from wavepy2.core.widgets.plot_intensities_harms import PlotIntensitiesHarms
 from wavepy2.core.widgets.plot_dark_field import PlotDarkField
-from wavepy2.core.widgets.plot_DPC import PlotDPC
+from wavepy2.tools.imaging.single_grating.widgets.plot_DPC import PlotDPC
+
 from wavepy2.tools.imaging.single_grating.widgets.input_parameters_widget import InputParametersWidget, generate_initialization_parameters
 from wavepy2.tools.imaging.single_grating.widgets.crop_dialog_widget import CropDialogPlot
 from wavepy2.tools.imaging.single_grating.widgets.second_crop_dialog_widget import SecondCropDialogPlot
 from wavepy2.tools.imaging.single_grating.widgets.show_cropped_figure_widget import ShowCroppedFigure
+from wavepy2.tools.imaging.single_grating.widgets.correct_DPC import CorrectDPC, CorrectDPCSubtractMean, CorrectZeroFromUnwrap
 
 
 from scipy import constants
@@ -89,6 +91,7 @@ def get_initialization_parameters():
                                                   sourceDistance     = ini.get_float_from_ini("Parameters", "source distance"),
                                                   correct_pi_jump    = ini.get_boolean_from_ini("Runtime", "correct pi jump"),
                                                   remove_mean        = ini.get_boolean_from_ini("Runtime", "remove mean"),
+                                                  correct_dpc_center = ini.get_boolean_from_ini("Runtime", "correct dpc center"),
                                                   remove_linear      = ini.get_boolean_from_ini("Runtime", "remove linear"),
                                                   do_integration     = ini.get_boolean_from_ini("Runtime", "do integration"),
                                                   calc_thickness     = ini.get_boolean_from_ini("Runtime", "calc thickness"),
@@ -275,4 +278,249 @@ def recrop_dpc(dpc_result, initialization_parameters):
 #--------------------------------------------------------------------------------
 
 def correct_zero_dpc(dpc_result, initialization_parameters):
-    pass
+
+    dpc01              = dpc_result.get_parameter("diffPhase01")
+    dpc10              = dpc_result.get_parameter("diffPhase10")
+    virtual_pixelsize  = dpc_result.get_parameter("virtual_pixelsize")
+
+    phenergy           = initialization_parameters.get_parameter("phenergy")
+    pixelsize          = initialization_parameters.get_parameter("pixelsize")
+    distDet2sample     = initialization_parameters.get_parameter("distDet2sample")
+    correct_pi_jump    = initialization_parameters.get_parameter("correct_pi_jump")
+    remove_mean        = initialization_parameters.get_parameter("remove_mean")
+    correct_dpc_center = initialization_parameters.get_parameter("correct_dpc_center")
+
+    plotter       = get_registered_plotter_instance()
+    main_logger   = get_registered_logger_instance()
+    script_logger = get_registered_secondary_logger()
+    ini           = get_registered_ini_instance()
+
+    plotter.register_context_window(CORRECT_ZERO_DPC)
+
+    factor = distDet2sample*hc/phenergy
+
+    angle = [dpc01/pixelsize[1]*factor, dpc10/pixelsize[0]*factor]
+    dpc   = [dpc01, dpc10]
+
+    script_logger.print('Initial Hrz Mean angle/pi : {:} pi'.format(np.mean(angle[0]/np.pi)))
+    script_logger.print('Initial Vt Mean angle/pi : {:} pi'.format(np.mean(angle[1]/np.pi)))
+
+    pi_jump = [int(np.round(np.mean(angle[0] / np.pi))),
+               int(np.round(np.mean(angle[1] / np.pi)))]
+
+    plotter.push_plot_on_context(CORRECT_ZERO_DPC, CorrectDPC, angle=angle, pi_jump=pi_jump)
+
+    if not sum(pi_jump) == 0 and correct_pi_jump:
+        angle[0] -= pi_jump[0] * np.pi
+        angle[1] -= pi_jump[1] * np.pi
+
+        dpc01 = angle[0] * pixelsize[0] / factor
+        dpc10 = angle[1] * pixelsize[1] / factor
+
+        dpc = [dpc01, dpc10]
+
+        plotter.push_plot_on_context(CORRECT_ZERO_DPC, PlotDPC, dpc01=dpc01, dpc10=dpc10, pixelsize=virtual_pixelsize, titleStr="Correct \u03c0 jump")
+
+    main_logger.print_message('mean angle/pi 0: {:} pi'.format(np.mean(angle[0]/np.pi)))
+    main_logger.print_message('mean angle/pi 1: {:} pi'.format(np.mean(angle[1]/np.pi)))
+    script_logger.print('Horz Mean angle/pi : {:} pi'.format(np.mean(angle[0]/np.pi)))
+    script_logger.print('Vert Mean angle/pi : {:} pi'.format(np.mean(angle[1]/np.pi)))
+
+    if remove_mean:
+        angle[0] -= np.mean(angle[0])
+        angle[1] -= np.mean(angle[1])
+
+        dpc01 = angle[0]*pixelsize[0]/factor
+        dpc10 = angle[1]*pixelsize[1]/factor
+
+        dpc = [dpc01, dpc10]
+
+        plotter.push_plot_on_context(CORRECT_ZERO_DPC, CorrectDPCSubtractMean, angle=angle)
+        plotter.push_plot_on_context(CORRECT_ZERO_DPC, PlotDPC, dpc01=dpc01, dpc10=dpc10, pixelsize=virtual_pixelsize, titleStr="Remove Mean")
+
+    if correct_dpc_center and plotter.is_active():
+        for i in [0, 1]:
+            iamhappy = False
+            while not iamhappy:
+                angle[i], pi_jump[i] = plotter.show_interactive_plot(CorrectZeroFromUnwrap, container_widget=None, angleArray=angle[i])
+
+                #iamhappy = plotter.show_interactive_plot(CorrectDPCCenter, container_widget=None, angle=angle[i], pi_jump=pi_jump[i])
+
+    plotter.draw_context_on_widget(CORRECT_ZERO_DPC, container_widget=plotter.get_context_container_widget(CORRECT_ZERO_DPC))
+
+    return WavePyData(dpc=dpc)
+
+'''
+def correct_zero_DPC(dpc01, dpc10,
+                     pixelsize, distDet2sample, phenergy, saveFileSuf,
+                     correct_pi_jump=False, remove_mean=False,
+                     saveFigFlag=True):
+
+    title = ['Angle displacement of fringes 01',
+             'Angle displacement of fringes 10']
+
+    factor = distDet2sample*hc/phenergy
+
+    angle = [dpc01/pixelsize[1]*factor, dpc10/pixelsize[0]*factor]
+    dpc   = [dpc01, dpc10]
+
+    wpu.log_this('Initial Hrz Mean angle/pi ' +
+                 ': {:} pi'.format(np.mean(angle[0]/np.pi)))
+
+    wpu.log_this('Initial Vt Mean angle/pi ' +
+                 ': {:} pi'.format(np.mean(angle[1]/np.pi)))
+
+    while True:
+
+        pi_jump = [0, 0]
+
+        pi_jump[0] = int(np.round(np.mean(angle[0]/np.pi)))
+        pi_jump[1] = int(np.round(np.mean(angle[1]/np.pi)))
+
+        plt.figure()
+        h1 = plt.hist(angle[0].flatten()/np.pi, 201,
+                      histtype='step', linewidth=2)
+        h2 = plt.hist(angle[1].flatten()/np.pi, 201,
+                      histtype='step', linewidth=2)
+
+        plt.xlabel(r'Angle [$\pi$rad]')
+        if pi_jump == [0, 0]:
+            lim = np.ceil(np.abs((h1[1][0], h1[1][-1],
+                                  h2[1][0], h2[1][-1])).max())
+            plt.xlim([-lim, lim])
+
+        plt.title('Correct DPC\n' +
+                  r'Angle displacement of fringes $[\pi$ rad]' +
+                  '\n' + r'Calculated jumps $x$ and $y$ : ' +
+                  '{:d}, {:d} $\pi$'.format(pi_jump[0], pi_jump[1]))
+
+        plt.legend(('DPC x', 'DPC y'))
+        plt.tight_layout()
+        if saveFigFlag:
+                    wpu.save_figs_with_idx(saveFileSuf)
+        plt.show(block=False)
+        plt.pause(.5)
+
+        if pi_jump == [0, 0]:
+            break
+
+        if (gui_mode and easyqt.get_yes_or_no('Subtract pi jump of DPC?') or
+           correct_pi_jump):
+
+            angle[0] -= pi_jump[0]*np.pi
+            angle[1] -= pi_jump[1]*np.pi
+
+            dpc01 = angle[0]*pixelsize[0]/factor
+            dpc10 = angle[1]*pixelsize[1]/factor
+            dpc = [dpc01, dpc10]
+
+            wgi.plot_DPC(dpc01, dpc10,
+                         virtual_pixelsize, saveFigFlag=saveFigFlag,
+                         saveFileSuf=saveFileSuf)
+            plt.show(block=False)
+
+        else:
+            break
+
+    wpu.print_blue('MESSAGE: mean angle/pi ' +
+                   '0: {:} pi'.format(np.mean(angle[0]/np.pi)))
+    wpu.print_blue('MESSAGE: mean angle/pi ' +
+                   '1: {:} pi'.format(np.mean(angle[1]/np.pi)))
+
+    wpu.log_this('Horz Mean angle/pi ' +
+                 ': {:} pi'.format(np.mean(angle[0]/np.pi)))
+
+    wpu.log_this('Vert Mean angle/pi ' +
+                 ': {:} pi'.format(np.mean(angle[1]/np.pi)))
+
+    #    if easyqt.get_yes_or_no('Subtract mean of DPC?'):
+    if (gui_mode and easyqt.get_yes_or_no('Subtract mean of DPC?') or
+       remove_mean):
+
+        wpu.log_this('%%% COMMENT: Subtrated mean value of DPC',
+                     saveFileSuf)
+
+        angle[0] -= np.mean(angle[0])
+        angle[1] -= np.mean(angle[1])
+
+        dpc01 = angle[0]*pixelsize[0]/factor
+        dpc10 = angle[1]*pixelsize[1]/factor
+        dpc = [dpc01, dpc10]
+
+        plt.figure()
+        plt.hist(angle[0].flatten()/np.pi, 201,
+                 histtype='step', linewidth=2)
+        plt.hist(angle[1].flatten()/np.pi, 201,
+                 histtype='step', linewidth=2)
+
+        plt.xlabel(r'Angle [$\pi$rad]')
+
+        plt.title('Correct DPC\n' +
+                  r'Angle displacement of fringes $[\pi$ rad]')
+
+        plt.legend(('DPC x', 'DPC y'))
+        plt.tight_layout()
+        if saveFigFlag:
+                    wpu.save_figs_with_idx(saveFileSuf)
+        plt.show(block=False)
+        plt.pause(.5)
+
+        wgi.plot_DPC(dpc01, dpc10,
+                     virtual_pixelsize, saveFigFlag=saveFigFlag,
+                     saveFileSuf=saveFileSuf)
+        plt.show(block=True)
+        plt.pause(.1)
+    else:
+        pass
+
+    if gui_mode and easyqt.get_yes_or_no('Correct DPC center?'):
+
+        wpu.log_this('%%% COMMENT: DCP center is corrected',
+                     saveFileSuf)
+
+        for i in [0, 1]:
+
+            iamhappy = False
+            while not iamhappy:
+
+                angle[i], pi_jump[i] = correct_zero_from_unwrap(angle[i])
+
+                wpu.print_blue('MESSAGE: pi jump ' +
+                               '{:}: {:} pi'.format(i, pi_jump[i]))
+                wpu.print_blue('MESSAGE: mean angle/pi ' +
+                               '{:}: {:} pi'.format(i, np.mean(angle[i]/np.pi)))
+                plt.figure()
+                plt.hist(angle[i].flatten() / np.pi, 101,
+                         histtype='step', linewidth=2)
+                plt.title(r'Angle displacement of fringes $[\pi$ rad]')
+
+                if saveFigFlag:
+                    wpu.save_figs_with_idx(saveFileSuf)
+                plt.show()
+
+                plt.figure()
+
+                vlim = np.max((np.abs(wpu.mean_plus_n_sigma(angle[i]/np.pi,
+                                                            -5)),
+                               np.abs(wpu.mean_plus_n_sigma(angle[i]/np.pi,
+                                                            5))))
+
+                plt.imshow(angle[i] / np.pi,
+                           cmap='RdGy',
+                           vmin=-vlim, vmax=vlim)
+
+                plt.colorbar()
+                plt.title(title[i] + r' [$\pi$ rad],')
+                plt.xlabel('Pixels')
+                plt.ylabel('Pixels')
+
+                plt.pause(.1)
+
+                iamhappy = easyqt.get_yes_or_no('Happy?')
+
+            dpc[i] = angle[i]*pixelsize[i]/factor
+
+    return dpc
+
+
+'''

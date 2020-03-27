@@ -42,51 +42,27 @@
 # ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE         #
 # POSSIBILITY OF SUCH DAMAGE.                                             #
 # #########################################################################
-import wavepy2.util.plot.widgets.graphical_roi_idx
-from wavepy2.util.common import common_tools
-from wavepy2.util.ini.initializer import get_registered_ini_instance
-from wavepy2.util.log.logger import get_registered_logger_instance, LoggerColor
-from wavepy2.util.plot import plot_tools
-from wavepy2.util.plot.plotter import WavePyInteractiveWidget
 
-FIXED_WIDTH=800
+class ImageToChange(object):
+    def __init__(self, mpl_image, mpl_figure):
+        self.__mpl_image  = mpl_image
+        self.__mpl_figure = mpl_figure
 
-class SecondCropDialogPlot(WavePyInteractiveWidget):
-    __initialized = False
+        self.__mpl_data = self.__mpl_image.get_array().data.astype(float)
+        self.__cmin_o   = self.__mpl_image.get_clim()[0]
+        self.__cmax_o   = self.__mpl_image.get_clim()[1]
 
-    def __init__(self, parent):
-        super(SecondCropDialogPlot, self).__init__(parent, message="New Crop?", title="Crop Image")
-        self.__logger  = get_registered_logger_instance()
+    def get_mpl_data(self):
+        return self.__mpl_data
 
-    def build_widget(self, **kwargs):
-        img         = kwargs["img"]
+    def get_mpl_image(self):
+        return self.__mpl_image
 
-        self.__initialize(img)
+    def get_mpl_figure(self):
+        return self.__mpl_figure
 
-        crop_image = wavepy2.util.plot.widgets.graphical_roi_idx.GraphicalRoiIdx(self,
-                                                                                 image=img,
-                                                                                 set_crop_output_listener=self.create_cropped_output)
+    def get_cmin_o(self):
+        return self.__cmin_o
 
-        tab_widget = plot_tools.tabWidget(self.get_central_widget())
-
-        plot_tools.createTabPage(tab_widget, "Crop Image", crop_image)
-
-        self.setFixedWidth(FIXED_WIDTH)
-
-        self.update()
-
-    def get_accepted_output(self):
-        return self.__img, self.__idx4crop
-
-    def get_rejected_output(self):
-        return self.__initial_img , self.__initial_idx4crop
-
-    def create_cropped_output(self, idx4crop):
-        self.__img      = common_tools.crop_matrix_at_indexes(self.__initial_img, idx4crop)
-        self.__idx4crop = idx4crop
-
-    def __initialize(self, img):
-        self.__initial_img      = img
-        self.__initial_idx4crop = [0, -1, 0, -1]
-        self.__img      = self.__initial_img
-        self.__idx4crop = self.__initial_idx4crop
+    def get_cmax_o(self):
+        return self.__cmax_o

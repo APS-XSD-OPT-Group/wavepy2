@@ -42,51 +42,61 @@
 # ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE         #
 # POSSIBILITY OF SUCH DAMAGE.                                             #
 # #########################################################################
-import wavepy2.util.plot.widgets.graphical_roi_idx
-from wavepy2.util.common import common_tools
-from wavepy2.util.ini.initializer import get_registered_ini_instance
-from wavepy2.util.log.logger import get_registered_logger_instance, LoggerColor
-from wavepy2.util.plot import plot_tools
-from wavepy2.util.plot.plotter import WavePyInteractiveWidget
+import numpy as np
+from PyQt5.QtWidgets import QWidget, QHBoxLayout
+from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
+from matplotlib.figure import Figure
+from matplotlib.widgets import Cursor
+from wavepy2.util.plot.plot_tools import WIDGET_FIXED_WIDTH
+from wavepy2.util.log.logger import get_registered_logger_instance
 
-FIXED_WIDTH=800
+class GraphicalSelectPointIdx(QWidget):
+    def __init__(self, parent, image, selection_listener, **kargs4graph):
+        super(GraphicalSelectPointIdx, self).__init__(parent)
 
-class SecondCropDialogPlot(WavePyInteractiveWidget):
-    __initialized = False
+        logger = get_registered_logger_instance()
 
-    def __init__(self, parent):
-        super(SecondCropDialogPlot, self).__init__(parent, message="New Crop?", title="Crop Image")
-        self.__logger  = get_registered_logger_instance()
+        layout = QHBoxLayout()
 
-    def build_widget(self, **kwargs):
-        img         = kwargs["img"]
+        figure_canvas = FigureCanvas(Figure(facecolor="white", figsize=(10, 8)))
+        figure = figure_canvas.figure
 
-        self.__initialize(img)
+        ax = figure.subplots()
 
-        crop_image = wavepy2.util.plot.widgets.graphical_roi_idx.GraphicalRoiIdx(self,
-                                                                                 image=img,
-                                                                                 set_crop_output_listener=self.create_cropped_output)
+        surface = ax.imshow(image, cmap='Spectral', **kargs4graph)
+        ax.autoscale(False)
 
-        tab_widget = plot_tools.tabWidget(self.get_central_widget())
+        ax1 = ax.plot(image.shape[1] // 2, image.shape[0] // 2, 'r+', ms=30, picker=10)
 
-        plot_tools.createTabPage(tab_widget, "Crop Image", crop_image)
+        ax.grid()
+        ax.set_xlabel('Pixels')
+        ax.set_ylabel('Pixels')
+        ax.set_title('CHOOSE POINT, Click OK when Done\nRight Click: Select point\n',
+                      fontsize=16, color='r', weight='bold')
+        figure.colorbar(surface)
 
-        self.setFixedWidth(FIXED_WIDTH)
+        def onclick(event):
+            if event.button == 3: # right click
+                xo, yo = event.xdata, event.ydata
 
-        self.update()
+                logger.print_message('Middle Click: Select point:\tx: {:.0f}, y: {:.0f}'.format(xo, yo))
 
-    def get_accepted_output(self):
-        return self.__img, self.__idx4crop
+                ax1[0].set_xdata(xo)
+                ax1[0].set_ydata(yo)
 
-    def get_rejected_output(self):
-        return self.__initial_img , self.__initial_idx4crop
+                ax.set_title('CHOOSE POINT, Click OK when Done\nRight Click: Select point\n' +
+                              'x: {:.0f}, y: {:.0f}'.format(xo, yo),
+                              fontsize=16, color='r', weight='bold')
 
-    def create_cropped_output(self, idx4crop):
-        self.__img      = common_tools.crop_matrix_at_indexes(self.__initial_img, idx4crop)
-        self.__idx4crop = idx4crop
+                if np.isnan(xo) or np.isnan(yo): selection_listener(None, None)
+                else: selection_listener(xo, yo)
 
-    def __initialize(self, img):
-        self.__initial_img      = img
-        self.__initial_idx4crop = [0, -1, 0, -1]
-        self.__img      = self.__initial_img
-        self.__idx4crop = self.__initial_idx4crop
+                figure.canvas.draw()
+
+        Cursor(ax, useblit=True, color='red', linewidth=2)
+        figure.canvas.mpl_connect('button_press_event', onclick)
+
+        layout.addWidget(figure_canvas)
+
+        self.setLayout(layout)
+        self.setFixedWidth(WIDGET_FIXED_WIDTH)
