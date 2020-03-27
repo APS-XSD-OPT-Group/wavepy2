@@ -54,6 +54,7 @@ from wavepy2.tools.common.wavepy_data import WavePyData
 from wavepy2.core import grating_interferometry
 from wavepy2.core.widgets.plot_intensities_harms import PlotIntensitiesHarms
 from wavepy2.core.widgets.plot_dark_field import PlotDarkField
+from wavepy2.core.widgets.plot_DPC import PlotDPC
 from wavepy2.tools.imaging.single_grating.widgets.input_parameters_widget import InputParametersWidget, generate_initialization_parameters
 from wavepy2.tools.imaging.single_grating.widgets.crop_dialog_widget import CropDialogPlot
 from wavepy2.tools.imaging.single_grating.widgets.second_crop_dialog_widget import SecondCropDialogPlot
@@ -66,6 +67,7 @@ hc = constants.value('inverse meter-electron volt relationship')  # hc
 
 CALCULATE_DPC_CONTEXT_KEY = "Calculate DPC"
 RECROP_DPC_CONTEXT_KEY = "Recrop DPC"
+CORRECT_ZERO_DPC = "Correct Zero DPC"
 
 def get_initialization_parameters():
     plotter = get_registered_plotter_instance()
@@ -92,6 +94,8 @@ def get_initialization_parameters():
                                                   calc_thickness     = ini.get_boolean_from_ini("Runtime", "calc thickness"),
                                                   remove_2nd_order   = ini.get_boolean_from_ini("Runtime", "remove 2nd order"),
                                                   material_idx       = ini.get_int_from_ini("Runtime", "material idx"))
+
+#--------------------------------------------------------------------------------
 
 def calculate_dpc(initialization_parameters):
     img             = initialization_parameters.get_parameter("img")
@@ -195,6 +199,8 @@ def calculate_dpc(initialization_parameters):
                       diffPhase10=diffPhase10,
                       virtual_pixelsize=virtual_pixelsize)
 
+#--------------------------------------------------------------------------------
+
 def recrop_dpc(dpc_result, initialization_parameters):
     img             = initialization_parameters.get_parameter("img")
     imgRef          = initialization_parameters.get_parameter("imgRef")
@@ -253,6 +259,8 @@ def recrop_dpc(dpc_result, initialization_parameters):
         plotter.push_plot_on_context(RECROP_DPC_CONTEXT_KEY, PlotIntensitiesHarms, int00=int00, int01=int01, int10=int10, pixelsize=virtual_pixelsize, titleStr='Intensity')
         plotter.push_plot_on_context(RECROP_DPC_CONTEXT_KEY, PlotDarkField, darkField01=darkField01, darkField10=darkField10, pixelsize=virtual_pixelsize)
 
+    plotter.push_plot_on_context(RECROP_DPC_CONTEXT_KEY, PlotDPC, dpc01=diffPhase01, dpc10=diffPhase10, pixelsize=virtual_pixelsize, titleStr="")
+
     plotter.draw_context_on_widget(RECROP_DPC_CONTEXT_KEY, container_widget=plotter.get_context_container_widget(RECROP_DPC_CONTEXT_KEY))
 
     return WavePyData(int00=int00,
@@ -263,3 +271,8 @@ def recrop_dpc(dpc_result, initialization_parameters):
                       diffPhase01=diffPhase01,
                       diffPhase10=diffPhase10,
                       virtual_pixelsize=virtual_pixelsize)
+
+#--------------------------------------------------------------------------------
+
+def correct_zero_dpc(dpc_result, initialization_parameters):
+    pass

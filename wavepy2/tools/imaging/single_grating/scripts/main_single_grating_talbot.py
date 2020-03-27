@@ -51,8 +51,8 @@ from wavepy2.util.plot.qt_application import get_registered_qt_application_insta
 from wavepy2.util.log.logger import register_logger_single_instance, register_secondary_logger, LoggerMode
 from wavepy2.util.plot.plotter import get_registered_plotter_instance, register_plotter_instance, PlotterMode
 
-from wavepy2.tools.imaging.single_grating.single_grating_talbot import get_initialization_parameters, calculate_dpc, recrop_dpc
-from wavepy2.tools.imaging.single_grating.single_grating_talbot import CALCULATE_DPC_CONTEXT_KEY, RECROP_DPC_CONTEXT_KEY
+from wavepy2.tools.imaging.single_grating.single_grating_talbot import get_initialization_parameters, calculate_dpc, recrop_dpc, correct_zero_dpc
+from wavepy2.tools.imaging.single_grating.single_grating_talbot import CALCULATE_DPC_CONTEXT_KEY, RECROP_DPC_CONTEXT_KEY, CORRECT_ZERO_DPC
 
 MAIN_LOGGER_MODE   = LoggerMode.FULL
 SCRIPT_LOGGER_MODE = LoggerMode.FULL
@@ -72,26 +72,33 @@ if __name__=="__main__":
     register_qt_application_instance(QtApplicationMode.QT if PLOTTER_MODE in [PlotterMode.FULL, PlotterMode.DISPLAY_ONLY, PlotterMode.SAVE_ONLY] else QtApplicationMode.NONE)
 
     # ==========================================================================
-    # %% Experimental parameters
+    # %% Initialization parameters
     # ==========================================================================
 
     initialization_parameters = get_initialization_parameters()
 
-
-    # ==========================================================================
-    # %% do the magic
-    # ==========================================================================
     plotter = get_registered_plotter_instance()
 
     register_secondary_logger(stream=open(plotter.get_save_file_prefix() + "_" + common_tools.datetime_now_str() + ".log", "wt"),
                               logger_mode=SCRIPT_LOGGER_MODE)
 
+    # ==========================================================================
+    # %% Main
+    # ==========================================================================
+
     dpc_result = calculate_dpc(initialization_parameters)
     plotter.show_context_window(CALCULATE_DPC_CONTEXT_KEY)
 
+    # ==========================================================================
 
-    recrop_result = recrop_dpc(dpc_result, initialization_parameters)
+    recrop_dpc_result = recrop_dpc(dpc_result, initialization_parameters)
     plotter.show_context_window(RECROP_DPC_CONTEXT_KEY)
+
+    # ==========================================================================
+
+    correct_zero_dpc_result = correct_zero_dpc(recrop_dpc_result, initialization_parameters)
+    plotter.show_context_window(CORRECT_ZERO_DPC)
+
 
     # integration
 

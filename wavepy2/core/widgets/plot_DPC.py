@@ -51,7 +51,7 @@ from warnings import filterwarnings
 filterwarnings("ignore")
 
 class PlotDPC(WavePyWidget):
-    def get_plot_tab_name(self): return 'Differential Phase ' + r'[$\pi$ rad]' + self.__title
+    def get_plot_tab_name(self): return "Differential Phase [\u03c0 rad]" + self.__title
 
     def build_mpl_figure(self, **kwargs):
         dpc01 = kwargs["dpc01"]
