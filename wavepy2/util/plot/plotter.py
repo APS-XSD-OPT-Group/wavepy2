@@ -88,10 +88,14 @@ class WavePyWidget(QWidget, WavePyGenericWidget):
 
     def build_mpl_figure(self, **kwargs): raise NotImplementedError()
 
+    def allows_saving(self): return True
+
     def get_figures_to_save(self):
-        return [FigureToSave(figure=figure_to_save,
-                             figure_file_name=common_tools.get_unique_filename(get_registered_plotter_instance().get_save_file_prefix(), "png"))
-                for figure_to_save in self.__figures_to_save]
+        if self.allows_saving():
+            return [FigureToSave(figure=figure_to_save,
+                                 figure_file_name=common_tools.get_unique_filename(get_registered_plotter_instance().get_save_file_prefix(), "png"))
+                    for figure_to_save in self.__figures_to_save]
+        else: return None
 
 
 class WavePyInteractiveWidget(QDialog, WavePyGenericWidget):
