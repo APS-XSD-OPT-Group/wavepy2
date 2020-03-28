@@ -96,82 +96,95 @@ class CorrectDPCHistos(WavePyWidget):
 from wavepy2.util.log.logger import get_registered_logger_instance, LoggerColor
 from wavepy2.util.plot.plot_tools import WIDGET_FIXED_WIDTH
 from wavepy2.util.plot.widgets.graphical_select_point_idx import GraphicalSelectPointIdx
+from PyQt5.QtWidgets import QHBoxLayout
 
 class CorrectDPCCenter(WavePyInteractiveWidget):
+    __harmonic = ["01", "10"]
+
     def __init__(self, parent):
         super(CorrectDPCCenter, self).__init__(parent, message="Correct DPC Center", title="Correct DPC Center")
 
         self.__logger  = get_registered_logger_instance()
 
     def build_widget(self, **kwargs):
-        self.__initialize(kwargs["angleArray"])
-        self.__harmonic = kwargs["harmonic"]
+        self.__initialize(kwargs["angle"])
 
-        self.__tab_widget = plot_tools.tabWidget(self.get_central_widget())
+        main_box = plot_tools.widgetBox(self.get_central_widget(), "", width=WIDGET_FIXED_WIDTH*2, orientation="horizontal")
 
-        self.__result_canvas_histo = FigureCanvas(Figure())
-        self.__result_canvas       = FigureCanvas(Figure())
+        harm_box = [plot_tools.widgetBox(main_box, "Harmonic 01"), plot_tools.widgetBox(main_box, "Harmonic 10")]
 
-        self.__update_result_figures()
-        
-        plot_tools.createTabPage(self.__tab_widget, "Correct Zero",  GraphicalSelectPointIdx(self, image=self.__pi_jump, selection_listener=self.set_selection))
-        plot_tools.createTabPage(self.__tab_widget, "Angle Displacement of Fringes",   self.__result_canvas_histo)
-        plot_tools.createTabPage(self.__tab_widget, "DPC Center",   self.__result_canvas)
+        self.__tab_widget = [plot_tools.tabWidget(harm_box[0]), plot_tools.tabWidget(harm_box[1])]
 
-        self.setFixedWidth(WIDGET_FIXED_WIDTH*1.1)
+        self.__result_canvas_histo = [FigureCanvas(Figure()), FigureCanvas(Figure())]
+        self.__result_canvas       = [FigureCanvas(Figure()), FigureCanvas(Figure())]
+
+        for index in [0, 1]:
+            self.__update_result_figures(index)
+
+            plot_tools.createTabPage(self.__tab_widget[index], "Correct Zero", GraphicalSelectPointIdx(self,
+                                                                                                       image=self.__pi_jump[index],
+                                                                                                       selection_listener=self.set_selection,
+                                                                                                       args_for_listener=index))
+            plot_tools.createTabPage(self.__tab_widget[index], "Angle Displacement of Fringes", self.__result_canvas_histo[index])
+            plot_tools.createTabPage(self.__tab_widget[index], "DPC Center",                    self.__result_canvas[index])
+
+            harm_box[index].setFixedHeight(max(self.__result_canvas_histo[index].get_width_height()[1], self.__result_canvas[index].get_width_height()[1])+150)
+
+        self.setFixedWidth(WIDGET_FIXED_WIDTH*2.1)
 
         self.update()
 
-    def __update_result_figures(self):
-        figure = self.__result_canvas_histo.figure
+
+    def get_accepted_output(self):
+        return self.__angle
+
+    def get_rejected_output(self):
+        return self.__angle_initial
+
+    def set_selection(self, xo, yo, index):
+        j_o, i_o = int(xo), int(yo)
+
+        if not j_o is None:
+            self.__angle[index]    -= self.__pi_jump[index][i_o, j_o] * np.pi
+            self.__pi_jump_i[index] = self.__pi_jump[index][i_o, j_o]
+        else:
+            self.__pi_jump_i[index] = None
+
+        self.__logger.print_other("MESSAGE: pi jump " + self.__harmonic[index] + ": {:} pi".format(self.__pi_jump_i[index]), color=LoggerColor.BLUE)
+
+        self.__update_result_figures(index)
+
+    def __initialize(self, angle):
+        self.__angle     = angle
+        self.__pi_jump   = [np.round(self.__angle[0] / np.pi), np.round(self.__angle[1] / np.pi)]
+        self.__pi_jump_i = [None, None]
+
+        self.__angle_array_initial = angle
+
+    def __update_result_figures(self, index):
+        figure = self.__result_canvas_histo[index].figure
         figure.clear()
 
-        figure.gca().hist(self.__angle_array.flatten() / np.pi, 101, histtype='step', linewidth=2)
-        figure.gca().set_title(r'Angle displacement of fringes [\u03c0 rad]')
+        figure.gca().hist(self.__angle[index].flatten() / np.pi, 101, histtype='step', linewidth=2, color=["blue", "orange"][index])
+        figure.gca().set_title(r'Angle displacement of fringes [$\pi$ rad]')
 
-        self.__result_canvas_histo.draw()
+        self.__result_canvas_histo[index].draw()
 
         #if saveFigFlag:
         #    wpu.save_figs_with_idx(saveFileSuf)
 
-        figure = self.__result_canvas.figure
+        figure = self.__result_canvas[index].figure
         figure.clear()
 
-        vlim = np.max((np.abs(common_tools.mean_plus_n_sigma(self.__angle_array / np.pi, -5)),
-                       np.abs(common_tools.mean_plus_n_sigma(self.__angle_array / np.pi, 5))))
+        vlim = np.max((np.abs(common_tools.mean_plus_n_sigma(self.__angle[index] / np.pi, -5)),
+                       np.abs(common_tools.mean_plus_n_sigma(self.__angle[index] / np.pi, 5))))
 
-        im = figure.gca().imshow(self.__angle_array / np.pi, cmap='RdGy', vmin=-vlim, vmax=vlim)
+        im = figure.gca().imshow(self.__angle[index] / np.pi, cmap='RdGy', vmin=-vlim, vmax=vlim)
         figure.colorbar(im)
-        figure.gca().set_title("Angle displacement of fringes " + self.__harmonic + r' [$\pi$ rad],')
+        figure.gca().set_title("Angle displacement of fringes " + self.__harmonic[index] + r' [$\pi$ rad],')
         figure.gca().set_xlabel('Pixels')
         figure.gca().set_ylabel('Pixels')
 
-        self.__result_canvas.draw()
+        self.__result_canvas[index].draw()
 
-        self.__tab_widget.setCurrentIndex(1)
-
-    def get_accepted_output(self):
-        return self.__angle_array
-
-    def get_rejected_output(self):
-        return self.__angle_array_initial
-
-    def set_selection(self, xo, yo):
-        j_o, i_o = int(xo), int(yo)
-
-        if not j_o is None:
-            self.__angle_array -= self.__pi_jump[i_o, j_o] * np.pi
-            self.__pi_jump_i = self.__pi_jump[i_o, j_o]
-        else:
-            self.__pi_jump_i = None
-
-        self.__logger.print_other("MESSAGE: pi jump " + self.__harmonic + ": {:} pi".format(self.__pi_jump_i), color=LoggerColor.BLUE)
-
-        self.__update_result_figures()
-
-    def __initialize(self, angleArray):
-        self.__angle_array = angleArray
-        self.__pi_jump     = np.round(self.__angle_array / np.pi)
-        self.__pi_jump_i   = None
-
-        self.__angle_array_initial = angleArray
+        self.__tab_widget[index].setCurrentIndex(1)

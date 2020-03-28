@@ -51,7 +51,7 @@ from wavepy2.util.plot.plot_tools import WIDGET_FIXED_WIDTH
 from wavepy2.util.log.logger import get_registered_logger_instance
 
 class GraphicalSelectPointIdx(QWidget):
-    def __init__(self, parent, image, selection_listener, **kargs4graph):
+    def __init__(self, parent, image, selection_listener, args_for_listener, **kwargs):
         super(GraphicalSelectPointIdx, self).__init__(parent)
 
         logger = get_registered_logger_instance()
@@ -63,7 +63,7 @@ class GraphicalSelectPointIdx(QWidget):
 
         ax = figure.subplots()
 
-        surface = ax.imshow(image, cmap='Spectral', **kargs4graph)
+        surface = ax.imshow(image, cmap='Spectral', **kwargs)
         ax.autoscale(False)
 
         ax1 = ax.plot(image.shape[1] // 2, image.shape[0] // 2, 'r+', ms=30, picker=10)
@@ -88,8 +88,8 @@ class GraphicalSelectPointIdx(QWidget):
                               'x: {:.0f}, y: {:.0f}'.format(xo, yo),
                               fontsize=16, color='r', weight='bold')
 
-                if np.isnan(xo) or np.isnan(yo): selection_listener(None, None)
-                else: selection_listener(xo, yo)
+                if np.isnan(xo) or np.isnan(yo): selection_listener(None, None, args_for_listener)
+                else: selection_listener(xo, yo, args_for_listener)
 
                 figure.canvas.draw()
 

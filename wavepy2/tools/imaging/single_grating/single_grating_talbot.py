@@ -336,8 +336,8 @@ def correct_zero_dpc(dpc_result, initialization_parameters):
         plotter.push_plot_on_context(CORRECT_ZERO_DPC, PlotDPC, dpc01=dpc01, dpc10=dpc10, pixelsize=virtual_pixelsize, titleStr="Remove Mean")
 
     if correct_dpc_center and plotter.is_active():
-        angle[0] = plotter.show_interactive_plot(CorrectDPCCenter, container_widget=None, angleArray=angle[0], harmonic="01")
-        angle[1] = plotter.show_interactive_plot(CorrectDPCCenter, container_widget=None, angleArray=angle[1], harmonic="10")
+        angle = plotter.show_interactive_plot(CorrectDPCCenter, container_widget=None, angle=angle)
+        #angle[1] = plotter.show_interactive_plot(CorrectDPCCenter, container_widget=None, angleArray=angle[1], harmonic="10")
 
         dpc01 = __get_dpc(angle[0], pixelsize[0])
         dpc10 = __get_dpc(angle[1], pixelsize[1])
