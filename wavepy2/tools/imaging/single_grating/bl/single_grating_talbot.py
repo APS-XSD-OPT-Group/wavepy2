@@ -62,14 +62,16 @@ from wavepy2.tools.imaging.single_grating.widgets.crop_dialog_widget import Crop
 from wavepy2.tools.imaging.single_grating.widgets.second_crop_dialog_widget import SecondCropDialogPlot
 from wavepy2.tools.imaging.single_grating.widgets.show_cropped_figure_widget import ShowCroppedFigure
 from wavepy2.tools.imaging.single_grating.widgets.correct_DPC_widgets import CorrectDPC, CorrectDPCHistos, CorrectDPCCenter
-from wavepy2.tools.imaging.single_grating.bl.dpc_profile_analysis import create_dpc_profile_analsysis_manager, DPC_PROFILE_ANALYSYS_CONTEXT_KEY
+from wavepy2.tools.imaging.single_grating.widgets.fit_radius_dpc_widget import FitRadiusDPC
+
+from wavepy2.tools.imaging.single_grating.bl.dpc_profile_analysis import create_dpc_profile_analsysis_manager
 
 
 CALCULATE_DPC_CONTEXT_KEY = "Calculate DPC"
 RECROP_DPC_CONTEXT_KEY = "Recrop DPC"
 CORRECT_ZERO_DPC_CONTEXT_KEY = "Correct Zero DPC"
 REMOVE_LINEAR_FIT_CONTEXT_KEY = "Remove Linear Fit"
-
+FIT_RADIUS_DPC_CONTEXT_KEY = "Fit Radius DPC"
 
 class SingleGratingTalbotFacade():
     @classmethod
@@ -474,83 +476,25 @@ class __SingleGratingTalbot(SingleGratingTalbotFacade):
                                                                      filter_width=50),
                                                           initialization_parameters)
 
-        return WavePyData()
+        return WavePyData(diffPhase01=diffPhase01,
+                          diffPhase10=diffPhase10,
+                          virtual_pixelsize=virtual_pixelsize,)
 
     @classmethod
     def fit_radius_dpc(cls, correct_zero_dpc_result, initialization_parameters):
-        pass
+        phenergy          = initialization_parameters.get_parameter("phenergy")
 
-    '''
-    def fit_radius_dpc(dpx, dpy, pixelsize, kwave,
-                       saveFigFlag=False, str4title=''):
-    
-        xVec = wpu.realcoordvec(dpx.shape[1], pixelsize[1])
-        yVec = wpu.realcoordvec(dpx.shape[0], pixelsize[0])
-    
-        xmatrix, ymatrix = np.meshgrid(xVec, yVec)
-    
-        fig = plt.figure(figsize=(14, 5))
-        fig.suptitle(str4title + 'Phase [rad]', fontsize=14)
-    
-        ax1 = plt.subplot(121)
-        ax2 = plt.subplot(122, sharex=ax1, sharey=ax1)
-    
-        ax1.plot(xVec*1e6, dpx[dpx.shape[0]//4, :],
-                 '-ob', label='1/4')
-        ax1.plot(xVec*1e6, dpx[dpx.shape[0]//4*3, :],
-                 '-og', label='3/4')
-        ax1.plot(xVec*1e6, dpx[dpx.shape[0]//2, :],
-                 '-or', label='1/2')
-    
-        lin_fitx = np.polyfit(xVec,
-                              dpx[dpx.shape[0]//2, :], 1)
-        lin_funcx = np.poly1d(lin_fitx)
-        ax1.plot(xVec*1e6, lin_funcx(xVec),
-                 '--c', lw=2,
-                 label='Fit 1/2')
-        curvrad_x = kwave/(lin_fitx[0])
-    
-        wpu.print_blue('lin_fitx[0] x: {:.3g} m'.format(lin_fitx[0]))
-        wpu.print_blue('lin_fitx[1] x: {:.3g} m'.format(lin_fitx[1]))
-    
-        wpu.print_blue('Curvature Radius of WF x: {:.3g} m'.format(curvrad_x))
-    
-        ax1.ticklabel_format(style='sci', axis='y', scilimits=(0, 1))
-        ax1.set_xlabel(r'[$\mu m$]')
-        ax1.set_ylabel('dpx [radians]')
-        ax1.legend(loc=0, fontsize='small')
-        ax1.set_title('Curvature Radius of WF {:.3g} m'.format(curvrad_x),
-                      fontsize=16)
-        # ax1.set_adjustable('box-forced')
-        ax1.set_adjustable('box')
-    
-        ax2.plot(yVec*1e6, dpy[:, dpy.shape[1]//4],
-                 '-ob', label='1/4')
-        ax2.plot(yVec*1e6, dpy[:, dpy.shape[1]//4*3],
-                 '-og', label='3/4')
-        ax2.plot(yVec*1e6, dpy[:, dpy.shape[1]//2],
-                 '-or', label='1/2')
-    
-        lin_fity = np.polyfit(yVec,
-                              dpy[:, dpy.shape[1]//2], 1)
-        lin_funcy = np.poly1d(lin_fity)
-        ax2.plot(yVec*1e6, lin_funcy(yVec),
-                 '--c', lw=2,
-                 label='Fit 1/2')
-        curvrad_y = kwave/(lin_fity[0])
-        wpu.print_blue('Curvature Radius of WF y: {:.3g} m'.format(curvrad_y))
-    
-        ax2.ticklabel_format(style='sci', axis='y', scilimits=(0, 1))
-        ax2.set_xlabel(r'[$\mu m$]')
-        ax2.set_ylabel('dpy [radians]')
-        ax2.legend(loc=0, fontsize='small')
-        ax2.set_title('Curvature Radius of WF {:.3g} m'.format(curvrad_y),
-                      fontsize=16)
-        # ax2.set_adjustable('box-forced')
-        ax2.set_adjustable('box')
-    
-        if saveFigFlag:
-            wpu.save_figs_with_idx(saveFileSuf, extension='png')
-        plt.show(block=True)
-    
-    '''
+        diffPhase01       = correct_zero_dpc_result.get_parameter("diffPhase01")
+        diffPhase10       = correct_zero_dpc_result.get_parameter("diffPhase10")
+        virtual_pixelsize = correct_zero_dpc_result.get_parameter("virtual_pixelsize")
+
+        wavelength = hc / phenergy
+        kwave = 2*np.pi/wavelength
+
+        plotter = get_registered_plotter_instance()
+        plotter.register_context_window(FIT_RADIUS_DPC_CONTEXT_KEY)
+        plotter.push_plot_on_context(FIT_RADIUS_DPC_CONTEXT_KEY, FitRadiusDPC, dpx=diffPhase01, dpy=diffPhase10, pixelsize=virtual_pixelsize, kwave=kwave, str4title="")
+
+        plotter.draw_context_on_widget(FIT_RADIUS_DPC_CONTEXT_KEY, container_widget=plotter.get_context_container_widget(FIT_RADIUS_DPC_CONTEXT_KEY))
+
+        return WavePyData()
