@@ -208,6 +208,43 @@ def save_csv_file(arrayList, fname='output.csv', headerList=[], comments=''):
     np.savetxt(fname, data2save, fmt=fmt, header=header, delimiter=', ')
     logger.print_message(fname + ' saved!')
 
+from matplotlib.pyplot import get_cmap
+import itertools
+
+def line_style_cycle(ls=['-', '--'], ms=['s', 'o', '^', 'd'], ncurves=2, cmap_str='default'):
+    '''
+    Generate a list with cycle of linestyles for plots. See
+    `here <http://matplotlib.org/api/pyplot_api.html?highlight=plot#matplotlib.pyplot.plot>`_
+    for imformation about the syntax of the styles.
+
+    Example
+    -------
+
+    >>> ls_cycle, lc_cycle = line_style_cycle(ncurves=10)
+    >>> x = np.linspace(0, 100, 10)
+    >>> for i in range (10):
+    >>>     plt.plot(x, i*x, next(ls_cycle), color=next(lc_cycle), label=str(i))
+    >>> plt.legend()
+    >>> plt.show()
+
+    '''
+
+    list_ls = list(a[0] + a[1] for a in itertools.product(ls, ms))
+    ls_cycle = itertools.cycle(list_ls[0:ncurves])
+
+    if cmap_str == 'default':
+        lc_list = ['#4C72B0', '#55A868', '#C44E52', '#8172B2',
+                   '#CCB974', '#64B5CD', '#1f77b4', '#ff7f0e',
+                   '#2ca02c', '#d62728', '#9467bd', '#8c564b',
+                   '#e377c2', '#7f7f7f', '#bcbd22', '#17becf']
+    else:
+        cmap = get_cmap(cmap_str)
+        lc_list = [cmap(x) for x in np.linspace(0, 1, ncurves)]
+
+    lc_cycle = itertools.cycle(lc_list)
+
+    return ls_cycle, lc_cycle
+
 ##########################################################################
 # WIDGETS UTILS FROM OASYS
 

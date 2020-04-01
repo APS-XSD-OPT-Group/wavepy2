@@ -261,9 +261,9 @@ class __SingleGratingTalbot(SingleGratingTalbotFacade):
         else: idx2ndCrop = ini.get_list_from_ini("Parameters", "Crop")
 
         if idx2ndCrop != [0, -1, 0, -1]:
-            int00 = common_tools.crop_matrix_at_indexes(int00, idx2ndCrop)
-            int01 = common_tools.crop_matrix_at_indexes(int01, idx2ndCrop)
-            int10 = common_tools.crop_matrix_at_indexes(int10, idx2ndCrop)
+            int00       = common_tools.crop_matrix_at_indexes(int00, idx2ndCrop)
+            int01       = common_tools.crop_matrix_at_indexes(int01, idx2ndCrop)
+            int10       = common_tools.crop_matrix_at_indexes(int10, idx2ndCrop)
             darkField01 = common_tools.crop_matrix_at_indexes(darkField01, idx2ndCrop)
             darkField10 = common_tools.crop_matrix_at_indexes(darkField10, idx2ndCrop)
             diffPhase01 = common_tools.crop_matrix_at_indexes(diffPhase01, idx2ndCrop)
@@ -369,7 +369,6 @@ class __SingleGratingTalbot(SingleGratingTalbotFacade):
 
         if correct_dpc_center and plotter.is_active():
             angle = plotter.show_interactive_plot(CorrectDPCCenter, container_widget=None, angle=angle)
-            #angle[1] = plotter.show_interactive_plot(CorrectDPCCenter, container_widget=None, angleArray=angle[1], harmonic="10")
 
             dpc01 = __get_dpc(angle[0], pixelsize[0])
             dpc10 = __get_dpc(angle[1], pixelsize[1])
@@ -463,10 +462,10 @@ class __SingleGratingTalbot(SingleGratingTalbotFacade):
         script_logger.print('projectionFromDiv : {:.4f}'.format(projectionFromDiv))
 
         dpc_profile_analysis_manager = create_dpc_profile_analsysis_manager()
-        dpc_profile_analysis_manager.dpc_profile_analysis(WavePyData(diffPhaseH=None,
+        dpc_profile_analysis_manager.dpc_profile_analysis(WavePyData(diffPhaseH=diffPhase01, #None,
                                                                      diffPhaseV=diffPhase10,
                                                                      virtual_pixelsize=virtual_pixelsize,
-                                                                     fnameH=None,
+                                                                     fnameH=fnameH, #None,
                                                                      fnameV=fnameV,
                                                                      grazing_angle=0,
                                                                      projectionFromDiv=projectionFromDiv,
@@ -475,6 +474,8 @@ class __SingleGratingTalbot(SingleGratingTalbotFacade):
                                                                      nprofiles=5,
                                                                      filter_width=50),
                                                           initialization_parameters)
+
+        return WavePyData()
 
     @classmethod
     def fit_radius_dpc(cls, correct_zero_dpc_result, initialization_parameters):

@@ -46,7 +46,7 @@ from wavepy2.util import Singleton, synchronized_method
 from wavepy2.util.plot import plot_tools
 from wavepy2.util.common import common_tools
 
-from PyQt5.QtWidgets import QWidget, QDialog, QVBoxLayout, QHBoxLayout, QMessageBox, QDialogButtonBox
+from PyQt5.QtWidgets import QWidget, QDialog, QVBoxLayout, QHBoxLayout, QDialogButtonBox
 from PyQt5.QtCore import Qt
 
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas

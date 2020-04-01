@@ -56,3 +56,5 @@ class WavePyData():
         except:
             return default_value
 
+    def set_parameter(self, parameter_name, value):
+        self.__parameters[parameter_name] = value

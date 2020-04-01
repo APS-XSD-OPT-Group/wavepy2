@@ -46,6 +46,8 @@
 from wavepy2.tools.imaging.single_grating.bl.single_grating_talbot import create_single_grating_talbot_manager, \
     CALCULATE_DPC_CONTEXT_KEY, CORRECT_ZERO_DPC_CONTEXT_KEY, RECROP_DPC_CONTEXT_KEY, REMOVE_LINEAR_FIT_CONTEXT_KEY
 
+from wavepy2.tools.imaging.single_grating.bl.dpc_profile_analysis import DPC_PROFILE_ANALYSYS_CONTEXT_KEY
+
 from wavepy2.util.common import common_tools
 from wavepy2.util.ini.initializer import get_registered_ini_instance, register_ini_instance, IniMode
 from wavepy2.util.plot.qt_application import get_registered_qt_application_instance, register_qt_application_instance, QtApplicationMode
@@ -103,6 +105,11 @@ if __name__=="__main__":
 
     remove_linear_fit_result = single_grating_talbot_manager.remove_linear_fit(correct_zero_dpc_result, initialization_parameters)
     plotter.show_context_window(REMOVE_LINEAR_FIT_CONTEXT_KEY)
+
+    # ==========================================================================
+
+    dpc_profile_analysis_result = single_grating_talbot_manager.dpc_profile_analysis(remove_linear_fit_result, initialization_parameters)
+    plotter.show_context_window(DPC_PROFILE_ANALYSYS_CONTEXT_KEY)
 
     # integration
 
