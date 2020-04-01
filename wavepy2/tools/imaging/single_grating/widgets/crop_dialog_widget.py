@@ -67,7 +67,6 @@ class CropDialogPlot(WavePyInteractiveWidget):
         idx4crop = self.__ini.get_list_from_ini("Parameters", "Crop")
 
         self.__initialize(img, idx4crop)
-
         self.__logger.print_other(idx4crop, "Stored Crop Indexes: ", color=LoggerColor.RED)
 
         original_cropped_image = SimplePlot(self,
