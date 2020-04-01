@@ -143,9 +143,10 @@ class CorrectDPCCenter(WavePyInteractiveWidget):
 
     def set_selection(self, xo, yo, index):
         j_o, i_o = int(xo), int(yo)
+        #i_o, j_o = int(xo), int(yo)
 
         if not j_o is None:
-            self.__angle[index]    -= self.__pi_jump[index][i_o, j_o] * np.pi
+            self.__angle[index]     = self.__angle_initial[index] - self.__pi_jump[index][i_o, j_o] * np.pi
             self.__pi_jump_i[index] = self.__pi_jump[index][i_o, j_o]
         else:
             self.__pi_jump_i[index] = None
@@ -159,13 +160,13 @@ class CorrectDPCCenter(WavePyInteractiveWidget):
         self.__pi_jump   = [np.round(self.__angle[0] / np.pi), np.round(self.__angle[1] / np.pi)]
         self.__pi_jump_i = [None, None]
 
-        self.__angle_array_initial = angle
+        self.__angle_initial = angle
 
     def __update_result_figures(self, index):
         figure = self.__result_canvas_histo[index].figure
         figure.clear()
 
-        figure.gca().hist(self.__angle[index].flatten() / np.pi, 101, histtype='step', linewidth=2, color=["blue", "orange"][index])
+        figure.gca().hist(self.__angle[index].flatten() / np.pi, 101, histtype='step', linewidth=2, color=["#594F83", "orange"][index])
         figure.gca().set_title(r'Angle displacement of fringes [$\pi$ rad]')
 
         self.__result_canvas_histo[index].draw()
