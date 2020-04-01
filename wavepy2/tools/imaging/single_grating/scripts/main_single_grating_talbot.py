@@ -42,10 +42,9 @@
 # ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE         #
 # POSSIBILITY OF SUCH DAMAGE.                                             #
 # #########################################################################
-import numpy as np
-import sys
 
-from wavepy2.tools.imaging.single_grating.single_grating_talbot import *
+from wavepy2.tools.imaging.single_grating.bl.single_grating_talbot import create_single_grating_talbot_manager, \
+    CALCULATE_DPC_CONTEXT_KEY, CORRECT_ZERO_DPC_CONTEXT_KEY, RECROP_DPC_CONTEXT_KEY, REMOVE_LINEAR_FIT_CONTEXT_KEY
 
 from wavepy2.util.common import common_tools
 from wavepy2.util.ini.initializer import get_registered_ini_instance, register_ini_instance, IniMode
@@ -70,11 +69,13 @@ if __name__=="__main__":
     register_plotter_instance(plotter_mode=PLOTTER_MODE)
     register_qt_application_instance(QtApplicationMode.QT if PLOTTER_MODE in [PlotterMode.FULL, PlotterMode.DISPLAY_ONLY, PlotterMode.SAVE_ONLY] else QtApplicationMode.NONE)
 
+    single_grating_talbot_manager = create_single_grating_talbot_manager()
+
     # ==========================================================================
     # %% Initialization parameters
     # ==========================================================================
 
-    initialization_parameters = get_initialization_parameters()
+    initialization_parameters = single_grating_talbot_manager.get_initialization_parameters()
 
     plotter = get_registered_plotter_instance()
 
@@ -85,23 +86,23 @@ if __name__=="__main__":
     # %% Main
     # ==========================================================================
 
-    dpc_result = calculate_dpc(initialization_parameters)
+    dpc_result = single_grating_talbot_manager.calculate_dpc(initialization_parameters)
     plotter.show_context_window(CALCULATE_DPC_CONTEXT_KEY)
 
     # ==========================================================================
 
-    recrop_dpc_result = recrop_dpc(dpc_result, initialization_parameters)
+    recrop_dpc_result = single_grating_talbot_manager.recrop_dpc(dpc_result, initialization_parameters)
     plotter.show_context_window(RECROP_DPC_CONTEXT_KEY)
 
     # ==========================================================================
 
-    correct_zero_dpc_result = correct_zero_dpc(recrop_dpc_result, initialization_parameters)
-    plotter.show_context_window(CORRECT_ZERO_DPC)
+    correct_zero_dpc_result = single_grating_talbot_manager.correct_zero_dpc(recrop_dpc_result, initialization_parameters)
+    plotter.show_context_window(CORRECT_ZERO_DPC_CONTEXT_KEY)
 
     # ==========================================================================
 
-    remove_linear_fit_result = remove_linear_fit(correct_zero_dpc_result, initialization_parameters)
-    plotter.show_context_window(REMOVE_LINEAR_FIT)
+    remove_linear_fit_result = single_grating_talbot_manager.remove_linear_fit(correct_zero_dpc_result, initialization_parameters)
+    plotter.show_context_window(REMOVE_LINEAR_FIT_CONTEXT_KEY)
 
     # integration
 
