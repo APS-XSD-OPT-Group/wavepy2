@@ -159,6 +159,7 @@ class PlotterFacade:
     def show_interactive_plot(self, widget_class, container_widget, **kwargs): raise NotImplementedError()
     def show_context_window(self, context_key): raise NotImplementedError()
     def save_sdf_file(self, array, pixelsize, suffix, extraHeader): raise NotImplementedError()
+    def save_csv_file(self, array_list, suffix, headerList, comments): raise NotImplementedError()
 
 class PlotterMode:
     FULL         = 0
