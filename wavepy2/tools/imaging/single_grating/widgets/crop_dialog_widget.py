@@ -42,9 +42,9 @@
 # ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE         #
 # POSSIBILITY OF SUCH DAMAGE.                                             #
 # #########################################################################
-import wavepy2.util.plot.widgets.figure_slide_colorbar
-import wavepy2.util.plot.widgets.graphical_roi_idx
-import wavepy2.util.plot.widgets.simple_plot
+from wavepy2.util.plot.widgets.figure_slide_colorbar import FigureSlideColorbar
+from wavepy2.util.plot.widgets.graphical_roi_idx import GraphicalRoiIdx
+from wavepy2.util.plot.widgets.simple_plot import SimplePlot
 from wavepy2.util.common import common_tools
 from wavepy2.util.ini.initializer import get_registered_ini_instance
 from wavepy2.util.log.logger import get_registered_logger_instance, LoggerColor
@@ -70,23 +70,23 @@ class CropDialogPlot(WavePyInteractiveWidget):
 
         self.__logger.print_other(idx4crop, "Stored Crop Indexes: ", color=LoggerColor.RED)
 
-        original_cropped_image = wavepy2.util.plot.widgets.simple_plot.SimplePlot(self,
-                                                                                  image=self.__img,
-                                                                                  title="Raw Image with initial Crop",
-                                                                                  xlabel=r'$[\mu m]$',
-                                                                                  ylabel=r'$[\mu m]$',
-                                                                                  extent=common_tools.extent_func(self.__img, pixelsize)*1e6)
+        original_cropped_image = SimplePlot(self,
+                                            image=self.__img,
+                                            title="Raw Image with initial Crop",
+                                            xlabel=r'$[\mu m]$',
+                                            ylabel=r'$[\mu m]$',
+                                            extent=common_tools.extent_func(self.__img, pixelsize)*1e6)
 
-        crop_image = wavepy2.util.plot.widgets.graphical_roi_idx.GraphicalRoiIdx(self,
-                                                                                 image=img,
-                                                                                 set_crop_output_listener=self.create_cropped_output)
+        crop_image = GraphicalRoiIdx(self,
+                                     image=img,
+                                     set_crop_output_listener=self.create_cropped_output)
 
-        figure_slide_colorbar = wavepy2.util.plot.widgets.figure_slide_colorbar.FigureSlideColorbar(self,
-                                                                                                    image=img,
-                                                                                                    title='SELECT COLOR SCALE,\nRaw Image, No Crop',
-                                                                                                    xlabel=r'x [$\mu m$ ]',
-                                                                                                    ylabel=r'y [$\mu m$ ]',
-                                                                                                    extent=common_tools.extent_func(img, pixelsize)*1e6)
+        figure_slide_colorbar = FigureSlideColorbar(self,
+                                                    image=img,
+                                                    title='SELECT COLOR SCALE,\nRaw Image, No Crop',
+                                                    xlabel=r'x [$\mu m$ ]',
+                                                    ylabel=r'y [$\mu m$ ]',
+                                                    extent=common_tools.extent_func(img, pixelsize)*1e6)
 
         figure_slide_colorbar.set_images_to_change([crop_image.get_image_to_change()])
 
