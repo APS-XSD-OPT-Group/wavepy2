@@ -292,10 +292,9 @@ class __SingleGratingTalbot(SingleGratingTalbotFacade):
         if not imgRef is None:
             plotter.push_plot_on_context(RECROP_DPC_CONTEXT_KEY, PlotIntensitiesHarms, int00=int00, int01=int01, int10=int10, pixelsize=virtual_pixelsize, titleStr='Intensity')
             plotter.push_plot_on_context(RECROP_DPC_CONTEXT_KEY, PlotDarkField, darkField01=darkField01, darkField10=darkField10, pixelsize=virtual_pixelsize)
-            plotter.save_sdf_file(int00, virtual_pixelsize, "_intensity", {'Title': 'Intensity', 'Zunit': 'au'})
+            plotter.save_sdf_file(int00, virtual_pixelsize, file_suffix="_intensity", extraHeader={'Title': 'Intensity', 'Zunit': 'au'})
 
         plotter.push_plot_on_context(RECROP_DPC_CONTEXT_KEY, PlotDPC, dpc01=diffPhase01, dpc10=diffPhase10, pixelsize=virtual_pixelsize, titleStr="")
-
         plotter.draw_context_on_widget(RECROP_DPC_CONTEXT_KEY, container_widget=plotter.get_context_container_widget(RECROP_DPC_CONTEXT_KEY))
 
         return WavePyData(int00=int00,
@@ -454,8 +453,8 @@ class __SingleGratingTalbot(SingleGratingTalbotFacade):
 
         plotter.register_context_window(REMOVE_LINEAR_FIT_CONTEXT_KEY)
 
-        fnameH = plotter.save_sdf_file(diffPhase01, virtual_pixelsize, "_dpc_X", {'Title': 'DPC 01', 'Zunit': 'rad'})
-        fnameV = plotter.save_sdf_file(diffPhase10, virtual_pixelsize, "_dpc_Y", {'Title': 'DPC 10', 'Zunit': 'rad'})
+        fnameH = plotter.save_sdf_file(diffPhase01, virtual_pixelsize, file_suffix="_dpc_X", extraHeader={'Title': 'DPC 01', 'Zunit': 'rad'})
+        fnameV = plotter.save_sdf_file(diffPhase10, virtual_pixelsize, file_suffix="_dpc_Y", extraHeader={'Title': 'DPC 10', 'Zunit': 'rad'})
 
         projectionFromDiv = 1.0
 

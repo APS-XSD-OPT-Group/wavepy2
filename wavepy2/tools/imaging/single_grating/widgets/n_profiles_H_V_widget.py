@@ -206,7 +206,7 @@ class NProfilesHV(WavePyWidget):
 
         header.append(zlabel + ', Filter Width = {:d} pixels'.format(filter_width))
 
-        plotter.save_csv_file(data2saveH, '_WF_profiles_H', headerList=header)
+        plotter.save_csv_file(data2saveH, file_prefix=saveFileSuf, file_suffix='_WF_profiles_H', headerList=header)
 
         figure2 = Figure(figsize=(12, 12 * 9 / 16))
         figure2.gca().imshow(arrayH, cmap='RdGy', vmin=common_tools.mean_plus_n_sigma(arrayH, -3), vmax=common_tools.mean_plus_n_sigma(arrayH, 3))
@@ -272,7 +272,7 @@ class NProfilesHV(WavePyWidget):
 
         header.append(zlabel + ', Filter Width = {:d} pixels'.format(filter_width))
 
-        plotter.save_csv_file(data2saveV, '_WF_profiles_V', headerList=header)
+        plotter.save_csv_file(data2saveV, file_prefix=saveFileSuf, file_suffix='_WF_profiles_V', headerList=header)
 
         figure2 = Figure(figsize=(12, 12 * 9 / 16))
         figure2.gca().imshow(arrayV, cmap='RdGy', vmin=common_tools.mean_plus_n_sigma(arrayV, -3), vmax=common_tools.mean_plus_n_sigma(arrayV, 3))

@@ -45,16 +45,14 @@
 import numpy as np
 import os
 
-from wavepy2.util.common import common_tools
-from wavepy2.util.plot import plot_tools
 from wavepy2.util.log.logger import get_registered_logger_instance, get_registered_secondary_logger
 from wavepy2.util.plot.plotter import get_registered_plotter_instance
-from wavepy2.util.ini.initializer import get_registered_ini_instance
 
 from wavepy2.tools.common.wavepy_data import WavePyData
 
-from wavepy2.core import grating_interferometry
 from wavepy2.tools.imaging.single_grating.widgets.n_profiles_H_V_widget import NProfilesHV
+from wavepy2.tools.imaging.single_grating.widgets.integrate_DPC_cumsum_widget import IntegrateDPCCumSum
+from wavepy2.tools.imaging.single_grating.widgets.curv_from_height_widget import CurvFromHeight
 
 from wavepy2.util.common.common_tools import hc
 
@@ -130,32 +128,44 @@ class __DPCProfileAnalysis(DPCProfileAnalysisFacade):
         fit_coefsH = np.array(fit_coefs[0])
         fit_coefsV = np.array(fit_coefs[1])
 
-        # TO BE REMOVED
-        fnameH = None
-        fnameV = None
-
         if fnameH is not None:
             radii_fit_H = (2*np.pi/wavelength/fit_coefsH[:][0])
 
             main_logger.print_message('Radius H from fit profiles: ')
             script_logger.print('radius fit Hor = ' + str(radii_fit_H))
 
-            integratedH = cls.__integrate_DPC_cumsum(plotter,
-                                                     WavePyData(data_DPC=dataH,
-                                                                wavelength=wavelength,
-                                                                remove2ndOrder=remove2ndOrder,
-                                                                xlabel='x',
-                                                                labels=labels_H,
-                                                                titleStr='Horizontal, ',
-                                                                saveFileSuf=saveFileSuf + '_X'))
+            integrate_dpc_cum_sum_result = WavePyData()
 
-            curv_H = cls.__curv_from_height(plotter,
-                                            height=integratedH,
-                                            virtual_pixelsize=virtual_pixelsize[0],
-                                            xlabel='x',
-                                            labels=labels_H,
-                                            titleStr='Horizontal, ',
-                                            saveFileSuf=saveFileSuf + '_X')
+            plotter.push_plot_on_context(DPC_PROFILE_ANALYSYS_CONTEXT_KEY, IntegrateDPCCumSum,
+                                         data_DPC=dataH,
+                                         wavelength=wavelength,
+                                         grazing_angle=0.0, #grazing_angle,
+                                         projectionFromDiv=1.0, #projectionFromDiv,
+                                         remove2ndOrder=remove2ndOrder,
+                                         xlabel='x',
+                                         ylabel='Height',
+                                         labels=labels_H,
+                                         titleStr='Horizontal, ',
+                                         saveFileSuf=saveFileSuf + '_X',
+                                         direction="Horizontal",
+                                         output_data=integrate_dpc_cum_sum_result)
+
+            integratedH = integrate_dpc_cum_sum_result.get_parameter("integrated")
+
+            curv_from_height_result = WavePyData()
+
+            plotter.push_plot_on_context(DPC_PROFILE_ANALYSYS_CONTEXT_KEY, CurvFromHeight,
+                                         height=integratedH,
+                                         virtual_pixelsize=virtual_pixelsize[0],
+                                         grazing_angle=0.0,  # grazing_angle,
+                                         projectionFromDiv=1.0,  # projectionFromDiv,
+                                         xlabel='x',
+                                         ylabel='Curvature',
+                                         labels=labels_H,
+                                         titleStr='Horizontal, ',
+                                         saveFileSuf=saveFileSuf + '_X',
+                                         direction="Horizontal",
+                                         output_data=curv_from_height_result)
 
         if fnameV is not None:
             radii_fit_V = (2*np.pi/wavelength/fit_coefsV[:][0])
@@ -163,49 +173,38 @@ class __DPCProfileAnalysis(DPCProfileAnalysisFacade):
             main_logger.print_message('Radius V from fit profiles: ')
             script_logger.print('radius fit Vert = ' + str(radii_fit_V))
 
-            integratedV = cls.__integrate_DPC_cumsum(plotter,
-                                                     WavePyData(data_DPC=dataV,
-                                                                wavelength=wavelength,
-                                                                remove2ndOrder=remove2ndOrder,
-                                                                xlabel='y',
-                                                                labels=labels_V,
-                                                                titleStr='Vertical, ',
-                                                                saveFileSuf=saveFileSuf + '_Y'))
+            integrate_dpc_cum_sum_result = WavePyData()
 
-            curv_V = cls.__curv_from_height(plotter,
-                                            height=integratedV,
-                                            virtual_pixelsize=virtual_pixelsize[1],
-                                            xlabel='y',
-                                            labels=labels_V,
-                                            titleStr='Vertical, ',
-                                            saveFileSuf=saveFileSuf + '_Y')
+            plotter.push_plot_on_context(DPC_PROFILE_ANALYSYS_CONTEXT_KEY, IntegrateDPCCumSum,
+                                         data_DPC=dataH,
+                                         wavelength=wavelength,
+                                         grazing_angle=0.0, #grazing_angle,
+                                         projectionFromDiv=1.0, #projectionFromDiv,
+                                         remove2ndOrder=remove2ndOrder,
+                                         xlabel='y',
+                                         ylabel='Height',
+                                         labels=labels_V,
+                                         titleStr='Vertical, ',
+                                         saveFileSuf=saveFileSuf + '_Y',
+                                         direction="Vertical",
+                                         output_data=integrate_dpc_cum_sum_result)
+
+
+            integratedV = integrate_dpc_cum_sum_result.get_parameter("integrated")
+
+            curv_from_height_result = WavePyData()
+
+            plotter.push_plot_on_context(DPC_PROFILE_ANALYSYS_CONTEXT_KEY, CurvFromHeight,
+                                         height=integratedV,
+                                         virtual_pixelsize=virtual_pixelsize[1],
+                                         grazing_angle=0.0,  # grazing_angle,
+                                         projectionFromDiv=1.0,  # projectionFromDiv,
+                                         xlabel='y',
+                                         ylabel='Curvature',
+                                         labels=labels_V,
+                                         titleStr='Vertical, ',
+                                         saveFileSuf=saveFileSuf + '_Y',
+                                         direction="Vertical",
+                                         output_data=curv_from_height_result)
 
         plotter.draw_context_on_widget(DPC_PROFILE_ANALYSYS_CONTEXT_KEY, container_widget=plotter.get_context_container_widget(DPC_PROFILE_ANALYSYS_CONTEXT_KEY))
-
-
-    @classmethod
-    def ___integrate_DPC_cumsum(cls, plotter, integrate_DPC_cumsum_data=WavePyData()):
-        data_DPC = integrate_DPC_cumsum_data.get_parameter("data_DPC")
-        wavelength = integrate_DPC_cumsum_data.get_parameter("wavelength")
-        remove2ndOrder = integrate_DPC_cumsum_data.get_parameter("remove2ndOrder")
-        xlabel = integrate_DPC_cumsum_data.get_parameter("xlabel")
-        labels = integrate_DPC_cumsum_data.get_parameter("labels")
-        titleStr = integrate_DPC_cumsum_data.get_parameter("titleStr")
-        saveFileSuf = integrate_DPC_cumsum_data.get_parameter("saveFileSuf")
-
-        list_integrated = None
-
-        return np.asarray(list_integrated).T
-
-    @classmethod
-    def ___curv_from_height(cls, plotter, curv_from_height_data=WavePyData()):
-        height = curv_from_height_data.get_parameter("height")
-        virtual_pixelsize = curv_from_height_data.get_parameter("virtual_pixelsize")
-        xlabel = curv_from_height_data.get_parameter("xlabel")
-        labels = curv_from_height_data.get_parameter("labels")
-        titleStr = curv_from_height_data.get_parameter("titleStr")
-        saveFileSuf = curv_from_height_data.get_parameter("saveFileSuf")
-
-        list_curv = None
-
-        return np.asarray(list_curv).T
