@@ -65,6 +65,11 @@ class FourierTransform:
 # ---------------------------------------------------------------------------
 # MISCELLANEA (FROM WAVEPY)
 
+from scipy import constants
+
+hc = constants.value('inverse meter-electron volt relationship')  # hc
+
+
 import os
 from itertools import count
 
@@ -296,4 +301,3 @@ def fouriercoordvec(npoints, delta):
 
 def fouriercoordmatrix(npointsx, deltax, npointsy, deltay):
     return reciprocalcoordmatrix(npointsx, deltax, npointsy, deltay)
-

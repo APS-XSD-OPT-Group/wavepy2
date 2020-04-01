@@ -46,7 +46,7 @@ from wavepy2.util import Singleton, synchronized_method
 from wavepy2.util.plot import plot_tools
 from wavepy2.util.common import common_tools
 
-from PyQt5.QtWidgets import QWidget, QDialog, QVBoxLayout, QHBoxLayout, QMessageBox, QDialogButtonBox
+from PyQt5.QtWidgets import QWidget, QDialog, QVBoxLayout, QHBoxLayout, QDialogButtonBox
 from PyQt5.QtCore import Qt
 
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
@@ -158,6 +158,8 @@ class PlotterFacade:
     def draw_context_on_widget(self, context_key, container_widget): raise NotImplementedError()
     def show_interactive_plot(self, widget_class, container_widget, **kwargs): raise NotImplementedError()
     def show_context_window(self, context_key): raise NotImplementedError()
+    def save_sdf_file(self, array, pixelsize, file_prefix, file_suffix, extraHeader): raise NotImplementedError()
+    def save_csv_file(self, array_list, file_prefix, file_suffix, headerList, comments): raise NotImplementedError()
 
 class PlotterMode:
     FULL         = 0
@@ -187,6 +189,18 @@ class __AbstractPlotter(PlotterFacade):
 
     def register_save_file_prefix(self, save_file_prefix): self.__save_file_prefix = save_file_prefix
     def get_save_file_prefix(self): return self.__save_file_prefix
+
+    def save_sdf_file(self, array, pixelsize=[1, 1], file_prefix=None, file_suffix="", extraHeader={}):
+        file_name = common_tools.get_unique_filename(self.get_save_file_prefix() if file_prefix is None else file_prefix + file_suffix, "sdf")
+        plot_tools.save_sdf_file(array, pixelsize, file_name, extraHeader)
+
+        return file_name
+
+    def save_csv_file(self, array_list, file_prefix=None, file_suffix="", headerList=[], comments=""):
+        file_name = common_tools.get_unique_filename(self.get_save_file_prefix() if file_prefix is None else file_prefix + file_suffix, "csv")
+        plot_tools.save_csv_file(array_list, file_name, headerList, comments)
+
+        return file_name
 
 from wavepy2.util.plot.plot_tools import DefaultMainWindow
 

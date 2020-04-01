@@ -42,19 +42,74 @@
 # ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE         #
 # POSSIBILITY OF SUCH DAMAGE.                                             #
 # #########################################################################
+import numpy as np
+from matplotlib.figure import Figure
+from wavepy2.util.common import common_tools
+from wavepy2.util.plot.plotter import WavePyWidget
+from wavepy2.util.log.logger import get_registered_logger_instance
 
-class WavePyData():
-    def __init__(self, **parameters):
-        self.__parameters = parameters
+from warnings import filterwarnings
+filterwarnings("ignore")
 
-    def get_parameters(self):
-        return self.__parameters
+class FitRadiusDPC(WavePyWidget):
+    def get_plot_tab_name(self): return "Fit Radius"
 
-    def get_parameter(self, parameter_name, default_value=None):
-        try:
-            return self.__parameters[parameter_name]
-        except:
-            return default_value
+    def build_mpl_figure(self, **kwargs):
+        dpx       = kwargs["dpx"]
+        dpy       = kwargs["dpy"]
+        pixelsize = kwargs["pixelsize"]
+        kwave     = kwargs["kwave"]
+        str4title = kwargs["str4title"]
 
-    def set_parameter(self, parameter_name, value):
-        self.__parameters[parameter_name] = value
+        logger   = get_registered_logger_instance()
+
+        xVec = common_tools.realcoordvec(dpx.shape[1], pixelsize[1])
+        yVec = common_tools.realcoordvec(dpx.shape[0], pixelsize[0])
+
+        fig = Figure(figsize=(14, 5))
+        fig.suptitle(str4title + 'Phase [rad]', fontsize=14)
+
+        ax1 = fig.add_subplot(121)
+        ax2 = fig.add_subplot(122, sharex=ax1, sharey=ax1)
+
+        ax1.plot(xVec * 1e6, dpx[dpx.shape[0] // 4, :],     '-ob', label='1/4')
+        ax1.plot(xVec * 1e6, dpx[dpx.shape[0] // 4 * 3, :], '-og', label='3/4')
+        ax1.plot(xVec * 1e6, dpx[dpx.shape[0] // 2, :],     '-or', label='1/2')
+
+        lin_fitx = np.polyfit(xVec, dpx[dpx.shape[0] // 2, :], 1)
+        lin_funcx = np.poly1d(lin_fitx)
+        ax1.plot(xVec * 1e6, lin_funcx(xVec), '--c', lw=2, label='Fit 1/2')
+        curvrad_x = kwave / (lin_fitx[0])
+
+        logger.print_message('lin_fitx[0] x: {:.3g} m'.format(lin_fitx[0]))
+        logger.print_message('lin_fitx[1] x: {:.3g} m'.format(lin_fitx[1]))
+        logger.print_message('Curvature Radius of WF x: {:.3g} m'.format(curvrad_x))
+
+        ax1.ticklabel_format(style='sci', axis='y', scilimits=(0, 1))
+        ax1.set_xlabel(r'[$\mu m$]')
+        ax1.set_ylabel('dpx [radians]')
+        ax1.legend(loc=0, fontsize='small')
+        ax1.set_title('H Curvature Radius of WF {:.3g} m'.format(curvrad_x), fontsize=16)
+        ax1.set_adjustable('box')
+
+        ax2.plot(yVec * 1e6, dpy[:, dpy.shape[1] // 4],     '-ob', label='1/4')
+        ax2.plot(yVec * 1e6, dpy[:, dpy.shape[1] // 4 * 3], '-og', label='3/4')
+        ax2.plot(yVec * 1e6, dpy[:, dpy.shape[1] // 2],     '-or', label='1/2')
+
+        lin_fity = np.polyfit(yVec,
+                              dpy[:, dpy.shape[1] // 2], 1)
+        lin_funcy = np.poly1d(lin_fity)
+        ax2.plot(yVec * 1e6, lin_funcy(yVec),
+                 '--c', lw=2,
+                 label='Fit 1/2')
+        curvrad_y = kwave / (lin_fity[0])
+        logger.print_message('Curvature Radius of WF y: {:.3g} m'.format(curvrad_y))
+
+        ax2.ticklabel_format(style='sci', axis='y', scilimits=(0, 1))
+        ax2.set_xlabel(r'[$\mu m$]')
+        ax2.set_ylabel('dpy [radians]')
+        ax2.legend(loc=0, fontsize='small')
+        ax2.set_title('V Curvature Radius of WF {:.3g} m'.format(curvrad_y), fontsize=16)
+        ax2.set_adjustable('box')
+
+        return fig

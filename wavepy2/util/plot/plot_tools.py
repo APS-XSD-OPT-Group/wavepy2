@@ -42,11 +42,10 @@
 # ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE         #
 # POSSIBILITY OF SUCH DAMAGE.                                             #
 # #########################################################################
+import numpy as np
 
 from PyQt5.QtWidgets import QMainWindow, QDesktopWidget
 from PyQt5.QtCore import QRect
-
-
 
 ##########################################################################
 # WIDGET FOR SCRIPTING
@@ -82,6 +81,169 @@ class DefaultMainWindow(QMainWindow):
         return self.__container_widget
 
 WIDGET_FIXED_WIDTH = 800
+
+##########################################################################
+# UTILITY FROM WAVEPY
+
+from wavepy2.util.log.logger import get_registered_logger_instance
+from wavepy2.util.common import common_tools
+
+def save_sdf_file(array, pixelsize=[1, 1], fname='output.sdf', extraHeader={}):
+    '''
+    Save an 2D array in the `Surface Data File Format (SDF)
+    <https://physics.nist.gov/VSC/jsp/DataFormat.jsp#a>`_ , which can be
+    viewed
+    with the program `Gwyddion
+    <http://gwyddion.net/documentation/user-guide-en/>`_ .
+    It is also useful because it is a plain
+    ASCII file
+
+
+    Parameters
+    ----------
+    array: 2D ndarray
+        data to be saved as *sdf*
+
+    pixelsize: list
+        list in the format [pixel_size_i, pixel_size_j]
+
+    fname: str
+        output file name
+
+    extraHeader: dict
+        dictionary with extra fields to be added to the header. Note that this
+        extra header have not effect when using Gwyddion. It is used only for
+        the asc file and when loaded by :py:func:`wavepy.utils.load_sdf`
+        as *headerdic*.
+
+
+    See Also
+    --------
+    :py:func:`wavepy.utils.load_sdf`
+
+
+    '''
+
+    logger = get_registered_logger_instance()
+
+    if len(array.shape) != 2:
+        logger.print_error('Function save_sdf: array must be 2-dimensional')
+        raise ValueError('Function save_sdf: array must be 2-dimensional')
+
+    header = 'aBCR-0.0\n' + \
+             'ManufacID\t=\tgrizolli@anl.gov\n' + \
+             'CreateDate\t=\t' + \
+             common_tools.datetime_now_str()[:-2].replace('_', '') + '\n' + \
+             'ModDate\t=\t' + \
+             common_tools.datetime_now_str()[:-2].replace('_', '') + '\n' + \
+             'NumPoints\t=\t' + str(array.shape[1]) + '\n' + \
+             'NumProfiles\t=\t' + str(array.shape[0]) + '\n' + \
+             'Xscale\t=\t' + str(pixelsize[1]) + '\n' + \
+             'Yscale\t=\t' + str(pixelsize[0]) + '\n' + \
+             'Zscale\t=\t1\n' + \
+             'Zresolution\t=\t0\n' + \
+             'Compression\t=\t0\n' + \
+             'DataType\t=\t7 \n' + \
+             'CheckType\t=\t0\n' + \
+             'NumDataSet\t=\t1\n' + \
+             'NanPresent\t=\t0\n'
+
+    for key in extraHeader.keys():
+        header += key + '\t=\t' + extraHeader[key] + '\n'
+    header += '*'
+
+    if array.dtype == 'float64': fmt = '%1.8g'
+    elif array.dtype == 'int64': fmt = '%d'
+    else: fmt = '%f'
+
+    np.savetxt(fname, array.flatten(), fmt=fmt, header=header, comments='')
+    logger.print_message(fname + ' saved!')
+
+
+def save_csv_file(arrayList, fname='output.csv', headerList=[], comments=''):
+    '''
+    Save an 2D array as a *comma separeted values* file. This is appropriated
+    to save several 1D curves. For 2D data use :py:func:`wavepy.utils.save_sdf`
+
+
+    Parameters
+    ----------
+    array: 2D ndarray
+        data to be saved as *sdf*
+
+    fname: str
+        output file name
+
+    headerList: dict
+        dictionary with fields to be added to the header.
+
+
+    See Also
+    --------
+    :py:func:`wavepy.utils.load_csv_file`
+
+    '''
+
+    logger = get_registered_logger_instance()
+
+    header = ''
+    if headerList != []:
+        for item in headerList:
+            header += item + ', '
+
+        header = header[:-2]  # remove last comma
+
+    if comments != '': header = comments + '\n' + header
+
+    if isinstance(arrayList, list):
+        data2save = np.c_[arrayList[0], arrayList[1]]
+        for array in arrayList[2:]: data2save = np.c_[data2save, array]
+    elif isinstance(arrayList, np.ndarray): data2save = arrayList
+    else: raise TypeError
+
+    if data2save.dtype == 'float64': fmt = '%1.8g'
+    elif data2save.dtype == 'int64': fmt = '%d'
+    else: fmt = '%f'
+
+    np.savetxt(fname, data2save, fmt=fmt, header=header, delimiter=', ')
+    logger.print_message(fname + ' saved!')
+
+from matplotlib.pyplot import get_cmap
+import itertools
+
+def line_style_cycle(ls=['-', '--'], ms=['s', 'o', '^', 'd'], ncurves=2, cmap_str='default'):
+    '''
+    Generate a list with cycle of linestyles for plots. See
+    `here <http://matplotlib.org/api/pyplot_api.html?highlight=plot#matplotlib.pyplot.plot>`_
+    for imformation about the syntax of the styles.
+
+    Example
+    -------
+
+    >>> ls_cycle, lc_cycle = line_style_cycle(ncurves=10)
+    >>> x = np.linspace(0, 100, 10)
+    >>> for i in range (10):
+    >>>     plt.plot(x, i*x, next(ls_cycle), color=next(lc_cycle), label=str(i))
+    >>> plt.legend()
+    >>> plt.show()
+
+    '''
+
+    list_ls = list(a[0] + a[1] for a in itertools.product(ls, ms))
+    ls_cycle = itertools.cycle(list_ls[0:ncurves])
+
+    if cmap_str == 'default':
+        lc_list = ['#4C72B0', '#55A868', '#C44E52', '#8172B2',
+                   '#CCB974', '#64B5CD', '#1f77b4', '#ff7f0e',
+                   '#2ca02c', '#d62728', '#9467bd', '#8c564b',
+                   '#e377c2', '#7f7f7f', '#bcbd22', '#17becf']
+    else:
+        cmap = get_cmap(cmap_str)
+        lc_list = [cmap(x) for x in np.linspace(0, 1, ncurves)]
+
+    lc_cycle = itertools.cycle(lc_list)
+
+    return ls_cycle, lc_cycle
 
 ##########################################################################
 # WIDGETS UTILS FROM OASYS

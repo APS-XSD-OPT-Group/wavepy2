@@ -42,19 +42,3 @@
 # ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE         #
 # POSSIBILITY OF SUCH DAMAGE.                                             #
 # #########################################################################
-
-class WavePyData():
-    def __init__(self, **parameters):
-        self.__parameters = parameters
-
-    def get_parameters(self):
-        return self.__parameters
-
-    def get_parameter(self, parameter_name, default_value=None):
-        try:
-            return self.__parameters[parameter_name]
-        except:
-            return default_value
-
-    def set_parameter(self, parameter_name, value):
-        self.__parameters[parameter_name] = value

@@ -208,7 +208,7 @@ class InputParametersWidget(WavePyInteractiveWidget):
         plot_tools.button(self.select_file_imgRef_box, self, "...", callback=self.selectImgRefFile)
 
         self.select_file_imgBlank_box = plot_tools.widgetBox(main_box, orientation="horizontal")
-        self.le_imgBlank = plot_tools.lineEdit(self.select_file_imgBlank_box, self, "img", label="Blank Image File", labelWidth=150, valueType=str, orientation="horizontal")
+        self.le_imgBlank = plot_tools.lineEdit(self.select_file_imgBlank_box, self, "imgBlank", label="Blank Image File", labelWidth=150, valueType=str, orientation="horizontal")
         plot_tools.button(self.select_file_imgBlank_box, self, "...", callback=self.selectImgBlankFile)
 
         self.set_mode()
