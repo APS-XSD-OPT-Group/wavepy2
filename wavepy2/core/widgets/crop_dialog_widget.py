@@ -42,81 +42,52 @@
 # ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE         #
 # POSSIBILITY OF SUCH DAMAGE.                                             #
 # #########################################################################
-from wavepy2.util.plot.widgets.figure_slide_colorbar import FigureSlideColorbar
-from wavepy2.util.plot.widgets.graphical_roi_idx import GraphicalRoiIdx
-from wavepy2.util.plot.widgets.simple_plot import SimplePlot
+import wavepy2.util.plot.widgets.graphical_roi_idx
 from wavepy2.util.common import common_tools
-from wavepy2.util.ini.initializer import get_registered_ini_instance
-from wavepy2.util.log.logger import get_registered_logger_instance, LoggerColor
+from wavepy2.util.log.logger import get_registered_logger_instance
 from wavepy2.util.plot import plot_tools
 from wavepy2.util.plot.plotter import WavePyInteractiveWidget
+from wavepy2.util.plot.widgets.graphical_roi_idx import GraphicalRoiIdx
 
+FIXED_WIDTH=800
 
 class CropDialogPlot(WavePyInteractiveWidget):
     __initialized = False
 
     def __init__(self, parent):
         super(CropDialogPlot, self).__init__(parent, message="New Crop?", title="Crop Image")
-        self.__ini     = get_registered_ini_instance()
         self.__logger  = get_registered_logger_instance()
 
     def build_widget(self, **kwargs):
-        img         = kwargs["img"]
-        pixelsize   = kwargs["pixelsize"]
+        img = kwargs["img"]
 
-        idx4crop = self.__ini.get_list_from_ini("Parameters", "Crop")
+        self.__initialize(img)
 
-        self.__initialize(img, idx4crop)
-        self.__logger.print_other(idx4crop, "Stored Crop Indexes: ", color=LoggerColor.RED)
-
-        original_cropped_image = SimplePlot(self,
-                                            image=self.__img,
-                                            title="Raw Image with initial Crop",
-                                            xlabel=r'$[\mu m]$',
-                                            ylabel=r'$[\mu m]$',
-                                            extent=common_tools.extent_func(self.__img, pixelsize)*1e6)
-
-        crop_image = GraphicalRoiIdx(self,
-                                     image=img,
-                                     set_crop_output_listener=self.create_cropped_output)
-
-        figure_slide_colorbar = FigureSlideColorbar(self,
-                                                    image=img,
-                                                    title='SELECT COLOR SCALE,\nRaw Image, No Crop',
-                                                    xlabel=r'x [$\mu m$ ]',
-                                                    ylabel=r'y [$\mu m$ ]',
-                                                    extent=common_tools.extent_func(img, pixelsize)*1e6)
-
-        figure_slide_colorbar.set_images_to_change([crop_image.get_image_to_change()])
+        try:
+            crop_image = GraphicalRoiIdx(self, image=img, set_crop_output_listener=self.create_cropped_output, kwargs4graph=kwargs["kwargs4graph"])
+        except:
+            crop_image = GraphicalRoiIdx(self, image=img, set_crop_output_listener=self.create_cropped_output)
 
         tab_widget = plot_tools.tabWidget(self.get_central_widget())
 
-        plot_tools.createTabPage(tab_widget, "Raw Image",  original_cropped_image)
-        plot_tools.createTabPage(tab_widget, "Colormap",   figure_slide_colorbar)
         plot_tools.createTabPage(tab_widget, "Crop Image", crop_image)
 
-        self.setFixedWidth(max(original_cropped_image.width(), figure_slide_colorbar.width(), crop_image.width())*1.1)
+        self.setFixedWidth(FIXED_WIDTH)
 
         self.update()
 
     def get_accepted_output(self):
-        if self.__initialized: self.__ini.set_list_at_ini('Parameters', 'Crop', self.__idx4crop)
-
         return self.__img, self.__idx4crop
 
     def get_rejected_output(self):
-        if self.__initialized: self.__ini.set_list_at_ini('Parameters', 'Crop', self.__initial_idx4crop)
-
         return self.__initial_img , self.__initial_idx4crop
 
     def create_cropped_output(self, idx4crop):
         self.__img      = common_tools.crop_matrix_at_indexes(self.__initial_img, idx4crop)
         self.__idx4crop = idx4crop
 
-    def __initialize(self, img, idx4crop):
-        self.__initial_img = img
-        self.__initial_idx4crop = idx4crop
-
-        self.create_cropped_output(idx4crop)
-
-        self.__initialized = True
+    def __initialize(self, img):
+        self.__initial_img      = img
+        self.__initial_idx4crop = [0, -1, 0, -1]
+        self.__img      = self.__initial_img
+        self.__idx4crop = self.__initial_idx4crop

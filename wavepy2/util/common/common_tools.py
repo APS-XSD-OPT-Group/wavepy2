@@ -49,17 +49,33 @@ from scipy.interpolate import UnivariateSpline
 # Fourier Transform
 
 try:
-    from  pyfftw.interfaces.numpy_fft import fft2, ifft2
+    from  pyfftw.interfaces.numpy_fft import fft, ifft, fft2, ifft2
 except ImportError:
-    from  numpy.fft import fft2, ifft2
+    from  numpy.fft import fft, ifft, fft2, ifft2
 
 class FourierTransform:
     @classmethod
-    def fft(cls, img):
+    def fft1d(cls, array):
+        return np.fft.fftshift(fft(array))
+
+    @classmethod
+    def ifft1d(cls, arrayFFT):
+        return ifft(np.fft.ifftshift(arrayFFT))
+
+    @classmethod
+    def fft_2d1d(cls, array2d, axis):
+        return np.fft.fftshift(fft(array2d, axis=axis), axes=axis)
+
+    @classmethod
+    def ifft_2d1d(cls, array2dFFT, axis):
+        return ifft(np.fft.ifftshift(array2dFFT, axes=axis), axis=axis)
+
+    @classmethod
+    def fft2d(cls, img):
         return np.fft.fftshift(fft2(img, norm='ortho'))
 
     @classmethod
-    def ifft(cls, imgFFT):
+    def ifft2d(cls, imgFFT):
         return ifft2(np.fft.ifftshift(imgFFT), norm='ortho')
 
 # ---------------------------------------------------------------------------
@@ -277,6 +293,8 @@ def is_empty_string(string):
 def is_empty_file_name(file_name):
     return is_empty_string(file_name) or file_name.strip().lower() == "none"
 
+# COORDINATES
+
 def realcoordvec(npoints, delta):
     return (np.linspace(1, npoints, npoints) - npoints//2 - 1) * delta
 
@@ -301,3 +319,42 @@ def fouriercoordvec(npoints, delta):
 
 def fouriercoordmatrix(npointsx, deltax, npointsy, deltay):
     return reciprocalcoordmatrix(npointsx, deltax, npointsy, deltay)
+
+# SHIFTS
+
+def fourier_spline_1d(vec1d, n=2):
+    # reflec pad to avoid discontinuity at the edges
+    fftvec = FourierTransform.fft1d(np.pad(vec1d, (0, vec1d.shape[0]), 'reflect'))
+    res = FourierTransform.ifft1d(np.pad(fftvec, pad_width=fftvec.shape[0] * (n - 1) // 2, mode='constant', constant_values=0.0)) * n
+
+    return res[0:res.shape[0]//2]
+
+def fourier_spline_2d_axis(array, n=2, axis=0):
+    # reflec pad to avoid discontinuity at the edges
+    if axis == 0:   padwidth = ((0, array.shape[0]), (0, 0))
+    elif axis == 1: padwidth = ((0, 0), (0, array.shape[1]))
+
+    fftvec = FourierTransform.fft_2d1d(np.pad(array, pad_width=padwidth, mode='reflect'), axis=axis)
+
+    listpad = [(0, 0), (0, 0)]
+    if fftvec.shape[axis]*(n-1) % 2 == 0: listpad[axis] = (fftvec.shape[axis]*(n-1)//2, fftvec.shape[axis]*(n-1)//2)
+    else: listpad[axis] = (fftvec.shape[axis]*(n-1)//2, fftvec.shape[axis]*(n-1)//2 + 1)
+
+    fftvec = np.pad(fftvec, pad_width=listpad, mode='constant', constant_values=0.0)
+    res = np.real(FourierTransform.ifft_2d1d(fftvec, axis)*n)
+
+    if axis == 0:   return res[0:res.shape[0]//2, :]
+    elif axis == 1: return res[:, 0:res.shape[1]//2]
+
+def fourier_spline_2d(array2d, n=2):
+    return fourier_spline_2d_axis(fourier_spline_2d_axis(array2d, n=n, axis=0), n=n, axis=1)
+
+def shift_subpixel_1d(array, frac_of_pixel, axis=0):
+    if array.ndim == 1: return fourier_spline_1d(array, frac_of_pixel)[1::frac_of_pixel]
+    elif array.ndim == 2:
+        if axis == 0:   return fourier_spline_2d_axis(array, frac_of_pixel, axis=0)[1::frac_of_pixel, :]
+        elif axis == 1: return fourier_spline_2d_axis(array, frac_of_pixel, axis=0)[:, 1::frac_of_pixel]
+
+def shift_subpixel_2d(array2d, frac_of_pixel):
+    return fourier_spline_2d(array2d, frac_of_pixel)[1::frac_of_pixel, 1::frac_of_pixel]
+

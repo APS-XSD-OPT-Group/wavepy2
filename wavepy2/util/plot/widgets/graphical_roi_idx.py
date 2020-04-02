@@ -54,7 +54,7 @@ from wavepy2.util.plot.widgets.image_to_change import ImageToChange
 
 
 class GraphicalRoiIdx(QWidget):
-    def __init__(self, parent, image, set_crop_output_listener):
+    def __init__(self, parent, image, set_crop_output_listener, kwargs4graph={'cmap': 'viridis'}):
         super(GraphicalRoiIdx, self).__init__(parent)
 
         logger = get_registered_logger_instance()
@@ -66,7 +66,7 @@ class GraphicalRoiIdx(QWidget):
 
         ax = figure.subplots()
 
-        surface = ax.imshow(image, cmap='viridis')
+        surface = ax.imshow(image, **kwargs4graph)
         surface.cmap.set_over('#FF0000')  # Red
         surface.cmap.set_under('#8B008B')  # Light Cyan
 

@@ -44,7 +44,8 @@
 # #########################################################################
 
 from wavepy2.tools.imaging.single_grating.bl.single_grating_talbot import create_single_grating_talbot_manager, \
-    CALCULATE_DPC_CONTEXT_KEY, CORRECT_ZERO_DPC_CONTEXT_KEY, RECROP_DPC_CONTEXT_KEY, REMOVE_LINEAR_FIT_CONTEXT_KEY, FIT_RADIUS_DPC_CONTEXT_KEY
+    CALCULATE_DPC_CONTEXT_KEY, CORRECT_ZERO_DPC_CONTEXT_KEY, RECROP_DPC_CONTEXT_KEY, \
+    REMOVE_LINEAR_FIT_CONTEXT_KEY, FIT_RADIUS_DPC_CONTEXT_KEY, INTEGRATION_CONTEXT_KEY
 
 from wavepy2.tools.imaging.single_grating.bl.dpc_profile_analysis import DPC_PROFILE_ANALYSYS_CONTEXT_KEY
 
@@ -117,6 +118,8 @@ if __name__=="__main__":
     # %% Integration
     # ==========================================================================
 
+    integration_result = single_grating_talbot_manager.do_integration(fit_radius_dpc_result, initialization_parameters)
+    plotter.show_context_window(INTEGRATION_CONTEXT_KEY)
 
     get_registered_ini_instance().push()
 

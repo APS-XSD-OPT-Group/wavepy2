@@ -56,11 +56,10 @@ from wavepy2.tools.common.wavepy_data import WavePyData
 from wavepy2.core import grating_interferometry
 from wavepy2.core.widgets.plot_intensities_harms import PlotIntensitiesHarms
 from wavepy2.core.widgets.plot_dark_field import PlotDarkField
+from wavepy2.core.widgets.crop_dialog_widget import CropDialogPlot
 from wavepy2.tools.imaging.single_grating.widgets.plot_DPC_widget import PlotDPC
-
 from wavepy2.tools.imaging.single_grating.widgets.input_parameters_widget import InputParametersWidget, generate_initialization_parameters
-from wavepy2.tools.imaging.single_grating.widgets.crop_dialog_widget import CropDialogPlot
-from wavepy2.tools.imaging.single_grating.widgets.second_crop_dialog_widget import SecondCropDialogPlot
+from wavepy2.tools.imaging.single_grating.widgets.first_crop_dialog_widget import FirstCropDialogPlot
 from wavepy2.tools.imaging.single_grating.widgets.show_cropped_figure_widget import ShowCroppedFigure
 from wavepy2.tools.imaging.single_grating.widgets.correct_DPC_widgets import CorrectDPC, CorrectDPCHistos, CorrectDPCCenter
 from wavepy2.tools.imaging.single_grating.widgets.fit_radius_dpc_widget import FitRadiusDPC
@@ -105,21 +104,21 @@ class __SingleGratingTalbot(SingleGratingTalbotFacade):
             initialization_parameters = generate_initialization_parameters(img_file_name      = self.__ini.get_string_from_ini("Files", "sample"),
                                                                            imgRef_file_name   = self.__ini.get_string_from_ini("Files", "reference"),
                                                                            imgBlank_file_name = self.__ini.get_string_from_ini("Files", "blank"),
-                                                                           mode               = self.__ini.get_string_from_ini("Parameters", "mode"),
-                                                                           pixel              = self.__ini.get_float_from_ini("Parameters", "pixel size"),
-                                                                           gratingPeriod      = self.__ini.get_float_from_ini("Parameters", "checkerboard grating period"),
-                                                                           pattern            = self.__ini.get_string_from_ini("Parameters", "pattern"),
-                                                                           distDet2sample     = self.__ini.get_float_from_ini("Parameters", "distance detector to gr"),
-                                                                           phenergy           = self.__ini.get_float_from_ini("Parameters", "photon energy"),
-                                                                           sourceDistance     = self.__ini.get_float_from_ini("Parameters", "source distance"),
-                                                                           correct_pi_jump    = self.__ini.get_boolean_from_ini("Runtime", "correct pi jump"),
-                                                                           remove_mean        = self.__ini.get_boolean_from_ini("Runtime", "remove mean"),
-                                                                           correct_dpc_center = self.__ini.get_boolean_from_ini("Runtime", "correct dpc center"),
-                                                                           remove_linear      = self.__ini.get_boolean_from_ini("Runtime", "remove linear"),
-                                                                           do_integration     = self.__ini.get_boolean_from_ini("Runtime", "do integration"),
-                                                                           calc_thickness     = self.__ini.get_boolean_from_ini("Runtime", "calc thickness"),
-                                                                           remove_2nd_order   = self.__ini.get_boolean_from_ini("Runtime", "remove 2nd order"),
-                                                                           material_idx       = self.__ini.get_int_from_ini("Runtime", "material idx"))
+                                                                           mode               = self.__ini.get_string_from_ini("Parameters", "mode", default="Relative"),
+                                                                           pixel              = self.__ini.get_float_from_ini("Parameters", "pixel size", default=6.5e-07),
+                                                                           gratingPeriod      = self.__ini.get_float_from_ini("Parameters", "checkerboard grating period", default=4.8e-06),
+                                                                           pattern            = self.__ini.get_string_from_ini("Parameters", "pattern", default="Diagonal half pi"),
+                                                                           distDet2sample     = self.__ini.get_float_from_ini("Parameters", "distance detector to gr", default=0.33),
+                                                                           phenergy           = self.__ini.get_float_from_ini("Parameters", "photon energy", default=14000.0),
+                                                                           sourceDistance     = self.__ini.get_float_from_ini("Parameters", "source distance", default=32.0),
+                                                                           correct_pi_jump    = self.__ini.get_boolean_from_ini("Runtime", "correct pi jump", default=False),
+                                                                           remove_mean        = self.__ini.get_boolean_from_ini("Runtime", "remove mean", default=False),
+                                                                           correct_dpc_center = self.__ini.get_boolean_from_ini("Runtime", "correct dpc center", default=False),
+                                                                           remove_linear      = self.__ini.get_boolean_from_ini("Runtime", "remove linear", default=False),
+                                                                           do_integration     = self.__ini.get_boolean_from_ini("Runtime", "do integration", default=False),
+                                                                           calc_thickness     = self.__ini.get_boolean_from_ini("Runtime", "calc thickness", default=False),
+                                                                           remove_2nd_order   = self.__ini.get_boolean_from_ini("Runtime", "remove 2nd order", default=False),
+                                                                           material_idx       = self.__ini.get_int_from_ini("Runtime", "material idx", default=0))
 
         plotter = get_registered_plotter_instance()
         plotter.register_save_file_prefix(initialization_parameters.get_parameter("saveFileSuf"))
@@ -148,7 +147,7 @@ class __SingleGratingTalbot(SingleGratingTalbotFacade):
         img_size_o = np.shape(img)
 
         if self.__plotter.is_active():
-            img, idx4crop = self.__plotter.show_interactive_plot(CropDialogPlot, container_widget=None, img=img, pixelsize=pixelsize)
+            img, idx4crop = self.__plotter.show_interactive_plot(FirstCropDialogPlot, container_widget=None, img=img, pixelsize=pixelsize)
         else:
             idx4crop = self.__ini.get_list_from_ini("Parameters", "Crop")
             img = common_tools.crop_matrix_at_indexes(img, idx4crop)
@@ -251,7 +250,7 @@ class __SingleGratingTalbot(SingleGratingTalbotFacade):
 
         img_to_crop = np.sqrt((diffPhase01 - diffPhase01.mean())**2 + (diffPhase10 - diffPhase10.mean())**2)
 
-        if self.__plotter.is_active(): _, idx2ndCrop = self.__plotter.show_interactive_plot(SecondCropDialogPlot, container_widget=None, img=img_to_crop, pixelsize=pixelsize)
+        if self.__plotter.is_active(): _, idx2ndCrop = self.__plotter.show_interactive_plot(CropDialogPlot, container_widget=None, img=img_to_crop, pixelsize=pixelsize)
         else: idx2ndCrop = self.__ini.get_list_from_ini("Parameters", "Crop")
 
         if idx2ndCrop != [0, -1, 0, -1]:
@@ -481,8 +480,21 @@ class __SingleGratingTalbot(SingleGratingTalbotFacade):
         diffPhase10       = fit_radius_dpc_result.get_parameter("diffPhase10")
         virtual_pixelsize = fit_radius_dpc_result.get_parameter("virtual_pixelsize")
 
-        self.__plotter.register_context_window(INTEGRATION_CONTEXT_KEY)
+        do_integration = initialization_parameters.get_parameter("do_integration")
 
-        self.__draw_context(INTEGRATION_CONTEXT_KEY)
+        if do_integration:
+            self.__plotter.register_context_window(INTEGRATION_CONTEXT_KEY)
 
-        return WavePyData()
+            self.__main_logger.print_message('Performing Frankot-Chellapa Integration')
+
+            phase = grating_interferometry.dpc_integration(diffPhase01, diffPhase10, virtual_pixelsize, context_key=INTEGRATION_CONTEXT_KEY)
+            phase -= np.min(phase)
+
+            self.__main_logger.print_message('DONE')
+            self.__main_logger.print_message('Plotting Phase in meters')
+
+            # TODO: the rest
+
+            self.__draw_context(INTEGRATION_CONTEXT_KEY)
+        else:
+            return WavePyData()

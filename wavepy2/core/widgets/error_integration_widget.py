@@ -42,51 +42,56 @@
 # ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE         #
 # POSSIBILITY OF SUCH DAMAGE.                                             #
 # #########################################################################
-import wavepy2.util.plot.widgets.graphical_roi_idx
+import numpy as np
+from matplotlib.figure import Figure
 from wavepy2.util.common import common_tools
-from wavepy2.util.ini.initializer import get_registered_ini_instance
-from wavepy2.util.log.logger import get_registered_logger_instance, LoggerColor
-from wavepy2.util.plot import plot_tools
-from wavepy2.util.plot.plotter import WavePyInteractiveWidget
+from wavepy2.util.plot.plotter import WavePyWidget
 
-FIXED_WIDTH=800
+from warnings import filterwarnings
+filterwarnings("ignore")
 
-class SecondCropDialogPlot(WavePyInteractiveWidget):
-    __initialized = False
+class ErrorIntegration(WavePyWidget):
+    def get_plot_tab_name(self): return "Error Integration"
 
-    def __init__(self, parent):
-        super(SecondCropDialogPlot, self).__init__(parent, message="New Crop?", title="Crop Image")
-        self.__logger  = get_registered_logger_instance()
+    def build_mpl_figure(self, **kwargs):
+        delx_f     = kwargs["delx_f"]
+        delx_y     = kwargs["delx_y"]
 
-    def build_widget(self, **kwargs):
-        img         = kwargs["img"]
+        func     = kwargs["func"]
+        pixelsize = kwargs["pixelsize"]
 
-        self.__initialize(img)
+        grad_x  = kwargs["grad_x"]
+        grad_y  = kwargs["grad_y"]
+        error_x  = kwargs["error_x"]
+        error_y  = kwargs["error_y"]
 
-        crop_image = wavepy2.util.plot.widgets.graphical_roi_idx.GraphicalRoiIdx(self,
-                                                                                 image=img,
-                                                                                 set_crop_output_listener=self.create_cropped_output)
+        xx, yy = common_tools.realcoordmatrix(func.shape[1], pixelsize[1], func.shape[0], pixelsize[0])
+        midleX = xx.shape[0] // 2
+        midleY = xx.shape[1] // 2
 
-        tab_widget = plot_tools.tabWidget(self.get_central_widget())
+        figure = Figure(figsize=(14, 10))
 
-        plot_tools.createTabPage(tab_widget, "Crop Image", crop_image)
+        ax1 = figure.add_subplot(221)
+        ax1.ticklabel_format(style='sci', axis='both', scilimits=(0, 1))
+        ax1.plot(xx[midleX, :], delx_f[midleX, :], '-kx', markersize=10, label='dx data')
+        ax1.plot(xx[midleX, :], grad_x[midleX, :], '-r+', markersize=10, label='dx reconstructed')
+        ax1.legend(loc=0)
 
-        self.setFixedWidth(FIXED_WIDTH)
+        ax2 = figure.add_subplot(223, sharex=ax1)
+        ax2.plot(xx[midleX, :], error_x[midleX, :], '-g.', label='error x')
+        ax2.set_title(r'$\mu$ = {:.2g}'.format(np.mean(error_x[midleX, :])))
+        ax2.legend(loc=0)
 
-        self.update()
+        ax3 = figure.add_subplot(222, sharex=ax1, sharey=ax1)
+        ax3.plot(yy[:, midleY], delx_y[:, midleY], '-kx', markersize=10, label='dy data')
+        ax3.plot(yy[:, midleY], grad_y[:, midleY], '-r+', markersize=10, label='dy reconstructed')
+        ax3.legend(loc=0)
 
-    def get_accepted_output(self):
-        return self.__img, self.__idx4crop
+        ax4 = figure.add_subplot(224, sharex=ax1, sharey=ax2)
+        ax4.plot(yy[:, midleY], error_y[:, midleY], '-g.', label='error y')
+        ax4.set_title(r'$\mu$ = {:.2g}'.format(np.mean(error_y[:, midleY])))
+        ax4.legend(loc=0)
 
-    def get_rejected_output(self):
-        return self.__initial_img , self.__initial_idx4crop
+        figure.suptitle('Error integration', fontsize=22)
 
-    def create_cropped_output(self, idx4crop):
-        self.__img      = common_tools.crop_matrix_at_indexes(self.__initial_img, idx4crop)
-        self.__idx4crop = idx4crop
-
-    def __initialize(self, img):
-        self.__initial_img      = img
-        self.__initial_idx4crop = [0, -1, 0, -1]
-        self.__img      = self.__initial_img
-        self.__idx4crop = self.__initial_idx4crop
+        return figure

@@ -43,12 +43,12 @@
 # POSSIBILITY OF SUCH DAMAGE.                                             #
 # #########################################################################
 import numpy as np
-from wavepy2.core.widgets.extract_harmonic_plot import ExtractHarmonicPlot
-from wavepy2.core.widgets.harmonic_grid_plot import HarmonicGridPlot
+from wavepy2.core.widgets.extract_harmonic_plot_widget import ExtractHarmonicPlot
+from wavepy2.core.widgets.harmonic_grid_plot_widget import HarmonicGridPlot
 from wavepy2.core.widgets.single_grating_harmonic_images import SingleGratingHarmonicImages
 from wavepy2.util.log.logger   import get_registered_logger_instance
 from wavepy2.util.plot.plotter import get_registered_plotter_instance
-from wavepy2.util.common.common_tools import FourierTransform, get_idxPeak_ij, get_idxPeak_ij_exp
+from wavepy2.util.common.common_tools import FourierTransform, get_idxPeak_ij, get_idxPeak_ij_exp, crop_matrix_at_indexes, mean_plus_n_sigma
 
 from skimage.restoration import unwrap_phase
 
@@ -73,7 +73,6 @@ def __check_harmonic_inside_image(harV, harH, nRows, nColumns, periodVert, perio
                          "{:d}{:d} is ".format(harV, harH) +
                          "out of image frequency range.")
 
-
 def __error_harmonic_peak(imgFFT, harV, harH, periodVert, periodHor, searchRegion=10):
     """
     Error in pixels (in the reciprocal space) between the harmonic peak and
@@ -89,7 +88,6 @@ def __error_harmonic_peak(imgFFT, harV, harH, periodVert, periodHor, searchRegio
     del_j = idxPeak_ij_exp[1] - idxPeak_ij[1]
 
     return del_i, del_j
-
 
 def exp_harm_period(img, harmonicPeriod, harmonic_ij='00', searchRegion=10, isFFT=False):
     """
@@ -116,7 +114,7 @@ def exp_harm_period(img, harmonicPeriod, harmonic_ij='00', searchRegion=10, isFF
         logger.print_message("Assuming Vertical 1D Grating")
 
     if isFFT: imgFFT = img
-    else: imgFFT = FourierTransform.fft(img)
+    else: imgFFT = FourierTransform.fft2d(img)
 
     del_i, del_j = __error_harmonic_peak(imgFFT, harV, harH,
                                          periodVert, periodHor,
@@ -183,7 +181,6 @@ def extract_harmonic(imgFFT, harmonicPeriod, harmonic_ij='00', searchRegion=10, 
                   idxPeak_ij[1] - periodHor//2:
                   idxPeak_ij[1] + periodHor//2]
 
-
 def single_grating_harmonic_images(img, harmonicPeriod, searchRegion=10, context_key="single_grating_harmonic", image_name=""):
     """
     Auxiliary function to process the data of single 2D grating Talbot imaging.
@@ -215,7 +212,7 @@ def single_grating_harmonic_images(img, harmonicPeriod, searchRegion=10, context
     """
     plotter = get_registered_plotter_instance()
 
-    imgFFT = FourierTransform.fft(img)
+    imgFFT = FourierTransform.fft2d(img)
 
     plotter.push_plot_on_context(context_key, HarmonicGridPlot, imgFFT=imgFFT, harmonicPeriod=harmonicPeriod, image_name=image_name)
 
@@ -244,13 +241,13 @@ def single_grating_harmonic_images(img, harmonicPeriod, searchRegion=10, context
                                  imgFFT00=imgFFT00, imgFFT01=imgFFT01, imgFFT10=imgFFT10,
                                  image_name=image_name)
 
-    img00 = FourierTransform.ifft(imgFFT00)
+    img00 = FourierTransform.ifft2d(imgFFT00)
 
     # non existing harmonics will return NAN, so here we check NAN
-    if np.all(np.isfinite(imgFFT01)): img01 = FourierTransform.ifft(imgFFT01)
+    if np.all(np.isfinite(imgFFT01)): img01 = FourierTransform.ifft2d(imgFFT01)
     else: img01 = imgFFT01
 
-    if np.all(np.isfinite(imgFFT10)): img10 = FourierTransform.ifft(imgFFT10)
+    if np.all(np.isfinite(imgFFT10)): img10 = FourierTransform.ifft2d(imgFFT10)
     else: img10 = imgFFT10
 
     return (img00, img01, img10)
@@ -303,3 +300,29 @@ def single_2Dgrating_analyses(img, img_ref=None, harmonicPeriod=None, unwrapFlag
     return [int00, int01, int10,
             darkField01, darkField10,
             arg01, arg10]
+
+from wavepy2.core.surface_from_grad import frankotchellappa, error_integration
+from wavepy2.core.widgets.crop_dialog_widget import CropDialogPlot
+
+def dpc_integration(dpc01, dpc10, pixelsize, shifthalfpixel=False, context_key="dpc_integration"):
+    img = dpc01**2+dpc10**2
+
+    vmin = mean_plus_n_sigma(img, -3)
+    vmax = mean_plus_n_sigma(img, 3)
+
+    _, idx = get_registered_plotter_instance().show_interactive_plot(CropDialogPlot, container_widget=None,
+                                                                     img=img, pixelsize=pixelsize, kargs4graph={'cmap': 'viridis', 'vmin': vmin, 'vmax': vmax})
+
+    dpc01 = crop_matrix_at_indexes(dpc01, idx)
+    dpc10 = crop_matrix_at_indexes(dpc10, idx)
+
+    phase = frankotchellappa(dpc01*pixelsize[1], dpc10*pixelsize[0], reflec_pad=True)
+
+    error_integration(dpc01*pixelsize[1],
+                      dpc10*pixelsize[0],
+                      phase,
+                      pixelsize,
+                      shifthalfpixel=shifthalfpixel,
+                      context_key=context_key)
+
+    return np.real(phase)
