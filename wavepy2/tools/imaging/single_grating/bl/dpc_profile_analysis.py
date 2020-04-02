@@ -57,8 +57,7 @@ from wavepy2.tools.imaging.single_grating.widgets.curv_from_height_widget import
 from wavepy2.util.common.common_tools import hc
 
 class DPCProfileAnalysisFacade():
-    @classmethod
-    def dpc_profile_analysis(cls, dpc_data): raise NotImplementedError()
+    def dpc_profile_analysis(self, dpc_data): raise NotImplementedError()
 
 
 def create_dpc_profile_analsysis_manager():
@@ -67,8 +66,12 @@ def create_dpc_profile_analsysis_manager():
 DPC_PROFILE_ANALYSYS_CONTEXT_KEY = "DPC Profile Analysis"
 
 class __DPCProfileAnalysis(DPCProfileAnalysisFacade):
-    @classmethod
-    def dpc_profile_analysis(cls, dpc_profile_analysis_data, initialization_parameters):
+    def __init__(self):
+        self.__main_logger   = get_registered_logger_instance()
+        self.__script_logger = get_registered_secondary_logger()
+        self.__plotter       = get_registered_plotter_instance()
+
+    def dpc_profile_analysis(self, dpc_profile_analysis_data, initialization_parameters):
         phenergy          = initialization_parameters.get_parameter("phenergy")
 
         diffPhaseH        = dpc_profile_analysis_data.get_parameter("diffPhaseH", None)
@@ -86,11 +89,7 @@ class __DPCProfileAnalysis(DPCProfileAnalysisFacade):
 
         wavelength = hc/phenergy
 
-        main_logger   = get_registered_logger_instance()
-        script_logger = get_registered_secondary_logger()
-        plotter = get_registered_plotter_instance()
-
-        plotter.register_context_window(DPC_PROFILE_ANALYSYS_CONTEXT_KEY)
+        self.__plotter.register_context_window(DPC_PROFILE_ANALYSYS_CONTEXT_KEY)
 
         if fnameH is None: diffPhaseH = diffPhaseV*np.nan
 
@@ -106,18 +105,18 @@ class __DPCProfileAnalysis(DPCProfileAnalysisFacade):
 
         n_profiles_H_V_result = WavePyData()
 
-        plotter.push_plot_on_context(DPC_PROFILE_ANALYSYS_CONTEXT_KEY, NProfilesHV,
-                                     arrayH=diffPhaseH,
-                                     arrayV=diffPhaseV,
-                                     virtual_pixelsize=virtual_pixelsize,
-                                     zlabel='DPC [rad/m]',
-                                     titleH='WF DPC Horz',
-                                     titleV='WF DPC Vert',
-                                     saveFileSuf=saveFileSuf,
-                                     nprofiles=nprofiles,
-                                     remove1stOrderDPC=remove1stOrderDPC,
-                                     filter_width=filter_width,
-                                     output_data=n_profiles_H_V_result)
+        self.__plotter.push_plot_on_context(DPC_PROFILE_ANALYSYS_CONTEXT_KEY, NProfilesHV,
+                                            arrayH=diffPhaseH,
+                                            arrayV=diffPhaseV,
+                                            virtual_pixelsize=virtual_pixelsize,
+                                            zlabel='DPC [rad/m]',
+                                            titleH='WF DPC Horz',
+                                            titleV='WF DPC Vert',
+                                            saveFileSuf=saveFileSuf,
+                                            nprofiles=nprofiles,
+                                            remove1stOrderDPC=remove1stOrderDPC,
+                                            filter_width=filter_width,
+                                            output_data=n_profiles_H_V_result)
 
         dataH     = n_profiles_H_V_result.get_parameter("dataH")
         dataV     = n_profiles_H_V_result.get_parameter("dataV")
@@ -131,80 +130,79 @@ class __DPCProfileAnalysis(DPCProfileAnalysisFacade):
         if fnameH is not None:
             radii_fit_H = (2*np.pi/wavelength/fit_coefsH[:][0])
 
-            main_logger.print_message('Radius H from fit profiles: ')
-            script_logger.print('radius fit Hor = ' + str(radii_fit_H))
+            self.__main_logger.print_message('Radius H from fit profiles: ')
+            self.__script_logger.print('radius fit Hor = ' + str(radii_fit_H))
 
             integrate_dpc_cum_sum_result = WavePyData()
 
-            plotter.push_plot_on_context(DPC_PROFILE_ANALYSYS_CONTEXT_KEY, IntegrateDPCCumSum,
-                                         data_DPC=dataH,
-                                         wavelength=wavelength,
-                                         grazing_angle=0.0, #grazing_angle,
-                                         projectionFromDiv=1.0, #projectionFromDiv,
-                                         remove2ndOrder=remove2ndOrder,
-                                         xlabel='x',
-                                         ylabel='Height',
-                                         labels=labels_H,
-                                         titleStr='Horizontal, ',
-                                         saveFileSuf=saveFileSuf + '_X',
-                                         direction="Horizontal",
-                                         output_data=integrate_dpc_cum_sum_result)
+            self.__plotter.push_plot_on_context(DPC_PROFILE_ANALYSYS_CONTEXT_KEY, IntegrateDPCCumSum,
+                                                data_DPC=dataH,
+                                                wavelength=wavelength,
+                                                grazing_angle=0.0, #grazing_angle,
+                                                projectionFromDiv=1.0, #projectionFromDiv,
+                                                remove2ndOrder=remove2ndOrder,
+                                                xlabel='x',
+                                                ylabel='Height',
+                                                labels=labels_H,
+                                                titleStr='Horizontal, ',
+                                                saveFileSuf=saveFileSuf + '_X',
+                                                direction="Horizontal",
+                                                output_data=integrate_dpc_cum_sum_result)
 
             integratedH = integrate_dpc_cum_sum_result.get_parameter("integrated")
 
             curv_from_height_result = WavePyData()
 
-            plotter.push_plot_on_context(DPC_PROFILE_ANALYSYS_CONTEXT_KEY, CurvFromHeight,
-                                         height=integratedH,
-                                         virtual_pixelsize=virtual_pixelsize[0],
-                                         grazing_angle=0.0,  # grazing_angle,
-                                         projectionFromDiv=1.0,  # projectionFromDiv,
-                                         xlabel='x',
-                                         ylabel='Curvature',
-                                         labels=labels_H,
-                                         titleStr='Horizontal, ',
-                                         saveFileSuf=saveFileSuf + '_X',
-                                         direction="Horizontal",
-                                         output_data=curv_from_height_result)
+            self.__plotter.push_plot_on_context(DPC_PROFILE_ANALYSYS_CONTEXT_KEY, CurvFromHeight,
+                                                height=integratedH,
+                                                virtual_pixelsize=virtual_pixelsize[0],
+                                                grazing_angle=0.0,  # grazing_angle,
+                                                projectionFromDiv=1.0,  # projectionFromDiv,
+                                                xlabel='x',
+                                                ylabel='Curvature',
+                                                labels=labels_H,
+                                                titleStr='Horizontal, ',
+                                                saveFileSuf=saveFileSuf + '_X',
+                                                direction="Horizontal",
+                                                output_data=curv_from_height_result)
 
         if fnameV is not None:
             radii_fit_V = (2*np.pi/wavelength/fit_coefsV[:][0])
 
-            main_logger.print_message('Radius V from fit profiles: ')
-            script_logger.print('radius fit Vert = ' + str(radii_fit_V))
+            self.__main_logger.print_message('Radius V from fit profiles: ')
+            self.__script_logger.print('radius fit Vert = ' + str(radii_fit_V))
 
             integrate_dpc_cum_sum_result = WavePyData()
 
-            plotter.push_plot_on_context(DPC_PROFILE_ANALYSYS_CONTEXT_KEY, IntegrateDPCCumSum,
-                                         data_DPC=dataH,
-                                         wavelength=wavelength,
-                                         grazing_angle=0.0, #grazing_angle,
-                                         projectionFromDiv=1.0, #projectionFromDiv,
-                                         remove2ndOrder=remove2ndOrder,
-                                         xlabel='y',
-                                         ylabel='Height',
-                                         labels=labels_V,
-                                         titleStr='Vertical, ',
-                                         saveFileSuf=saveFileSuf + '_Y',
-                                         direction="Vertical",
-                                         output_data=integrate_dpc_cum_sum_result)
-
+            self.__plotter.push_plot_on_context(DPC_PROFILE_ANALYSYS_CONTEXT_KEY, IntegrateDPCCumSum,
+                                                data_DPC=dataV,
+                                                wavelength=wavelength,
+                                                grazing_angle=0.0, #grazing_angle,
+                                                projectionFromDiv=1.0, #projectionFromDiv,
+                                                remove2ndOrder=remove2ndOrder,
+                                                xlabel='y',
+                                                ylabel='Height',
+                                                labels=labels_V,
+                                                titleStr='Vertical, ',
+                                                saveFileSuf=saveFileSuf + '_Y',
+                                                direction="Vertical",
+                                                output_data=integrate_dpc_cum_sum_result)
 
             integratedV = integrate_dpc_cum_sum_result.get_parameter("integrated")
 
             curv_from_height_result = WavePyData()
 
-            plotter.push_plot_on_context(DPC_PROFILE_ANALYSYS_CONTEXT_KEY, CurvFromHeight,
-                                         height=integratedV,
-                                         virtual_pixelsize=virtual_pixelsize[1],
-                                         grazing_angle=0.0,  # grazing_angle,
-                                         projectionFromDiv=1.0,  # projectionFromDiv,
-                                         xlabel='y',
-                                         ylabel='Curvature',
-                                         labels=labels_V,
-                                         titleStr='Vertical, ',
-                                         saveFileSuf=saveFileSuf + '_Y',
-                                         direction="Vertical",
-                                         output_data=curv_from_height_result)
+            self.__plotter.push_plot_on_context(DPC_PROFILE_ANALYSYS_CONTEXT_KEY, CurvFromHeight,
+                                                height=integratedV,
+                                                virtual_pixelsize=virtual_pixelsize[1],
+                                                grazing_angle=0.0,  # grazing_angle,
+                                                projectionFromDiv=1.0,  # projectionFromDiv,
+                                                xlabel='y',
+                                                ylabel='Curvature',
+                                                labels=labels_V,
+                                                titleStr='Vertical, ',
+                                                saveFileSuf=saveFileSuf + '_Y',
+                                                direction="Vertical",
+                                                output_data=curv_from_height_result)
 
-        plotter.draw_context_on_widget(DPC_PROFILE_ANALYSYS_CONTEXT_KEY, container_widget=plotter.get_context_container_widget(DPC_PROFILE_ANALYSYS_CONTEXT_KEY))
+        self.__plotter.draw_context_on_widget(DPC_PROFILE_ANALYSYS_CONTEXT_KEY, container_widget=self.__plotter.get_context_container_widget(DPC_PROFILE_ANALYSYS_CONTEXT_KEY))

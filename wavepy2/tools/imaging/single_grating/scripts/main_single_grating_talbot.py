@@ -71,21 +71,18 @@ if __name__=="__main__":
     register_plotter_instance(plotter_mode=PLOTTER_MODE)
     register_qt_application_instance(QtApplicationMode.QT if PLOTTER_MODE in [PlotterMode.FULL, PlotterMode.DISPLAY_ONLY, PlotterMode.SAVE_ONLY] else QtApplicationMode.NONE)
 
+    plotter = get_registered_plotter_instance()
+
     single_grating_talbot_manager = create_single_grating_talbot_manager()
 
     # ==========================================================================
     # %% Initialization parameters
     # ==========================================================================
 
-    initialization_parameters = single_grating_talbot_manager.get_initialization_parameters()
-
-    plotter = get_registered_plotter_instance()
-
-    register_secondary_logger(stream=open(plotter.get_save_file_prefix() + "_" + common_tools.datetime_now_str() + ".log", "wt"),
-                              logger_mode=SCRIPT_LOGGER_MODE)
+    initialization_parameters = single_grating_talbot_manager.get_initialization_parameters(SCRIPT_LOGGER_MODE)
 
     # ==========================================================================
-    # %% Main
+    # %% DPC Analysis
     # ==========================================================================
 
     dpc_result = single_grating_talbot_manager.calculate_dpc(initialization_parameters)
@@ -116,7 +113,10 @@ if __name__=="__main__":
     fit_radius_dpc_result = single_grating_talbot_manager.fit_radius_dpc(dpc_profile_analysis_result, initialization_parameters)
     plotter.show_context_window(FIT_RADIUS_DPC_CONTEXT_KEY)
 
-    # integration
+    # ==========================================================================
+    # %% Integration
+    # ==========================================================================
+
 
     get_registered_ini_instance().push()
 

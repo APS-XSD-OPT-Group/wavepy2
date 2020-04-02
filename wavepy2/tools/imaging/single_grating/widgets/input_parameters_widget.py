@@ -49,7 +49,7 @@ from wavepy2.util.common import common_tools
 from wavepy2.util.ini.initializer import get_registered_ini_instance
 from wavepy2.util.log.logger import get_registered_logger_instance
 from wavepy2.util.plot import plot_tools
-from wavepy2.util.plot.plotter import WavePyInteractiveWidget, get_registered_plotter_instance
+from wavepy2.util.plot.plotter import WavePyInteractiveWidget
 from wavepy2.util.io.read_write_file import read_tiff
 
 from wavepy2.tools.common.wavepy_data import WavePyData
@@ -121,8 +121,6 @@ def generate_initialization_parameters(img_file_name,
     saveFileSuf += '_d{:.0f}mm_'.format(distDet2sample * 1e3)
     saveFileSuf += '{:.1f}KeV'.format(phenergy * 1e-3)
     saveFileSuf = saveFileSuf.replace('.', 'p')
-
-    get_registered_plotter_instance().register_save_file_prefix(saveFileSuf)
 
     # calculate the theoretical position of the hamonics
     period_harm_Vert = np.int(pixelsize[0] / gratingPeriod * img.shape[0] / (sourceDistance + distDet2sample) * sourceDistance)
