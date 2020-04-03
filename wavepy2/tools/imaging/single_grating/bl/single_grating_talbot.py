@@ -380,12 +380,14 @@ class __SingleGratingTalbot(SingleGratingTalbotFacade):
 
         remove_linear      = initialization_parameters.get_parameter("remove_linear")
 
-        self.__plotter.register_context_window(REMOVE_LINEAR_FIT_CONTEXT_KEY)
-
         if not remove_linear:
             diffPhase01_2save = diffPhase01
             diffPhase10_2save = diffPhase10
+            linfitDPC01 = None
+            linfitDPC10 = None
         else:
+            self.__plotter.register_context_window(REMOVE_LINEAR_FIT_CONTEXT_KEY)
+
             def __fit_lin_surfaceH(zz, pixelsize):
                 xx, yy = common_tools.grid_coord(zz, pixelsize)
                 argNotNAN = np.isfinite(zz)
@@ -425,7 +427,7 @@ class __SingleGratingTalbot(SingleGratingTalbotFacade):
             self.__plotter.push_plot_on_context(REMOVE_LINEAR_FIT_CONTEXT_KEY, PlotDPC, dpc01=linfitDPC01,       dpc10=linfitDPC10,       pixelsize=virtual_pixelsize, titleStr="Linear DPC Component")
             self.__plotter.push_plot_on_context(REMOVE_LINEAR_FIT_CONTEXT_KEY, PlotDPC, dpc01=diffPhase01_2save, dpc10=diffPhase10_2save, pixelsize=virtual_pixelsize, titleStr="(removed linear DPC component)")
 
-        self.__draw_context(REMOVE_LINEAR_FIT_CONTEXT_KEY)
+            self.__draw_context(REMOVE_LINEAR_FIT_CONTEXT_KEY)
 
         return WavePyData(diffPhase01=diffPhase01_2save,
                           diffPhase10=diffPhase10_2save,
