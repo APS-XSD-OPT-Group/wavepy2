@@ -493,12 +493,21 @@ class __SingleGratingTalbot(SingleGratingTalbotFacade):
         do_integration   = initialization_parameters.get_parameter("do_integration")
         calc_thickness   = initialization_parameters.get_parameter("calc_thickness")
         remove_2nd_order = initialization_parameters.get_parameter("remove_2nd_order")
+        remove_linear      = initialization_parameters.get_parameter("remove_linear")
+
 
         def doIntegration(diffPhase01, diffPhase10, virtual_pixelsize, message="New Crop for Integration?"):
             phase = grating_interferometry.dpc_integration(diffPhase01, diffPhase10, virtual_pixelsize, context_key=INTEGRATION_CONTEXT_KEY, message=message)
             phase -= np.min(phase)
 
             return phase
+
+        def remove2ndOrder(data, virtual_pixelsize):
+            data_2nd_order_lsq, popt = common_tools.lsq_fit_parabola(data, virtual_pixelsize)
+            err = -(data - data_2nd_order_lsq)  # [rad]
+            err -= np.min(err)
+
+            return err, popt
 
         if do_integration:
             self.__plotter.register_context_window(INTEGRATION_CONTEXT_KEY)
@@ -558,7 +567,7 @@ class __SingleGratingTalbot(SingleGratingTalbotFacade):
 
                 # % 2nd order component of phase
 
-            if linfitDPC01 is not None:
+            if remove_linear:
                 data = 1 / 2 / np.pi * doIntegration(linfitDPC01, linfitDPC10, virtual_pixelsize, message="New Crop for 2nd order component of the phase?") # phase_2nd_order
 
                 self.__plotter.push_plot_on_context(INTEGRATION_CONTEXT_KEY, PlotIntegration,
@@ -586,15 +595,10 @@ class __SingleGratingTalbot(SingleGratingTalbotFacade):
 
             if remove_2nd_order:
                 if calc_thickness:
-                    thickness_2nd_order_lsq, popt = common_tools.lsq_fit_parabola(thickness, virtual_pixelsize)
-
-                    _, popt = common_tools.lsq_fit_parabola(thickness, virtual_pixelsize)
+                    err, popt = remove2ndOrder(thickness, virtual_pixelsize)
 
                     self.__main_logger.print_message('Thickness Radius of WF x: {:.3g} m'.format(popt[0]))
                     self.__main_logger.print_message('Thickness Radius of WF y: {:.3g} m'.format(popt[1]))
-
-                    err = -(thickness - thickness_2nd_order_lsq)  # [rad]
-                    err -= np.min(err)
 
                     self.__plotter.push_plot_on_context(INTEGRATION_CONTEXT_KEY, PlotIntegration,
                                                         title="Thickness Residual",
@@ -609,15 +613,11 @@ class __SingleGratingTalbot(SingleGratingTalbotFacade):
 
                     self.__plotter.save_sdf_file(err, virtual_pixelsize, file_suffix='_thickness_residual', extraHeader={'Title': 'Thickness Residual', 'Zunit': 'meters'})
 
-                phase_2nd_order_lsq, popt = common_tools.lsq_fit_parabola(phase, virtual_pixelsize)
-
+                err, _ = remove2ndOrder(phase, virtual_pixelsize)
                 _, popt = common_tools.lsq_fit_parabola(1 / 2 / np.pi * phase * self.__wavelength, virtual_pixelsize)
 
                 self.__main_logger.print_message('Curvature Radius of WF x: {:.3g} m'.format(popt[0]))
                 self.__main_logger.print_message('Curvature Radius of WF y: {:.3g} m'.format(popt[1]))
-
-                err = -(phase - phase_2nd_order_lsq)  # [rad]
-                err -= np.min(err)
 
                 data = err / 2 / np.pi * self.__wavelength
 

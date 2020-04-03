@@ -64,4 +64,4 @@ class CloseApp(QMainWindow):
         self.setFixedWidth(167)
 
     def close_all(self):
-        if plot_tools.ConfirmDialog.confirmed(self, "Confirm the closure of the application?"): sys.exit(0)
+        if plot_tools.ConfirmDialog.confirmed(self, "Confirm Close?"): sys.exit(0)
