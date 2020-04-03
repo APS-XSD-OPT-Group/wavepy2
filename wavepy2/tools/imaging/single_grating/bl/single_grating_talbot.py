@@ -102,9 +102,6 @@ class __SingleGratingTalbot(SingleGratingTalbotFacade):
         self.__main_logger = get_registered_logger_instance()
         self.__ini         = get_registered_ini_instance()
 
-    def __draw_context(self, context_key):
-        self.__plotter.draw_context_on_widget(context_key, container_widget=self.__plotter.get_context_container_widget(context_key))
-
     # %% ==================================================================================================
 
     def get_initialization_parameters(self, script_logger_mode):
@@ -714,6 +711,9 @@ class __SingleGratingTalbot(SingleGratingTalbotFacade):
 
     ###################################################################
     # PRIVATE METHODS
+
+    def __draw_context(self, context_key):
+        self.__plotter.draw_context_on_widget(context_key, container_widget=self.__plotter.get_context_container_widget(context_key))
 
     @classmethod
     def __doIntegration(cls, diffPhase01, diffPhase10, virtual_pixelsize, context_key, message="New Crop for Integration?"):
