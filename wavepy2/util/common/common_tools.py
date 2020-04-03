@@ -244,6 +244,28 @@ def fwhm_xy(xvalues, yvalues):
     else:
         return[[], []]
 
+
+def lsq_fit_parabola(zz, pixelsize):
+    xx, yy = grid_coord(zz, pixelsize)
+    f = zz.flatten()
+    x = xx.flatten()
+    y = yy.flatten()
+    X_matrix = np.vstack([x**2, y**2, x, y, x*0.0 + 1]).T
+    beta_matrix = np.linalg.lstsq(X_matrix, f)[0]
+    fit = (beta_matrix[0]*(xx**2) +
+           beta_matrix[1]*(yy**2) +
+           beta_matrix[2]*xx +
+           beta_matrix[3]*yy +
+           beta_matrix[4])
+    R_x = 1/2/beta_matrix[0]
+    R_y = 1/2/beta_matrix[1]
+    x_o = -beta_matrix[2]/beta_matrix[0]/2
+    y_o = -beta_matrix[3]/beta_matrix[1]/2
+    offset = beta_matrix[3]
+    popt = [R_x, R_y, x_o, y_o, offset]
+
+    return fit, popt
+
 def mean_plus_n_sigma(array, n_sigma=5):
     return np.nanmean(array) + n_sigma*np.nanstd(array)
 

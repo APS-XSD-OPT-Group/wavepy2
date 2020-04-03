@@ -64,6 +64,7 @@ class IniFacade:
     def get_float_from_ini(self, section, key, default=None): raise NotImplementedError()
     def get_boolean_from_ini(self, section, key, default=False): raise NotImplementedError()
     def get_list_from_ini(self, section, key, default=None): raise NotImplementedError()
+    def dump(self): raise NotImplementedError()
     def push(self): raise NotImplementedError()
 
 class __NullIni(IniFacade):
@@ -74,6 +75,7 @@ class __NullIni(IniFacade):
     def get_float_from_ini(self, section, key, default=None): pass
     def get_boolean_from_ini(self, section, key, default=False): pass
     def get_list_from_ini(self, section, key, default=None): pass
+    def dump(self): pass
     def push(self): pass
 
 class __LocalIniFile(IniFacade):
@@ -130,6 +132,17 @@ class __LocalIniFile(IniFacade):
             values_string = values_string[:-2]
 
         self.set_value_at_ini(section, key, values_string)
+
+    def dump(self):
+        text = "Dump of file: " + self.__ini_file_name + "\n"
+
+        for section in self.__config_parser.sections():
+            text += "\n[" + section + "]\n"
+
+            for option in self.__config_parser.options(section):
+                text += option + " = " + str(self.__config_parser.get(section, option)) + "\n"
+
+        return text[:-1]
 
     def push(self):
         with open(self.__ini_file_name, "w") as ini_file: self.__config_parser.write(ini_file)

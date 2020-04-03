@@ -583,9 +583,59 @@ class __SingleGratingTalbot(SingleGratingTalbotFacade):
                 self.__plotter.save_sdf_file(data * self.__wavelength, virtual_pixelsize, file_suffix='_phase', extraHeader={'Title': 'WF Phase 2nd order removed', 'Zunit': 'meters'})
 
             if remove_2nd_order:
-               pass
+                if calc_thickness:
+                    thickness_2nd_order_lsq, popt = common_tools.lsq_fit_parabola(thickness, virtual_pixelsize)
+
+                    _, popt = common_tools.lsq_fit_parabola(thickness, virtual_pixelsize)
+
+                    self.__main_logger.print_message('Thickness Radius of WF x: {:.3g} m'.format(popt[0]))
+                    self.__main_logger.print_message('Thickness Radius of WF y: {:.3g} m'.format(popt[1]))
+
+                    err = -(thickness - thickness_2nd_order_lsq)  # [rad]
+                    err -= np.min(err)
+
+                    self.__plotter.push_plot_on_context(INTEGRATION_CONTEXT_KEY, PlotIntegration,
+                                                        title="Thickness Residual",
+                                                        data=err * 1e6,
+                                                        pixelsize=virtual_pixelsize,
+                                                        titleStr=r'Thickness $[\mu m ]$' + '\n' +
+                                                                 r'Rx = {:.3f} $\mu m$, '.format(popt[0] * 1e6) +
+                                                                 r'Ry = {:.3f} $\mu m$'.format(popt[1] * 1e6),
+                                                        ctitle='',
+                                                        max3d_grid_points=101,
+                                                        kwarg4surf={})
+
+                    self.__plotter.save_sdf_file(err, virtual_pixelsize, file_suffix='_thickness_residual', extraHeader={'Title': 'Thickness Residual', 'Zunit': 'meters'})
+
+                phase_2nd_order_lsq, popt = common_tools.lsq_fit_parabola(phase, virtual_pixelsize)
+
+                _, popt = common_tools.lsq_fit_parabola(1 / 2 / np.pi * phase * self.__wavelength, virtual_pixelsize)
+
+                self.__main_logger.print_message('Curvature Radius of WF x: {:.3g} m'.format(popt[0]))
+                self.__main_logger.print_message('Curvature Radius of WF y: {:.3g} m'.format(popt[1]))
+
+                err = -(phase - phase_2nd_order_lsq)  # [rad]
+                err -= np.min(err)
+
+                data = err / 2 / np.pi * self.__wavelength
+
+                self.__plotter.push_plot_on_context(INTEGRATION_CONTEXT_KEY, PlotIntegration,
+                                                    title="Phase Residual",
+                                                    data=data * 1e9,
+                                                    pixelsize=virtual_pixelsize,
+                                                    titleStr=r'WF $[nm ]$' +
+                                                             '\nRx = {:.3f} m, Ry = {:.3f} m'.format(popt[0], popt[1]),
+                                                    ctitle='',
+                                                    max3d_grid_points=101,
+                                                    kwarg4surf={})
+
+                self.__plotter.save_sdf_file(err, virtual_pixelsize, file_suffix='_phase_residual', extraHeader={'Title': 'WF Phase Residual', 'Zunit': 'meters'})
+
+                self.__main_logger.print_message('DONE')
 
             self.__draw_context(INTEGRATION_CONTEXT_KEY)
+
+        self.__script_logger.print("\n\n" + self.__ini.dump())
 
         return WavePyData(diffPhase01=diffPhase01,
                           diffPhase10=diffPhase10,
