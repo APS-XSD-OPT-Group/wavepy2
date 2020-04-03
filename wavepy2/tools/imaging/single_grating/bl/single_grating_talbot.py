@@ -54,9 +54,10 @@ from wavepy2.util.ini.initializer import get_registered_ini_instance
 from wavepy2.tools.common.wavepy_data import WavePyData
 
 from wavepy2.core import grating_interferometry
-from wavepy2.core.widgets.plot_intensities_harms import PlotIntensitiesHarms
-from wavepy2.core.widgets.plot_dark_field import PlotDarkField
+from wavepy2.core.widgets.plot_intensities_harms_widget import PlotIntensitiesHarms
+from wavepy2.core.widgets.plot_dark_field_widget import PlotDarkField
 from wavepy2.core.widgets.crop_dialog_widget import CropDialogPlot
+from wavepy2.core.widgets.plot_integration_widget import PlotIntegration
 from wavepy2.tools.imaging.single_grating.widgets.plot_DPC_widget import PlotDPC
 from wavepy2.tools.imaging.single_grating.widgets.input_parameters_widget import InputParametersWidget, generate_initialization_parameters
 from wavepy2.tools.imaging.single_grating.widgets.first_crop_dialog_widget import FirstCropDialogPlot
@@ -476,9 +477,13 @@ class __SingleGratingTalbot(SingleGratingTalbotFacade):
                           virtual_pixelsize=virtual_pixelsize)
 
     def do_integration(self, fit_radius_dpc_result, initialization_parameters):
+        phenergy          = initialization_parameters.get_parameter("phenergy")
+
         diffPhase01       = fit_radius_dpc_result.get_parameter("diffPhase01")
         diffPhase10       = fit_radius_dpc_result.get_parameter("diffPhase10")
         virtual_pixelsize = fit_radius_dpc_result.get_parameter("virtual_pixelsize")
+
+        wavelength = hc / phenergy
 
         do_integration = initialization_parameters.get_parameter("do_integration")
 
@@ -493,7 +498,13 @@ class __SingleGratingTalbot(SingleGratingTalbotFacade):
             self.__main_logger.print_message('DONE')
             self.__main_logger.print_message('Plotting Phase in meters')
 
-            # TODO: the rest
+            self.__plotter.push_plot_on_context(INTEGRATION_CONTEXT_KEY, PlotIntegration,
+                                                integrated=-1 / 2 / np.pi * phase * wavelength * 1e9,
+                                                pixelsize=virtual_pixelsize,
+                                                titleStr = r'-WF $[nm]$',
+                                                ctitle="",
+                                                max3d_grid_points=101,
+                                                kwarg4surf={})
 
             self.__draw_context(INTEGRATION_CONTEXT_KEY)
         else:

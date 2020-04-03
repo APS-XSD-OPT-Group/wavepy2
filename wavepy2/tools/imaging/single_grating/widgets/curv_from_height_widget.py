@@ -81,7 +81,7 @@ class CurvFromHeight(WavePyWidget):
 
         figure1.tight_layout()
 
-        self.append_mpl_figure_to_save(FigureToSave(figure=figure1, figure_file_name=common_tools.get_unique_filename(saveFileSuf, "png")))
+        self.append_mpl_figure_to_save(figure=figure1, figure_file_name=common_tools.get_unique_filename(saveFileSuf, "png"))
 
         data2saveV = np.asarray(list_curv).T
 

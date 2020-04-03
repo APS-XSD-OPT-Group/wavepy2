@@ -82,9 +82,11 @@ class WavePyWidget(QWidget, WavePyGenericWidget):
 
         self.setLayout(layout)
 
-    def append_mpl_figure_to_save(self, figure_to_save):
-        if not hasattr(self, "__figures_to_save") or self.__figures_to_save is None: self.__figures_to_save = [figure_to_save]
-        else: self.__figures_to_save.append(figure_to_save)
+    def append_mpl_figure_to_save(self, figure, figure_file_name=None):
+        if not hasattr(self, "__figures_to_save") or self.__figures_to_save is None: self.__figures_to_save = []
+        self.__figures_to_save.append(FigureToSave(figure=figure,
+                                                   figure_file_name=figure_file_name if not common_tools.is_empty_string(figure_file_name) else \
+                                                       common_tools.get_unique_filename(get_registered_plotter_instance().get_save_file_prefix(), "png")))
 
     def build_mpl_figure(self, **kwargs): raise NotImplementedError()
 
@@ -92,9 +94,7 @@ class WavePyWidget(QWidget, WavePyGenericWidget):
 
     def get_figures_to_save(self):
         if self.allows_saving():
-            return [FigureToSave(figure=figure_to_save,
-                                 figure_file_name=common_tools.get_unique_filename(get_registered_plotter_instance().get_save_file_prefix(), "png"))
-                    for figure_to_save in self.__figures_to_save]
+            return self.__figures_to_save
         else: return None
 
 

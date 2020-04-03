@@ -202,7 +202,7 @@ class NProfilesHV(WavePyWidget):
         figure1.gca().set_ylabel(zlabel, fontsize=18)
         figure1.gca().set_title(titleH + ', Filter Width = {:d} pixels'.format(filter_width), fontsize=20)
 
-        self.append_mpl_figure_to_save(FigureToSave(figure=figure1, figure_file_name=common_tools.get_unique_filename(saveFileSuf + "_H", "png")))
+        self.append_mpl_figure_to_save(figure=figure1, figure_file_name=common_tools.get_unique_filename(saveFileSuf + "_H", "png"))
 
         header.append(zlabel + ', Filter Width = {:d} pixels'.format(filter_width))
 
@@ -224,7 +224,7 @@ class NProfilesHV(WavePyWidget):
             currentAxis.add_patch(Rectangle((-.5, row - filter_width // 2 - .5), np.shape(arrayH)[1], filter_width, facecolor=lc[i - 1], alpha=.5))
             figure2.gca().axhline(row, color=lc[i - 1])
 
-        self.append_mpl_figure_to_save(FigureToSave(figure=figure2, figure_file_name=common_tools.get_unique_filename(saveFileSuf + "_H", "png")))
+        self.append_mpl_figure_to_save(figure=figure2, figure_file_name=common_tools.get_unique_filename(saveFileSuf + "_H", "png"))
 
         return figure1, figure2, data2saveH, labels_H
 
@@ -268,7 +268,7 @@ class NProfilesHV(WavePyWidget):
         figure1.gca().set_ylabel(zlabel, fontsize=18)
         figure1.gca().set_title(titleV + ', Filter Width = {:d} pixels'.format(filter_width), fontsize=20)
 
-        self.append_mpl_figure_to_save(FigureToSave(figure=figure1, figure_file_name=common_tools.get_unique_filename(saveFileSuf + "_V", "png")))
+        self.append_mpl_figure_to_save(figure=figure1, figure_file_name=common_tools.get_unique_filename(saveFileSuf + "_V", "png"))
 
         header.append(zlabel + ', Filter Width = {:d} pixels'.format(filter_width))
 
@@ -288,6 +288,6 @@ class NProfilesHV(WavePyWidget):
             currentAxis.add_patch(Rectangle((col - filter_width // 2 - .5, -.5), filter_width, np.shape(arrayV)[0], facecolor=lc[i - 1], alpha=.5))
             figure2.gca().axvline(col, color=lc[i - 1])
 
-        self.append_mpl_figure_to_save(FigureToSave(figure=figure2, figure_file_name=common_tools.get_unique_filename(saveFileSuf + "_V", "png")))
+        self.append_mpl_figure_to_save(figure=figure2, figure_file_name=common_tools.get_unique_filename(saveFileSuf + "_V", "png"))
 
         return figure1, figure2, data2saveV, labels_V

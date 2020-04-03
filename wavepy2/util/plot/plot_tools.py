@@ -245,6 +245,35 @@ def line_style_cycle(ls=['-', '--'], ms=['s', 'o', '^', 'd'], ncurves=2, cmap_st
 
     return ls_cycle, lc_cycle
 
+from scipy.interpolate import UnivariateSpline
+
+def fwhm_xy(xvalues, yvalues):
+    """
+    Calculate FWHM of a vector  y(x)
+
+    Parameters
+    ----------
+    xvalues : ndarray
+        vector with the values of x
+    yvalues : ndarray
+        vector with the values of x
+
+    Returns
+    -------
+    list
+        list of values x and y(x) at half maximum in the format
+        [[fwhm_x1, fwhm_x2], [fwhm_y1, fwhm_y2]]
+    """
+
+    spline = UnivariateSpline(xvalues, yvalues-np.min(yvalues)/2-np.max(yvalues)/2, s=0)
+
+    xvalues = spline.roots().tolist()
+    yvalues = (spline(spline.roots()) + np.min(yvalues)/2 + np.max(yvalues)/2).tolist()
+
+    if len(xvalues) == 2: return [xvalues, yvalues]
+    else: return[[], []]
+
+
 ##########################################################################
 # WIDGETS UTILS FROM OASYS
 

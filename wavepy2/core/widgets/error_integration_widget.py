@@ -69,7 +69,7 @@ class ErrorIntegration(WavePyWidget):
         midleX = xx.shape[0] // 2
         midleY = xx.shape[1] // 2
 
-        figure = Figure(figsize=(14, 10))
+        figure = Figure(figsize=(9, 6.4)) # 14, 10
 
         ax1 = figure.add_subplot(221)
         ax1.ticklabel_format(style='sci', axis='both', scilimits=(0, 1))
