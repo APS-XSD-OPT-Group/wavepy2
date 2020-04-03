@@ -88,6 +88,9 @@ class SingleGratingTalbotFacade:
     def dpc_profile_analysis(self, remove_linear_fit_result, initialization_parameters): raise NotImplementedError()
     def fit_radius_dpc(self, correct_zero_dpc_result, initialization_parameters): raise NotImplementedError()
     def do_integration(self, fit_radius_dpc_result, initialization_parameters): raise NotImplementedError()
+    def calc_thickness(self, integration_result, initialization_parameters): raise NotImplementedError()
+    def calc_2nd_order_component_of_the_phase(self, integration_result, initialization_parameters): raise NotImplementedError()
+    def remove_2nd_order(self, integration_result, initialization_parameters): raise NotImplementedError()
 
 def create_single_grating_talbot_manager():
     return __SingleGratingTalbot()
