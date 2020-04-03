@@ -70,11 +70,11 @@ class FirstCropDialogPlot(WavePyInteractiveWidget):
         self.__logger.print_other(idx4crop, "Stored Crop Indexes: ", color=LoggerColor.RED)
 
         original_cropped_image = SimplePlot(self,
-                                            image=self.__img,
+                                            image=self.__cropped_img,
                                             title="Raw Image with initial Crop",
                                             xlabel=r'$[\mu m]$',
                                             ylabel=r'$[\mu m]$',
-                                            extent=common_tools.extent_func(self.__img, pixelsize)*1e6)
+                                            extent=common_tools.extent_func(self.__cropped_img, pixelsize) * 1e6)
 
         crop_image = GraphicalRoiIdx(self,
                                      image=img,
@@ -102,19 +102,21 @@ class FirstCropDialogPlot(WavePyInteractiveWidget):
     def get_accepted_output(self):
         if self.__initialized: self.__ini.set_list_at_ini('Parameters', 'Crop', self.__idx4crop)
 
-        return self.__img, self.__idx4crop
+        return self.__cropped_img, self.__idx4crop
 
     def get_rejected_output(self):
         if self.__initialized: self.__ini.set_list_at_ini('Parameters', 'Crop', self.__initial_idx4crop)
 
-        return self.__initial_img , self.__initial_idx4crop
+        cropped_img = common_tools.crop_matrix_at_indexes(self.__uncropped_img, self.__initial_idx4crop)
+
+        return  cropped_img, self.__initial_idx4crop
 
     def create_cropped_output(self, idx4crop):
-        self.__img      = common_tools.crop_matrix_at_indexes(self.__initial_img, idx4crop)
-        self.__idx4crop = idx4crop
+        self.__cropped_img = common_tools.crop_matrix_at_indexes(self.__uncropped_img, idx4crop)
+        self.__idx4crop    = idx4crop
 
     def __initialize(self, img, idx4crop):
-        self.__initial_img = img
+        self.__uncropped_img    = img
         self.__initial_idx4crop = idx4crop
 
         self.create_cropped_output(idx4crop)
