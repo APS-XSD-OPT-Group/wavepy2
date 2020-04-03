@@ -69,12 +69,15 @@ from wavepy2.tools.imaging.single_grating.widgets.fit_radius_dpc_widget import F
 from wavepy2.tools.imaging.single_grating.bl.dpc_profile_analysis import create_dpc_profile_analsysis_manager
 
 
-CALCULATE_DPC_CONTEXT_KEY = "Calculate DPC"
-RECROP_DPC_CONTEXT_KEY = "Recrop DPC"
-CORRECT_ZERO_DPC_CONTEXT_KEY = "Correct Zero DPC"
-REMOVE_LINEAR_FIT_CONTEXT_KEY = "Remove Linear Fit"
-FIT_RADIUS_DPC_CONTEXT_KEY = "Fit Radius DPC"
-INTEGRATION_CONTEXT_KEY = "Integration"
+CALCULATE_DPC_CONTEXT_KEY                  = "Calculate DPC"
+RECROP_DPC_CONTEXT_KEY                     = "Recrop DPC"
+CORRECT_ZERO_DPC_CONTEXT_KEY               = "Correct Zero DPC"
+REMOVE_LINEAR_FIT_CONTEXT_KEY              = "Remove Linear Fit"
+FIT_RADIUS_DPC_CONTEXT_KEY                 = "Fit Radius DPC"
+INTEGRATION_CONTEXT_KEY                    = "Integration"
+CALCULATE_THICKNESS_CONTEXT_KEY            = "Calculate Thickness"
+CALCULATE_2ND_ORDER_COMPONENT_OF_THE_PHASE = "Calculate 2nd order component of the phase"
+REMOVE_2ND_ORDER                           = "Remove 2nd order"
 
 class SingleGratingTalbotFacade:
     def get_initialization_parameters(self): raise NotImplementedError()
@@ -98,6 +101,8 @@ class __SingleGratingTalbot(SingleGratingTalbotFacade):
 
     def __draw_context(self, context_key):
         self.__plotter.draw_context_on_widget(context_key, container_widget=self.__plotter.get_context_container_widget(context_key))
+
+    # %% ==================================================================================================
 
     def get_initialization_parameters(self, script_logger_mode):
         if self.__plotter.is_active():
@@ -136,7 +141,7 @@ class __SingleGratingTalbot(SingleGratingTalbotFacade):
 
         return initialization_parameters
 
-    #--------------------------------------------------------------------------------
+    # %% ==================================================================================================
 
     def calculate_dpc(self, initialization_parameters):
         img             = initialization_parameters.get_parameter("img")
@@ -233,7 +238,7 @@ class __SingleGratingTalbot(SingleGratingTalbotFacade):
                           diffPhase10=diffPhase10,
                           virtual_pixelsize=virtual_pixelsize)
 
-    #--------------------------------------------------------------------------------
+    # %% ==================================================================================================
 
     def recrop_dpc(self, dpc_result, initialization_parameters):
         img             = initialization_parameters.get_parameter("img")
@@ -303,7 +308,7 @@ class __SingleGratingTalbot(SingleGratingTalbotFacade):
                           diffPhase10=diffPhase10,
                           virtual_pixelsize=virtual_pixelsize)
 
-    #--------------------------------------------------------------------------------
+    # %% ==================================================================================================
 
     def correct_zero_dpc(self, dpc_result, initialization_parameters):
         dpc01              = dpc_result.get_parameter("diffPhase01")
@@ -371,7 +376,7 @@ class __SingleGratingTalbot(SingleGratingTalbotFacade):
 
         return WavePyData(diffPhase01=dpc01, diffPhase10=dpc10, virtual_pixelsize=virtual_pixelsize)
 
-    #--------------------------------------------------------------------------------
+    # %% ==================================================================================================
 
     def remove_linear_fit(self, correct_zero_dpc_result, initialization_parameters):
         diffPhase01        = correct_zero_dpc_result.get_parameter("diffPhase01")
@@ -435,6 +440,7 @@ class __SingleGratingTalbot(SingleGratingTalbotFacade):
                           linfitDPC01=linfitDPC01,
                           linfitDPC10=linfitDPC10)
 
+    # %% ==================================================================================================
 
     def dpc_profile_analysis(self, remove_linear_fit_result, initialization_parameters):
         diffPhase01        = remove_linear_fit_result.get_parameter("diffPhase01")
@@ -467,6 +473,8 @@ class __SingleGratingTalbot(SingleGratingTalbotFacade):
                           linfitDPC01=remove_linear_fit_result.get_parameter("linfitDPC01"),
                           linfitDPC10=remove_linear_fit_result.get_parameter("linfitDPC10"))
 
+    # %% ==================================================================================================
+
     def fit_radius_dpc(self, dpc_profile_analysis_result, initialization_parameters):
         diffPhase01       = dpc_profile_analysis_result.get_parameter("diffPhase01")
         diffPhase10       = dpc_profile_analysis_result.get_parameter("diffPhase10")
@@ -483,38 +491,22 @@ class __SingleGratingTalbot(SingleGratingTalbotFacade):
                           linfitDPC01=dpc_profile_analysis_result.get_parameter("linfitDPC01"),
                           linfitDPC10=dpc_profile_analysis_result.get_parameter("linfitDPC10"))
 
+    # %% ==================================================================================================
+
     def do_integration(self, fit_radius_dpc_result, initialization_parameters):
         diffPhase01       = fit_radius_dpc_result.get_parameter("diffPhase01")
         diffPhase10       = fit_radius_dpc_result.get_parameter("diffPhase10")
         virtual_pixelsize = fit_radius_dpc_result.get_parameter("virtual_pixelsize")
-        linfitDPC01       = fit_radius_dpc_result.get_parameter("linfitDPC01")
-        linfitDPC10       = fit_radius_dpc_result.get_parameter("linfitDPC10")
 
         do_integration   = initialization_parameters.get_parameter("do_integration")
-        calc_thickness   = initialization_parameters.get_parameter("calc_thickness")
-        remove_2nd_order = initialization_parameters.get_parameter("remove_2nd_order")
-        remove_linear      = initialization_parameters.get_parameter("remove_linear")
-
-
-        def doIntegration(diffPhase01, diffPhase10, virtual_pixelsize, message="New Crop for Integration?"):
-            phase = grating_interferometry.dpc_integration(diffPhase01, diffPhase10, virtual_pixelsize, context_key=INTEGRATION_CONTEXT_KEY, message=message)
-            phase -= np.min(phase)
-
-            return phase
-
-        def remove2ndOrder(data, virtual_pixelsize):
-            data_2nd_order_lsq, popt = common_tools.lsq_fit_parabola(data, virtual_pixelsize)
-            err = -(data - data_2nd_order_lsq)  # [rad]
-            err -= np.min(err)
-
-            return err, popt
 
         if do_integration:
             self.__plotter.register_context_window(INTEGRATION_CONTEXT_KEY)
 
             self.__main_logger.print_message('Performing Frankot-Chellappa Integration')
 
-            phase = doIntegration(diffPhase01, diffPhase10, virtual_pixelsize, "Crop Differential Phase")
+            phase = self.__doIntegration(diffPhase01, diffPhase10, virtual_pixelsize,
+                                         INTEGRATION_CONTEXT_KEY, message="Crop Differential Phase")
 
             self.__main_logger.print_message('DONE')
             self.__main_logger.print_message('Plotting Phase in meters')
@@ -531,114 +523,206 @@ class __SingleGratingTalbot(SingleGratingTalbotFacade):
 
             self.__plotter.save_sdf_file(integrated_data, virtual_pixelsize, file_suffix='_phase', extraHeader={'Title': 'WF Phase', 'Zunit': 'meters'})
 
-            if calc_thickness:
-                self.__main_logger.print_message('Plotting Thickness')
-
-                material_idx   = initialization_parameters.get_parameter("material_idx")
-                phenergy       = initialization_parameters.get_parameter("phenergy")
-                distDet2sample = initialization_parameters.get_parameter("distDet2sample")
-
-                delta, material, density = get_delta(phenergy, material_idx=material_idx)
-
-                thickness = -(phase - np.min(phase)) / self.__kwave / delta
-
-                titleStr = r'Material: ' + material + ', Thickness $[\mu m]$'
-
-                self.__plotter.push_plot_on_context(INTEGRATION_CONTEXT_KEY, PlotIntegration,
-                                                    title="Thickness",
-                                                    data=thickness * 1e6,
-                                                    pixelsize=virtual_pixelsize,
-                                                    titleStr=titleStr,
-                                                    ctitle=r'$[\mu m]$',
-                                                    max3d_grid_points=101,
-                                                    kwarg4surf={})
-
-                # Log thickness properties
-                self.__script_logger.print('Material = ' + material)
-                self.__script_logger.print('density = ' + str('{:.3g}'.format(density)) + ' g/cm^3')
-                self.__script_logger.print('delta = ' + str('{:.5g}'.format(delta)))
-
-                thickSensitivy100 = virtual_pixelsize[0] ** 2 / distDet2sample / delta / 100
-                # the 100 means that I arbitrarylly assumed the angular error in
-                #  fringe displacement to be 2pi/100 = 3.6 deg
-                self.__script_logger.print('Thickness Sensitivy 100 [m] = ' + str('{:.5g}'.format(thickSensitivy100)))
-
-                self.__plotter.save_sdf_file(thickness, virtual_pixelsize, file_suffix='_thickness', extraHeader={'Title': 'Thickness', 'Zunit': 'meters'})
-
-                # % 2nd order component of phase
-
-            if remove_linear:
-                data = 1 / 2 / np.pi * doIntegration(linfitDPC01, linfitDPC10, virtual_pixelsize, message="New Crop for 2nd order component of the phase?") # phase_2nd_order
-
-                self.__plotter.push_plot_on_context(INTEGRATION_CONTEXT_KEY, PlotIntegration,
-                                                    title="2nd order component of the phase",
-                                                    data=data,
-                                                    pixelsize=virtual_pixelsize,
-                                                    titleStr=r'WF, 2nd order component' + r'$[\lambda$ units $]$',
-                                                    ctitle='',
-                                                    max3d_grid_points=101,
-                                                    kwarg4surf={})
-
-                data = 1 / 2 / np.pi * doIntegration(diffPhase01 - linfitDPC01, diffPhase10 - linfitDPC10, virtual_pixelsize, "New Crop for difference to 2nd order of the phase?")
-
-                self.__plotter.push_plot_on_context(INTEGRATION_CONTEXT_KEY, PlotIntegration,
-                                                    title="Difference to 2nd order of the phase",
-                                                    data=data,
-                                                    pixelsize=virtual_pixelsize,
-                                                    titleStr=r'WF, difference to 2nd order component' + r'$[\lambda$ units $]$',
-                                                    ctitle='',
-                                                    max3d_grid_points=101,
-                                                    kwarg4surf={})
-
-
-                self.__plotter.save_sdf_file(data * self.__wavelength, virtual_pixelsize, file_suffix='_phase', extraHeader={'Title': 'WF Phase 2nd order removed', 'Zunit': 'meters'})
-
-            if remove_2nd_order:
-                if calc_thickness:
-                    err, popt = remove2ndOrder(thickness, virtual_pixelsize)
-
-                    self.__main_logger.print_message('Thickness Radius of WF x: {:.3g} m'.format(popt[0]))
-                    self.__main_logger.print_message('Thickness Radius of WF y: {:.3g} m'.format(popt[1]))
-
-                    self.__plotter.push_plot_on_context(INTEGRATION_CONTEXT_KEY, PlotIntegration,
-                                                        title="Thickness Residual",
-                                                        data=err * 1e6,
-                                                        pixelsize=virtual_pixelsize,
-                                                        titleStr=r'Thickness $[\mu m ]$' + '\n' +
-                                                                 r'Rx = {:.3f} $\mu m$, '.format(popt[0] * 1e6) +
-                                                                 r'Ry = {:.3f} $\mu m$'.format(popt[1] * 1e6),
-                                                        ctitle='',
-                                                        max3d_grid_points=101,
-                                                        kwarg4surf={})
-
-                    self.__plotter.save_sdf_file(err, virtual_pixelsize, file_suffix='_thickness_residual', extraHeader={'Title': 'Thickness Residual', 'Zunit': 'meters'})
-
-                err, _ = remove2ndOrder(phase, virtual_pixelsize)
-                _, popt = common_tools.lsq_fit_parabola(1 / 2 / np.pi * phase * self.__wavelength, virtual_pixelsize)
-
-                self.__main_logger.print_message('Curvature Radius of WF x: {:.3g} m'.format(popt[0]))
-                self.__main_logger.print_message('Curvature Radius of WF y: {:.3g} m'.format(popt[1]))
-
-                data = err / 2 / np.pi * self.__wavelength
-
-                self.__plotter.push_plot_on_context(INTEGRATION_CONTEXT_KEY, PlotIntegration,
-                                                    title="Phase Residual",
-                                                    data=data * 1e9,
-                                                    pixelsize=virtual_pixelsize,
-                                                    titleStr=r'WF $[nm ]$' +
-                                                             '\nRx = {:.3f} m, Ry = {:.3f} m'.format(popt[0], popt[1]),
-                                                    ctitle='',
-                                                    max3d_grid_points=101,
-                                                    kwarg4surf={})
-
-                self.__plotter.save_sdf_file(err, virtual_pixelsize, file_suffix='_phase_residual', extraHeader={'Title': 'WF Phase Residual', 'Zunit': 'meters'})
-
-                self.__main_logger.print_message('DONE')
-
             self.__draw_context(INTEGRATION_CONTEXT_KEY)
 
         self.__script_logger.print("\n\n" + self.__ini.dump())
 
         return WavePyData(diffPhase01=diffPhase01,
                           diffPhase10=diffPhase10,
-                          virtual_pixelsize=virtual_pixelsize)
+                          virtual_pixelsize=virtual_pixelsize,
+                          linfitDPC01=fit_radius_dpc_result.get_parameter("linfitDPC01"),
+                          linfitDPC10=fit_radius_dpc_result.get_parameter("linfitDPC10"),
+                          phase=phase if do_integration else None)
+
+    # %% ==================================================================================================
+
+    def calc_thickness(self, integration_result, initialization_parameters):
+        virtual_pixelsize = integration_result.get_parameter("virtual_pixelsize")
+        phase             = integration_result.get_parameter("phase")
+
+        do_integration   = initialization_parameters.get_parameter("do_integration")
+        calc_thickness   = initialization_parameters.get_parameter("calc_thickness")
+
+        if do_integration and calc_thickness:
+            self.__plotter.register_context_window(CALCULATE_THICKNESS_CONTEXT_KEY)
+
+            self.__main_logger.print_message('Plotting Thickness')
+
+            material_idx   = initialization_parameters.get_parameter("material_idx")
+            phenergy       = initialization_parameters.get_parameter("phenergy")
+            distDet2sample = initialization_parameters.get_parameter("distDet2sample")
+
+            delta, material, density = get_delta(phenergy, material_idx=material_idx)
+
+            thickness = -(phase - np.min(phase)) / self.__kwave / delta
+
+            titleStr = r'Material: ' + material + ', Thickness $[\mu m]$'
+
+            self.__plotter.push_plot_on_context(CALCULATE_THICKNESS_CONTEXT_KEY, PlotIntegration,
+                                                title="Thickness",
+                                                data=thickness * 1e6,
+                                                pixelsize=virtual_pixelsize,
+                                                titleStr=titleStr,
+                                                ctitle=r'$[\mu m]$',
+                                                max3d_grid_points=101,
+                                                kwarg4surf={})
+
+            # Log thickness properties
+            self.__script_logger.print('Material = ' + material)
+            self.__script_logger.print('density = ' + str('{:.3g}'.format(density)) + ' g/cm^3')
+            self.__script_logger.print('delta = ' + str('{:.5g}'.format(delta)))
+
+            thickSensitivy100 = virtual_pixelsize[0] ** 2 / distDet2sample / delta / 100
+            # the 100 means that I arbitrarylly assumed the angular error in
+            #  fringe displacement to be 2pi/100 = 3.6 deg
+            self.__script_logger.print('Thickness Sensitivy 100 [m] = ' + str('{:.5g}'.format(thickSensitivy100)))
+            self.__plotter.save_sdf_file(thickness, virtual_pixelsize, file_suffix='_thickness', extraHeader={'Title': 'Thickness', 'Zunit': 'meters'})
+
+            self.__draw_context(CALCULATE_THICKNESS_CONTEXT_KEY)
+
+        return WavePyData(diffPhase01=integration_result.get_parameter("diffPhase01"),
+                          diffPhase10=integration_result.get_parameter("diffPhase10"),
+                          virtual_pixelsize=virtual_pixelsize,
+                          linfitDPC01=integration_result.get_parameter("linfitDPC01"),
+                          linfitDPC10=integration_result.get_parameter("linfitDPC10"),
+                          phase=phase,
+                          thickness=thickness if calc_thickness else None)
+
+    # %% ==================================================================================================
+
+    def calc_2nd_order_component_of_the_phase(self, integration_result, initialization_parameters):
+        diffPhase01       = integration_result.get_parameter("diffPhase01")
+        diffPhase10       = integration_result.get_parameter("diffPhase10")
+        virtual_pixelsize = integration_result.get_parameter("virtual_pixelsize")
+        linfitDPC01       = integration_result.get_parameter("linfitDPC01")
+        linfitDPC10       = integration_result.get_parameter("linfitDPC10")
+
+        do_integration = initialization_parameters.get_parameter("do_integration")
+        remove_linear  = initialization_parameters.get_parameter("remove_linear")
+
+        # % 2nd order component of phase
+
+        if do_integration and remove_linear:
+            self.__plotter.register_context_window(CALCULATE_2ND_ORDER_COMPONENT_OF_THE_PHASE)
+
+            data = 1 / 2 / np.pi * self.__doIntegration(linfitDPC01, linfitDPC10, virtual_pixelsize,
+                                                        CALCULATE_2ND_ORDER_COMPONENT_OF_THE_PHASE, message="New Crop for 2nd order component of the phase?") # phase_2nd_order
+
+            self.__plotter.push_plot_on_context(CALCULATE_2ND_ORDER_COMPONENT_OF_THE_PHASE, PlotIntegration,
+                                                title="2nd order component of the phase",
+                                                data=data,
+                                                pixelsize=virtual_pixelsize,
+                                                titleStr=r'WF, 2nd order component' + r'$[\lambda$ units $]$',
+                                                ctitle='',
+                                                max3d_grid_points=101,
+                                                kwarg4surf={})
+
+            data = 1 / 2 / np.pi * self.__doIntegration(diffPhase01 - linfitDPC01, diffPhase10 - linfitDPC10, virtual_pixelsize,
+                                                        CALCULATE_2ND_ORDER_COMPONENT_OF_THE_PHASE, message="New Crop for difference to 2nd order of the phase?")
+
+            self.__plotter.push_plot_on_context(CALCULATE_2ND_ORDER_COMPONENT_OF_THE_PHASE, PlotIntegration,
+                                                title="Difference to 2nd order of the phase",
+                                                data=data,
+                                                pixelsize=virtual_pixelsize,
+                                                titleStr=r'WF, difference to 2nd order component' + r'$[\lambda$ units $]$',
+                                                ctitle='',
+                                                max3d_grid_points=101,
+                                                kwarg4surf={})
+
+
+            self.__plotter.save_sdf_file(data * self.__wavelength, virtual_pixelsize, file_suffix='_phase', extraHeader={'Title': 'WF Phase 2nd order removed', 'Zunit': 'meters'})
+
+            self.__draw_context(CALCULATE_2ND_ORDER_COMPONENT_OF_THE_PHASE)
+
+        return WavePyData(diffPhase01=diffPhase01,
+                          diffPhase10=diffPhase10,
+                          virtual_pixelsize=virtual_pixelsize,
+                          linfitDPC01=linfitDPC01,
+                          linfitDPC10=linfitDPC10,
+                          phase=integration_result.get_parameter("phase"),
+                          thickness=integration_result.get_parameter("thickness", None))
+
+    # %% ==================================================================================================
+
+    def remove_2nd_order(self, integration_result, initialization_parameters):
+        virtual_pixelsize = integration_result.get_parameter("virtual_pixelsize")
+        phase             = integration_result.get_parameter("phase")
+
+        do_integration = initialization_parameters.get_parameter("do_integration")
+        calc_thickness = initialization_parameters.get_parameter("calc_thickness")
+        remove_2nd_order = initialization_parameters.get_parameter("remove_2nd_order")
+
+        if do_integration and remove_2nd_order:
+            self.__plotter.register_context_window(REMOVE_2ND_ORDER)
+
+            if calc_thickness:
+                thickness = integration_result.get_parameter("thickness")
+
+                err, popt = self.__remove2ndOrder(thickness, virtual_pixelsize)
+
+                self.__main_logger.print_message('Thickness Radius of WF x: {:.3g} m'.format(popt[0]))
+                self.__main_logger.print_message('Thickness Radius of WF y: {:.3g} m'.format(popt[1]))
+
+                self.__plotter.push_plot_on_context(REMOVE_2ND_ORDER, PlotIntegration,
+                                                    title="Thickness Residual",
+                                                    data=err * 1e6,
+                                                    pixelsize=virtual_pixelsize,
+                                                    titleStr=r'Thickness $[\mu m ]$' + '\n' +
+                                                             r'Rx = {:.3f} $\mu m$, '.format(popt[0] * 1e6) +
+                                                             r'Ry = {:.3f} $\mu m$'.format(popt[1] * 1e6),
+                                                    ctitle='',
+                                                    max3d_grid_points=101,
+                                                    kwarg4surf={})
+
+                self.__plotter.save_sdf_file(err, virtual_pixelsize, file_suffix='_thickness_residual', extraHeader={'Title': 'Thickness Residual', 'Zunit': 'meters'})
+
+            err, _ = self.__remove2ndOrder(phase, virtual_pixelsize)
+            _, popt = common_tools.lsq_fit_parabola(1 / 2 / np.pi * phase * self.__wavelength, virtual_pixelsize)
+
+            self.__main_logger.print_message('Curvature Radius of WF x: {:.3g} m'.format(popt[0]))
+            self.__main_logger.print_message('Curvature Radius of WF y: {:.3g} m'.format(popt[1]))
+
+            data = err / 2 / np.pi * self.__wavelength
+
+            self.__plotter.push_plot_on_context(REMOVE_2ND_ORDER, PlotIntegration,
+                                                title="Phase Residual",
+                                                data=data * 1e9,
+                                                pixelsize=virtual_pixelsize,
+                                                titleStr=r'WF $[nm ]$' +
+                                                         '\nRx = {:.3f} m, Ry = {:.3f} m'.format(popt[0], popt[1]),
+                                                ctitle='',
+                                                max3d_grid_points=101,
+                                                kwarg4surf={})
+
+            self.__plotter.save_sdf_file(err, virtual_pixelsize, file_suffix='_phase_residual', extraHeader={'Title': 'WF Phase Residual', 'Zunit': 'meters'})
+
+            self.__main_logger.print_message('DONE')
+
+            self.__draw_context(REMOVE_2ND_ORDER)
+
+
+        return WavePyData(diffPhase01=integration_result.get_parameter("diffPhase01"),
+                          diffPhase10=integration_result.get_parameter("diffPhase10"),
+                          virtual_pixelsize=virtual_pixelsize,
+                          linfitDPC01=integration_result.get_parameter("linfitDPC01"),
+                          linfitDPC10=integration_result.get_parameter("linfitDPC10"),
+                          phase=phase,
+                          thickness=thickness if calc_thickness else None)
+
+    ###################################################################
+    # PRIVATE METHODS
+
+    @classmethod
+    def __doIntegration(cls, diffPhase01, diffPhase10, virtual_pixelsize, context_key, message="New Crop for Integration?"):
+        phase = grating_interferometry.dpc_integration(diffPhase01, diffPhase10, virtual_pixelsize, context_key=context_key, message=message)
+        phase -= np.min(phase)
+
+        return phase
+
+    @classmethod
+    def __remove2ndOrder(cls, data, virtual_pixelsize):
+        data_2nd_order_lsq, popt = common_tools.lsq_fit_parabola(data, virtual_pixelsize)
+        err = -(data - data_2nd_order_lsq)
+        err -= np.min(err)
+
+        return err, popt

@@ -44,8 +44,8 @@
 # #########################################################################
 
 from wavepy2.tools.imaging.single_grating.bl.single_grating_talbot import create_single_grating_talbot_manager, \
-    CALCULATE_DPC_CONTEXT_KEY, CORRECT_ZERO_DPC_CONTEXT_KEY, RECROP_DPC_CONTEXT_KEY, \
-    REMOVE_LINEAR_FIT_CONTEXT_KEY, FIT_RADIUS_DPC_CONTEXT_KEY, INTEGRATION_CONTEXT_KEY
+    CALCULATE_DPC_CONTEXT_KEY, CORRECT_ZERO_DPC_CONTEXT_KEY, RECROP_DPC_CONTEXT_KEY, REMOVE_LINEAR_FIT_CONTEXT_KEY, FIT_RADIUS_DPC_CONTEXT_KEY, \
+    INTEGRATION_CONTEXT_KEY, CALCULATE_THICKNESS_CONTEXT_KEY, CALCULATE_2ND_ORDER_COMPONENT_OF_THE_PHASE, REMOVE_2ND_ORDER
 
 from wavepy2.tools.imaging.single_grating.bl.dpc_profile_analysis import DPC_PROFILE_ANALYSYS_CONTEXT_KEY
 
@@ -119,6 +119,15 @@ if __name__=="__main__":
 
     integration_result = single_grating_talbot_manager.do_integration(fit_radius_dpc_result, initialization_parameters)
     plotter.show_context_window(INTEGRATION_CONTEXT_KEY)
+
+    integration_result = single_grating_talbot_manager.calc_thickness(integration_result, initialization_parameters)
+    plotter.show_context_window(CALCULATE_THICKNESS_CONTEXT_KEY)
+
+    integration_result = single_grating_talbot_manager.calc_2nd_order_component_of_the_phase(integration_result, initialization_parameters)
+    plotter.show_context_window(CALCULATE_2ND_ORDER_COMPONENT_OF_THE_PHASE)
+
+    integration_result = single_grating_talbot_manager.remove_2nd_order(integration_result, initialization_parameters)
+    plotter.show_context_window(REMOVE_2ND_ORDER)
 
     get_registered_ini_instance().push()
 
