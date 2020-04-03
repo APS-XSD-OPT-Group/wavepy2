@@ -492,8 +492,8 @@ class __SingleGratingTalbot(SingleGratingTalbotFacade):
         calc_thickness   = initialization_parameters.get_parameter("calc_thickness")
         remove_2nd_order = initialization_parameters.get_parameter("remove_2nd_order")
 
-        def doIntegration(diffPhase01, diffPhase10, virtual_pixelsize, context_key):
-            phase = grating_interferometry.dpc_integration(diffPhase01, diffPhase10, virtual_pixelsize, context_key=INTEGRATION_CONTEXT_KEY)
+        def doIntegration(diffPhase01, diffPhase10, virtual_pixelsize, message="New Crop for Integration?"):
+            phase = grating_interferometry.dpc_integration(diffPhase01, diffPhase10, virtual_pixelsize, context_key=INTEGRATION_CONTEXT_KEY, message=message)
             phase -= np.min(phase)
 
             return phase
@@ -503,7 +503,7 @@ class __SingleGratingTalbot(SingleGratingTalbotFacade):
 
             self.__main_logger.print_message('Performing Frankot-Chellapa Integration')
 
-            phase = do_integration(diffPhase01, diffPhase10, virtual_pixelsize)
+            phase = doIntegration(diffPhase01, diffPhase10, virtual_pixelsize, "Crop Differential Phase")
 
             self.__main_logger.print_message('DONE')
             self.__main_logger.print_message('Plotting Phase in meters')
@@ -520,9 +520,6 @@ class __SingleGratingTalbot(SingleGratingTalbotFacade):
 
             self.__plotter.save_sdf_file(integrated_data, virtual_pixelsize, file_suffix='_phase', extraHeader={'Title': 'WF Phase', 'Zunit': 'meters'})
 
-            self.__draw_context(INTEGRATION_CONTEXT_KEY)
-
-
             if calc_thickness:
                 self.__main_logger.print_message('Plotting Thickness')
 
@@ -537,6 +534,7 @@ class __SingleGratingTalbot(SingleGratingTalbotFacade):
                 titleStr = r'Material: ' + material + ', Thickness $[\mu m]$'
 
                 self.__plotter.push_plot_on_context(INTEGRATION_CONTEXT_KEY, PlotIntegration,
+                                                    title="Thickness",
                                                     data=thickness * 1e6,
                                                     pixelsize=virtual_pixelsize,
                                                     titleStr=titleStr,
@@ -559,9 +557,10 @@ class __SingleGratingTalbot(SingleGratingTalbotFacade):
                 # % 2nd order component of phase
 
             if linfitDPC01 is not None:
-                data = 1 / 2 / np.pi * doIntegration(linfitDPC01, linfitDPC10, virtual_pixelsize) # phase_2nd_order
+                data = 1 / 2 / np.pi * doIntegration(linfitDPC01, linfitDPC10, virtual_pixelsize, message="New Crop for 2nd order component of the phase?") # phase_2nd_order
 
                 self.__plotter.push_plot_on_context(INTEGRATION_CONTEXT_KEY, PlotIntegration,
+                                                    title="2nd order component of the phase",
                                                     data=data,
                                                     pixelsize=virtual_pixelsize,
                                                     titleStr=r'WF, 2nd order component' + r'$[\lambda$ units $]$',
@@ -569,9 +568,10 @@ class __SingleGratingTalbot(SingleGratingTalbotFacade):
                                                     max3d_grid_points=101,
                                                     kwarg4surf={})
 
-                data = 1 / 2 / np.pi * doIntegration(diffPhase01 - linfitDPC01, diffPhase10 - linfitDPC10, virtual_pixelsize)
+                data = 1 / 2 / np.pi * doIntegration(diffPhase01 - linfitDPC01, diffPhase10 - linfitDPC10, virtual_pixelsize, "New Crop for difference to 2nd order of the phase?")
 
                 self.__plotter.push_plot_on_context(INTEGRATION_CONTEXT_KEY, PlotIntegration,
+                                                    title="Difference to 2nd order of the phase",
                                                     data=data,
                                                     pixelsize=virtual_pixelsize,
                                                     titleStr=r'WF, difference to 2nd order component' + r'$[\lambda$ units $]$',
@@ -582,6 +582,10 @@ class __SingleGratingTalbot(SingleGratingTalbotFacade):
 
                 self.__plotter.save_sdf_file(data * self.__wavelength, virtual_pixelsize, file_suffix='_phase', extraHeader={'Title': 'WF Phase 2nd order removed', 'Zunit': 'meters'})
 
+            if remove_2nd_order:
+               pass
+
+            self.__draw_context(INTEGRATION_CONTEXT_KEY)
 
         return WavePyData(diffPhase01=diffPhase01,
                           diffPhase10=diffPhase10,

@@ -22,9 +22,12 @@ from warnings import filterwarnings
 filterwarnings("ignore")
 
 class PlotIntegration(WavePyWidget):
-    def get_plot_tab_name(self): return "Frankot-Chellappa Integration Result"
+    def get_plot_tab_name(self): return self.__title
 
     def build_widget(self, **kwargs):
+        try: self.__title = kwargs["title"]
+        except: self.__title = "Frankot-Chellappa Integration Result"
+
         data              = kwargs["data"]
         pixelsize         = kwargs["pixelsize"]
         titleStr          = kwargs["titleStr"]

@@ -304,14 +304,14 @@ def single_2Dgrating_analyses(img, img_ref=None, harmonicPeriod=None, unwrapFlag
 from wavepy2.core.surface_from_grad import frankotchellappa, error_integration
 from wavepy2.core.widgets.crop_dialog_widget import CropDialogPlot
 
-def dpc_integration(dpc01, dpc10, pixelsize, shifthalfpixel=False, context_key="dpc_integration"):
+def dpc_integration(dpc01, dpc10, pixelsize, shifthalfpixel=False, context_key="dpc_integration", message="New Crop for Integration?"):
     img = dpc01**2+dpc10**2
 
     vmin = mean_plus_n_sigma(img, -3)
     vmax = mean_plus_n_sigma(img, 3)
 
     _, idx = get_registered_plotter_instance().show_interactive_plot(CropDialogPlot, container_widget=None,
-                                                                     img=img, pixelsize=pixelsize, kargs4graph={'cmap': 'viridis', 'vmin': vmin, 'vmax': vmax})
+                                                                     img=img, message=message, pixelsize=pixelsize, kargs4graph={'cmap': 'viridis', 'vmin': vmin, 'vmax': vmax})
 
     dpc01 = crop_matrix_at_indexes(dpc01, idx)
     dpc10 = crop_matrix_at_indexes(dpc10, idx)

@@ -61,12 +61,13 @@ class CropDialogPlot(WavePyInteractiveWidget):
     def build_widget(self, **kwargs):
         img = kwargs["img"]
 
+        try: self.setWindowTitle(kwargs["message"])
+        except: pass
+
         self.__initialize(img)
 
-        try:
-            crop_image = GraphicalRoiIdx(self, image=img, set_crop_output_listener=self.create_cropped_output, kwargs4graph=kwargs["kwargs4graph"])
-        except:
-            crop_image = GraphicalRoiIdx(self, image=img, set_crop_output_listener=self.create_cropped_output)
+        try:    crop_image = GraphicalRoiIdx(self, image=img, set_crop_output_listener=self.create_cropped_output, kwargs4graph=kwargs["kwargs4graph"])
+        except: crop_image = GraphicalRoiIdx(self, image=img, set_crop_output_listener=self.create_cropped_output)
 
         tab_widget = plot_tools.tabWidget(self.get_central_widget())
 
