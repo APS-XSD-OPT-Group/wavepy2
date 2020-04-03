@@ -58,6 +58,7 @@ from wavepy2.core.widgets.plot_intensities_harms_widget import PlotIntensitiesHa
 from wavepy2.core.widgets.plot_dark_field_widget import PlotDarkField
 from wavepy2.core.widgets.crop_dialog_widget import CropDialogPlot
 from wavepy2.core.widgets.plot_integration_widget import PlotIntegration
+from wavepy2.tools.common.physical_properties import get_delta
 from wavepy2.tools.imaging.single_grating.widgets.plot_DPC_widget import PlotDPC
 from wavepy2.tools.imaging.single_grating.widgets.input_parameters_widget import InputParametersWidget, generate_initialization_parameters
 from wavepy2.tools.imaging.single_grating.widgets.first_crop_dialog_widget import FirstCropDialogPlot
@@ -126,6 +127,9 @@ class __SingleGratingTalbot(SingleGratingTalbotFacade):
 
         register_secondary_logger(stream=open(plotter.get_save_file_prefix() + "_" + common_tools.datetime_now_str() + ".log", "wt"),
                                   logger_mode=script_logger_mode)
+
+        self.__wavelength = hc / initialization_parameters.get_parameter("phenergy")
+        self.__kwave = 2 * np.pi / self.__wavelength
 
         self.__script_logger                = get_registered_secondary_logger()
         self.__dpc_profile_analysis_manager = create_dpc_profile_analsysis_manager()
@@ -206,10 +210,8 @@ class __SingleGratingTalbot(SingleGratingTalbotFacade):
         self.__main_logger.print_message('VALUES: virtual pixelsize i, j: {:.4f}um, {:.4f}um'.format(virtual_pixelsize[0]*1e6, virtual_pixelsize[1]*1e6))
         self.__script_logger.print('\nvirtual_pixelsize = ' + str(virtual_pixelsize))
 
-        wavelength = hc / phenergy
-
-        self.__main_logger.print_message('wavelength [m] = ' + str('{:.5g}'.format(wavelength)))
-        self.__script_logger.print('wavelength [m] = ' + str('{:.5g}'.format(wavelength)))
+        self.__main_logger.print_message('wavelength [m] = ' + str('{:.5g}'.format(self.__wavelength)))
+        self.__script_logger.print('wavelength [m] = ' + str('{:.5g}'.format(self.__wavelength)))
 
         lengthSensitivy100 = virtual_pixelsize[0]**2/distDet2sample/100
 
@@ -217,10 +219,10 @@ class __SingleGratingTalbot(SingleGratingTalbotFacade):
         #  fringe displacement to be 2pi/100 = 3.6 deg
 
         self.__main_logger.print_message('WF Length Sensitivy 100 [m] = ' + str('{:.5g}'.format(lengthSensitivy100)))
-        self.__main_logger.print_message('WF Length Sensitivy 100 [1/lambda] = ' + str('{:.5g}'.format(lengthSensitivy100/wavelength)) + '\n')
+        self.__main_logger.print_message('WF Length Sensitivy 100 [1/lambda] = ' + str('{:.5g}'.format(lengthSensitivy100/self.__wavelength)) + '\n')
 
         self.__script_logger.print('WF Length Sensitivy 100 [m] = ' + str('{:.5g}'.format(lengthSensitivy100)))
-        self.__script_logger.print('WF Length Sensitivy 100 [1/lambda] = ' + str('{:.5g}'.format(lengthSensitivy100/wavelength)) + '\n')
+        self.__script_logger.print('WF Length Sensitivy 100 [1/lambda] = ' + str('{:.5g}'.format(lengthSensitivy100/self.__wavelength)) + '\n')
 
         return WavePyData(int00=int00,
                           int01=int01,
@@ -425,7 +427,11 @@ class __SingleGratingTalbot(SingleGratingTalbotFacade):
 
         self.__draw_context(REMOVE_LINEAR_FIT_CONTEXT_KEY)
 
-        return WavePyData(diffPhase01=diffPhase01_2save, diffPhase10=diffPhase10_2save, virtual_pixelsize=virtual_pixelsize)
+        return WavePyData(diffPhase01=diffPhase01_2save,
+                          diffPhase10=diffPhase10_2save,
+                          virtual_pixelsize=virtual_pixelsize,
+                          linfitDPC01=linfitDPC01,
+                          linfitDPC10=linfitDPC10)
 
 
     def dpc_profile_analysis(self, remove_linear_fit_result, initialization_parameters):
@@ -455,57 +461,128 @@ class __SingleGratingTalbot(SingleGratingTalbotFacade):
 
         return WavePyData(diffPhase01=diffPhase01,
                           diffPhase10=diffPhase10,
-                          virtual_pixelsize=virtual_pixelsize,)
+                          virtual_pixelsize=virtual_pixelsize,
+                          linfitDPC01=remove_linear_fit_result.get_parameter("linfitDPC01"),
+                          linfitDPC10=remove_linear_fit_result.get_parameter("linfitDPC10"))
 
     def fit_radius_dpc(self, dpc_profile_analysis_result, initialization_parameters):
-        phenergy          = initialization_parameters.get_parameter("phenergy")
-
         diffPhase01       = dpc_profile_analysis_result.get_parameter("diffPhase01")
         diffPhase10       = dpc_profile_analysis_result.get_parameter("diffPhase10")
         virtual_pixelsize = dpc_profile_analysis_result.get_parameter("virtual_pixelsize")
 
-        wavelength = hc / phenergy
-        kwave = 2*np.pi/wavelength
-
         self.__plotter.register_context_window(FIT_RADIUS_DPC_CONTEXT_KEY)
-        self.__plotter.push_plot_on_context(FIT_RADIUS_DPC_CONTEXT_KEY, FitRadiusDPC, dpx=diffPhase01, dpy=diffPhase10, pixelsize=virtual_pixelsize, kwave=kwave, str4title="")
+        self.__plotter.push_plot_on_context(FIT_RADIUS_DPC_CONTEXT_KEY, FitRadiusDPC, dpx=diffPhase01, dpy=diffPhase10, pixelsize=virtual_pixelsize, kwave=self.__kwave, str4title="")
 
         self.__draw_context(FIT_RADIUS_DPC_CONTEXT_KEY)
 
         return WavePyData(diffPhase01=diffPhase01,
                           diffPhase10=diffPhase10,
-                          virtual_pixelsize=virtual_pixelsize)
+                          virtual_pixelsize=virtual_pixelsize,
+                          linfitDPC01=dpc_profile_analysis_result.get_parameter("linfitDPC01"),
+                          linfitDPC10=dpc_profile_analysis_result.get_parameter("linfitDPC10"))
 
     def do_integration(self, fit_radius_dpc_result, initialization_parameters):
-        phenergy          = initialization_parameters.get_parameter("phenergy")
-
         diffPhase01       = fit_radius_dpc_result.get_parameter("diffPhase01")
         diffPhase10       = fit_radius_dpc_result.get_parameter("diffPhase10")
         virtual_pixelsize = fit_radius_dpc_result.get_parameter("virtual_pixelsize")
+        linfitDPC01       = fit_radius_dpc_result.get_parameter("linfitDPC01")
+        linfitDPC10       = fit_radius_dpc_result.get_parameter("linfitDPC10")
 
-        wavelength = hc / phenergy
+        do_integration   = initialization_parameters.get_parameter("do_integration")
+        calc_thickness   = initialization_parameters.get_parameter("calc_thickness")
+        remove_2nd_order = initialization_parameters.get_parameter("remove_2nd_order")
 
-        do_integration = initialization_parameters.get_parameter("do_integration")
+        def doIntegration(diffPhase01, diffPhase10, virtual_pixelsize, context_key):
+            phase = grating_interferometry.dpc_integration(diffPhase01, diffPhase10, virtual_pixelsize, context_key=INTEGRATION_CONTEXT_KEY)
+            phase -= np.min(phase)
+
+            return phase
 
         if do_integration:
             self.__plotter.register_context_window(INTEGRATION_CONTEXT_KEY)
 
             self.__main_logger.print_message('Performing Frankot-Chellapa Integration')
 
-            phase = grating_interferometry.dpc_integration(diffPhase01, diffPhase10, virtual_pixelsize, context_key=INTEGRATION_CONTEXT_KEY)
-            phase -= np.min(phase)
+            phase = do_integration(diffPhase01, diffPhase10, virtual_pixelsize)
 
             self.__main_logger.print_message('DONE')
             self.__main_logger.print_message('Plotting Phase in meters')
 
+            integrated_data = -1 / 2 / np.pi * phase * self.__wavelength
+
             self.__plotter.push_plot_on_context(INTEGRATION_CONTEXT_KEY, PlotIntegration,
-                                                integrated=-1 / 2 / np.pi * phase * wavelength * 1e9,
+                                                data=integrated_data * 1e9,
                                                 pixelsize=virtual_pixelsize,
                                                 titleStr = r'-WF $[nm]$',
                                                 ctitle="",
                                                 max3d_grid_points=101,
                                                 kwarg4surf={})
 
+            self.__plotter.save_sdf_file(integrated_data, virtual_pixelsize, file_suffix='_phase', extraHeader={'Title': 'WF Phase', 'Zunit': 'meters'})
+
             self.__draw_context(INTEGRATION_CONTEXT_KEY)
-        else:
-            return WavePyData()
+
+
+            if calc_thickness:
+                self.__main_logger.print_message('Plotting Thickness')
+
+                material_idx   = initialization_parameters.get_parameter("material_idx")
+                phenergy       = initialization_parameters.get_parameter("phenergy")
+                distDet2sample = initialization_parameters.get_parameter("distDet2sample")
+
+                delta, material, density = get_delta(phenergy, material_idx=material_idx)
+
+                thickness = -(phase - np.min(phase)) / self.__kwave / delta
+
+                titleStr = r'Material: ' + material + ', Thickness $[\mu m]$'
+
+                self.__plotter.push_plot_on_context(INTEGRATION_CONTEXT_KEY, PlotIntegration,
+                                                    data=thickness * 1e6,
+                                                    pixelsize=virtual_pixelsize,
+                                                    titleStr=titleStr,
+                                                    ctitle=r'$[\mu m]$',
+                                                    max3d_grid_points=101,
+                                                    kwarg4surf={})
+
+                # Log thickness properties
+                self.__script_logger.print('Material = ' + material)
+                self.__script_logger.print('density = ' + str('{:.3g}'.format(density)) + ' g/cm^3')
+                self.__script_logger.print('delta = ' + str('{:.5g}'.format(delta)))
+
+                thickSensitivy100 = virtual_pixelsize[0] ** 2 / distDet2sample / delta / 100
+                # the 100 means that I arbitrarylly assumed the angular error in
+                #  fringe displacement to be 2pi/100 = 3.6 deg
+                self.__script_logger.print('Thickness Sensitivy 100 [m] = ' + str('{:.5g}'.format(thickSensitivy100)))
+
+                self.__plotter.save_sdf_file(thickness, virtual_pixelsize, file_suffix='_thickness', extraHeader={'Title': 'Thickness', 'Zunit': 'meters'})
+
+                # % 2nd order component of phase
+
+            if linfitDPC01 is not None:
+                data = 1 / 2 / np.pi * doIntegration(linfitDPC01, linfitDPC10, virtual_pixelsize) # phase_2nd_order
+
+                self.__plotter.push_plot_on_context(INTEGRATION_CONTEXT_KEY, PlotIntegration,
+                                                    data=data,
+                                                    pixelsize=virtual_pixelsize,
+                                                    titleStr=r'WF, 2nd order component' + r'$[\lambda$ units $]$',
+                                                    ctitle='',
+                                                    max3d_grid_points=101,
+                                                    kwarg4surf={})
+
+                data = 1 / 2 / np.pi * doIntegration(diffPhase01 - linfitDPC01, diffPhase10 - linfitDPC10, virtual_pixelsize)
+
+                self.__plotter.push_plot_on_context(INTEGRATION_CONTEXT_KEY, PlotIntegration,
+                                                    data=data,
+                                                    pixelsize=virtual_pixelsize,
+                                                    titleStr=r'WF, difference to 2nd order component' + r'$[\lambda$ units $]$',
+                                                    ctitle='',
+                                                    max3d_grid_points=101,
+                                                    kwarg4surf={})
+
+
+                self.__plotter.save_sdf_file(data * self.__wavelength, virtual_pixelsize, file_suffix='_phase', extraHeader={'Title': 'WF Phase 2nd order removed', 'Zunit': 'meters'})
+
+
+        return WavePyData(diffPhase01=diffPhase01,
+                          diffPhase10=diffPhase10,
+                          virtual_pixelsize=virtual_pixelsize)

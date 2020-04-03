@@ -169,14 +169,14 @@ class PlotterMode:
 
 class __AbstractPlotter(PlotterFacade):
     @classmethod
-    def save_images(cls, plot_widget_instance, **kwargs):
+    def _save_images(cls, plot_widget_instance, **kwargs):
         figures_to_save = plot_widget_instance.get_figures_to_save()
 
         if not figures_to_save is None:
             for figure_to_save in figures_to_save: figure_to_save.save_figure(**kwargs)
 
     @classmethod
-    def build_plot(cls, widget_class, **kwargs):
+    def _build_plot(cls, widget_class, **kwargs):
         if not issubclass(widget_class, WavePyWidget): raise ValueError("Widget class is not a WavePyWidget")
 
         try:
@@ -188,6 +188,7 @@ class __AbstractPlotter(PlotterFacade):
             raise ValueError("Plot Widget can't be created: " + str(e))
 
     def register_save_file_prefix(self, save_file_prefix): self.__save_file_prefix = save_file_prefix
+
     def get_save_file_prefix(self): return self.__save_file_prefix
 
     def save_sdf_file(self, array, pixelsize=[1, 1], file_prefix=None, file_suffix="", extraHeader={}):
@@ -211,7 +212,7 @@ class __AbstractActivePlotter(__AbstractPlotter):
 
     def is_active(self): return True
 
-    def register_plot(self, context_key, plot_widget):
+    def _register_plot(self, context_key, plot_widget):
         if context_key in self.__plot_registry and not self.__plot_registry[context_key] is None:
             self.__plot_registry[context_key].append(plot_widget)
         else:
@@ -269,18 +270,19 @@ class __AbstractActivePlotter(__AbstractPlotter):
 
 class __FullPlotter(__AbstractActivePlotter):
     def push_plot_on_context(self, context_key, widget_class, **kwargs):
-        plot_widget_instance = self.build_plot(widget_class, **kwargs)
-
-        self.register_plot(context_key, plot_widget_instance)
-        self.save_images(plot_widget_instance, **kwargs)
+        plot_widget_instance = self._build_plot(widget_class, **kwargs)
+        self._register_plot(context_key, plot_widget_instance)
+        self._save_images(plot_widget_instance, **kwargs)
 
 class __DisplayOnlyPlotter(__AbstractActivePlotter):
-    def push_plot_on_context(self, context_key, widget_class, **kwargs): self.register_plot(context_key, self.build_plot(widget_class, **kwargs))
+    def push_plot_on_context(self, context_key, widget_class, **kwargs): self._register_plot(context_key, self._build_plot(widget_class, **kwargs))
+    def save_csv_file(self, array_list, file_prefix=None, file_suffix="", headerList=[], comments=""): pass
+    def save_sdf_file(self, array, pixelsize=[1, 1], file_prefix=None, file_suffix="", extraHeader={}): pass
 
 class __SaveOnlyPlotter(__AbstractActivePlotter):
     def is_active(self): return False
     def register_context_window(self, context_key, context_window=None): pass
-    def push_plot_on_context(self, context_key, widget_class, **kwargs): self.save_images(self.build_plot(widget_class, **kwargs))
+    def push_plot_on_context(self, context_key, widget_class, **kwargs): self._save_images(self._build_plot(widget_class, **kwargs))
     def get_context_container_widget(self, context_key): return None
     def get_plots_of_context(self, context_key): pass
     def draw_context_on_widget(self, context_key, container_widget): pass
@@ -296,8 +298,8 @@ class __NullPlotter(PlotterFacade):
     def draw_context_on_widget(self, context_key, container_widget): pass
     def show_interactive_plot(self, widget_class, container_widget, **kwargs): pass
     def show_context_window(self, context_key): pass
-    def register_save_file_prefix(self, save_file_prefix): pass
-    def get_save_file_prefix(self): pass
+    def save_csv_file(self, array_list, file_prefix=None, file_suffix="", headerList=[], comments=""): pass
+    def save_sdf_file(self, array, pixelsize=[1, 1], file_prefix=None, file_suffix="", extraHeader={}): pass
 
 @Singleton
 class __PlotterRegistry:

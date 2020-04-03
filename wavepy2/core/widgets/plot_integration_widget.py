@@ -25,7 +25,7 @@ class PlotIntegration(WavePyWidget):
     def get_plot_tab_name(self): return "Frankot-Chellappa Integration Result"
 
     def build_widget(self, **kwargs):
-        integrated        = kwargs["integrated"]
+        data              = kwargs["data"]
         pixelsize         = kwargs["pixelsize"]
         titleStr          = kwargs["titleStr"]
         ctitle            = kwargs["ctitle"]
@@ -37,7 +37,7 @@ class PlotIntegration(WavePyWidget):
 
         self.setLayout(layout)
 
-        xxGrid, yyGrid = common_tools.grid_coord(integrated, pixelsize)
+        xxGrid, yyGrid = common_tools.grid_coord(data, pixelsize)
 
         factor_x, unit_x = common_tools.choose_unit(xxGrid)
         factor_y, unit_y = common_tools.choose_unit(yyGrid)
@@ -47,10 +47,10 @@ class PlotIntegration(WavePyWidget):
         fig = Figure(figsize=(10, 8))
         ax = fig.add_subplot(111, projection='3d')
 
-        rstride = integrated.shape[0] // max3d_grid_points + 1
-        cstride = integrated.shape[1] // max3d_grid_points + 1
+        rstride = data.shape[0] // max3d_grid_points + 1
+        cstride = data.shape[1] // max3d_grid_points + 1
 
-        surf = ax.plot_surface(xxGrid * factor_x, yyGrid * factor_y, integrated[::-1, :],
+        surf = ax.plot_surface(xxGrid * factor_x, yyGrid * factor_y, data[::-1, :],
                                rstride=rstride, cstride=cstride, cmap='viridis', linewidth=0.1, **kwarg4surf)
 
         ax_lim = np.max([np.abs(xxGrid * factor_x), np.abs(yyGrid * factor_y)])
@@ -80,7 +80,7 @@ class PlotIntegration(WavePyWidget):
         plot_profile_widget = PlotProfile(self,
                                           xmatrix=xxGrid * factor_x,
                                           ymatrix=yyGrid * factor_y,
-                                          zmatrix=integrated[::-1, :],
+                                          zmatrix=data[::-1, :],
                                           xlabel=r'$x [' + unit_x + ' m]$',
                                           ylabel=r'$y [' + unit_y + ' m]$',
                                           title=titleStr,
@@ -89,7 +89,7 @@ class PlotIntegration(WavePyWidget):
                                           arg4main={'cmap': 'viridis', 'lw': 3})
 
         figure4 = Figure(figsize=(10, 8))
-        im = figure4.gca().imshow(integrated[::-1, :], cmap='viridis', extent=common_tools.extent_func(integrated, pixelsize) * factor_x, **kwarg4surf)
+        im = figure4.gca().imshow(data[::-1, :], cmap='viridis', extent=common_tools.extent_func(data, pixelsize) * factor_x, **kwarg4surf)
         figure4.gca().set_xlabel(r'$x [' + unit_x + ' m]$', fontsize=24)
         figure4.gca().set_ylabel(r'$y [' + unit_x + ' m]$', fontsize=24)
         figure4.gca().set_title(titleStr, fontsize=18, weight='bold')
