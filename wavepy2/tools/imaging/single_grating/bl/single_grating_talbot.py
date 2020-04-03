@@ -503,7 +503,7 @@ class __SingleGratingTalbot(SingleGratingTalbotFacade):
         if do_integration:
             self.__plotter.register_context_window(INTEGRATION_CONTEXT_KEY)
 
-            self.__main_logger.print_message('Performing Frankot-Chellapa Integration')
+            self.__main_logger.print_message('Performing Frankot-Chellappa Integration')
 
             phase = doIntegration(diffPhase01, diffPhase10, virtual_pixelsize, "Crop Differential Phase")
 
