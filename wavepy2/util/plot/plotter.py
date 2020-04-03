@@ -168,6 +168,7 @@ class PlotterMode:
     NONE         = 3
 
 class __AbstractPlotter(PlotterFacade):
+
     @classmethod
     def _save_images(cls, plot_widget_instance, **kwargs):
         figures_to_save = plot_widget_instance.get_figures_to_save()
@@ -191,18 +192,18 @@ class __AbstractPlotter(PlotterFacade):
 
     def get_save_file_prefix(self): return self.__save_file_prefix
 
-    def __get_file_name(self, file_prefix=None, file_suffix="", extension=""):
+    def _get_file_name(self, file_prefix=None, file_suffix="", extension=""):
         return common_tools.get_unique_filename(self.get_save_file_prefix() if file_prefix is None else file_prefix + file_suffix, extension)
 
     def save_sdf_file(self, array, pixelsize=[1, 1], file_prefix=None, file_suffix="", extraHeader={}):
-        file_name = self.__get_file_name(file_prefix, file_suffix, "sdf")
-        if self.is_active(): plot_tools.save_sdf_file(array, pixelsize, file_name, extraHeader)
+        file_name = self._get_file_name(file_prefix, file_suffix, "sdf")
+        plot_tools.save_sdf_file(array, pixelsize, file_name, extraHeader)
 
         return file_name
 
     def save_csv_file(self, array_list, file_prefix=None, file_suffix="", headerList=[], comments=""):
-        file_name = self.__get_file_name(file_prefix, file_suffix, "csv")
-        if self.is_active(): plot_tools.save_csv_file(array_list, file_name, headerList, comments)
+        file_name = self._get_file_name(file_prefix, file_suffix, "csv")
+        plot_tools.save_csv_file(array_list, file_name, headerList, comments)
 
         return file_name
 
@@ -279,6 +280,8 @@ class __FullPlotter(__AbstractActivePlotter):
 
 class __DisplayOnlyPlotter(__AbstractActivePlotter):
     def push_plot_on_context(self, context_key, widget_class, **kwargs): self._register_plot(context_key, self._build_plot(widget_class, **kwargs))
+    def save_sdf_file(self, array, pixelsize=[1, 1], file_prefix=None, file_suffix="", extraHeader={}): return self._get_file_name(file_prefix, file_suffix, "sdf")
+    def save_csv_file(self, array_list, file_prefix=None, file_suffix="", headerList=[], comments=""): return self._get_file_name(file_prefix, file_suffix, "csv")
 
 class __SaveOnlyPlotter(__AbstractActivePlotter):
     def is_active(self): return False
@@ -290,7 +293,7 @@ class __SaveOnlyPlotter(__AbstractActivePlotter):
     def show_interactive_plot(self, widget_class, container_widget, **kwargs): pass
     def show_context_window(self, context_key): pass
 
-class __NullPlotter(PlotterFacade):
+class __NullPlotter(__AbstractPlotter):
     def is_active(self): return False
     def register_context_window(self, context_key, context_window=None): pass
     def push_plot_on_context(self, context_key, widget_class, **kwargs): pass
@@ -299,6 +302,8 @@ class __NullPlotter(PlotterFacade):
     def draw_context_on_widget(self, context_key, container_widget): pass
     def show_interactive_plot(self, widget_class, container_widget, **kwargs): pass
     def show_context_window(self, context_key): pass
+    def save_sdf_file(self, array, pixelsize=[1, 1], file_prefix=None, file_suffix="", extraHeader={}): return self._get_file_name(file_prefix, file_suffix, "sdf")
+    def save_csv_file(self, array_list, file_prefix=None, file_suffix="", headerList=[], comments=""): return self._get_file_name(file_prefix, file_suffix, "csv")
 
 @Singleton
 class __PlotterRegistry:
