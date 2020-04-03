@@ -42,65 +42,26 @@
 # ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE         #
 # POSSIBILITY OF SUCH DAMAGE.                                             #
 # #########################################################################
-from wavepy2.util import Singleton, synchronized_method
-from wavepy2.util.plot.widgets.close_app_widget import CloseApp
 
 import sys
-from PyQt5.Qt import QApplication
-from PyQt5.QtWidgets import QStyleFactory
+from PyQt5.QtWidgets import QMainWindow, QWidget, QHBoxLayout
+from wavepy2.util.plot import plot_tools
+from wavepy2.util.plot.plot_tools import widgetBox, button
 
-class QtApplicationMode:
-    QT = 0
-    NONE = 99
+class CloseApp(QMainWindow):
+    def __init__(self, parent=None):
+        super(CloseApp, self).__init__(parent)
 
-class QtApplicationFacade:
-    def show_application_closer(self): raise NotImplementedError()
-    def run_qt_application(self): raise NotImplementedError()
+        self.setWindowTitle("Close Application")
+        container_widget = QWidget()
+        container_widget.setLayout(QHBoxLayout())
 
-class __NullQtApplication(QtApplicationFacade):
-    def run_qt_application(self): pass
-    def show_application_closer(self): pass
+        box = widgetBox(container_widget)
+        button(box, container_widget, "Close Application", callback=self.close_all, height=50, width=150)
 
-class __QtApplication(QtApplicationFacade):
-    def __init__(self):
-        self.__qt_application = QApplication(sys.argv)
-        self.__qt_application.setStyle(QStyleFactory.create('Windows'))
-        self.__application_closer = CloseApp()
+        self.setCentralWidget(container_widget)
+        self.setFixedHeight(67)
+        self.setFixedWidth(167)
 
-    def show_application_closer(self):
-        self.__application_closer.show()
-
-    def run_qt_application(self): 
-        self.__qt_application.exec_()
-
-@Singleton
-class __QtApplicationRegistry:
-    def __init__(self):
-        self.__qt_application_instance = None
-
-    @synchronized_method
-    def register_qt_application(self, qt_application_facade_instance = None):
-        if qt_application_facade_instance is None: raise ValueError("QtApplication Instance is None")
-        if not isinstance(qt_application_facade_instance, QtApplicationFacade): raise ValueError("QtApplication Instance do not implement QtApplication Facade")
-
-        if self.__qt_application_instance is None: self.__qt_application_instance = qt_application_facade_instance
-        else: raise ValueError("QtApplication Instance already initialized")
-
-    @synchronized_method
-    def reset(self):
-        self.__qt_application_instance = None
-
-    def get_qt_application_instance(self):
-        return self.__qt_application_instance
-
-# -----------------------------------------------------
-# Factory Methods
-
-def register_qt_application_instance(qt_application_mode=QtApplicationMode.QT, reset=False):
-    if reset: __QtApplicationRegistry.Instance().reset()
-    if qt_application_mode == QtApplicationMode.QT:      __QtApplicationRegistry.Instance().register_qt_application(__QtApplication())
-    elif qt_application_mode == QtApplicationMode.NONE:  __QtApplicationRegistry.Instance().register_qt_application(__NullQtApplication())
-
-def get_registered_qt_application_instance():
-    return __QtApplicationRegistry.Instance().get_qt_application_instance()
-
+    def close_all(self):
+        if plot_tools.ConfirmDialog.confirmed(self, "Confirm the closure of the application?"): sys.exit(0)

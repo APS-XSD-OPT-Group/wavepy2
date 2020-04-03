@@ -49,10 +49,9 @@ from wavepy2.tools.imaging.single_grating.bl.single_grating_talbot import create
 
 from wavepy2.tools.imaging.single_grating.bl.dpc_profile_analysis import DPC_PROFILE_ANALYSYS_CONTEXT_KEY
 
-from wavepy2.util.common import common_tools
 from wavepy2.util.ini.initializer import get_registered_ini_instance, register_ini_instance, IniMode
+from wavepy2.util.log.logger import register_logger_single_instance, LoggerMode
 from wavepy2.util.plot.qt_application import get_registered_qt_application_instance, register_qt_application_instance, QtApplicationMode
-from wavepy2.util.log.logger import register_logger_single_instance, register_secondary_logger, LoggerMode
 from wavepy2.util.plot.plotter import get_registered_plotter_instance, register_plotter_instance, PlotterMode
 
 MAIN_LOGGER_MODE   = LoggerMode.FULL
@@ -123,4 +122,5 @@ if __name__=="__main__":
 
     get_registered_ini_instance().push()
 
+    get_registered_qt_application_instance().show_application_closer()
     get_registered_qt_application_instance().run_qt_application()
