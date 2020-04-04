@@ -8,7 +8,8 @@ if __name__ == "__main__":
         print("=============================================================")
         print("           WELCOME TO WavePy 2 - command line mode")
         print("=============================================================\n")
-        print("To launch a script: 'python -m wavepy2.tools <script id>\n")
+        print("To launch a script:       'python -m wavepy2.tools <script id>\n")
+        print("To show help of a script: 'python -m wavepy2.tools <script id> --h\n")
         print("* Available scripts:\n" +
               "    1) Imaging   - Single Grating Talbot, id: img-sgt\n" +
               "    2) Coherence - Single Grating Z SCan, id: coh-sgz\n" +
@@ -18,9 +19,7 @@ if __name__ == "__main__":
     if len(sys.argv) == 1 or sys.argv[1] == "--h":
         show_help()
     else:
-        if sys.argv[1] == "img-sgt":
-            run_single_grating_talbot(**arguments_single_grating_talbot(sys.argv))
-
+        if sys.argv[1]   == "img-sgt": run_single_grating_talbot(**arguments_single_grating_talbot(sys.argv))
         elif sys.argv[1] == "coh-sgz": print("Currently not implemented")
         elif sys.argv[1] == "met-frl": print("Currently not implemented")
         else: print("Script not recognized")
