@@ -166,6 +166,13 @@ class PlotterMode:
     DISPLAY_ONLY = 1
     SAVE_ONLY    = 2
     NONE         = 3
+    
+    @classmethod
+    def get_plotter_mode(cls, plotter_mode=FULL):
+        if plotter_mode==cls.FULL: return "Full" 
+        if plotter_mode==cls.DISPLAY_ONLY: return "Display Only" 
+        if plotter_mode==cls.SAVE_ONLY: return "Save Only" 
+        if plotter_mode==cls.NONE: return "None" 
 
 class __AbstractPlotter(PlotterFacade):
 

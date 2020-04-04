@@ -54,19 +54,44 @@ from wavepy2.util.log.logger import register_logger_single_instance, LoggerMode
 from wavepy2.util.plot.qt_application import get_registered_qt_application_instance, register_qt_application_instance, QtApplicationMode
 from wavepy2.util.plot.plotter import get_registered_plotter_instance, register_plotter_instance, PlotterMode
 
-MAIN_LOGGER_MODE   = LoggerMode.FULL
 SCRIPT_LOGGER_MODE = LoggerMode.FULL
+INI_MODE           = IniMode.LOCAL_FILE
+INI_FILE_NAME      = ".single_grating_talbot.ini"
 
-INI_MODE      = IniMode.LOCAL_FILE
-INI_FILE_NAME = ".single_grating_talbot.ini"
-PLOTTER_MODE  = PlotterMode.SAVE_ONLY
+import sys
 
-if __name__=="__main__":
+def arguments_single_grating_talbot(sys_argv):
+    args_sgt = {}
+    if len(sys_argv) > 2:
+        if sys_argv[2] == "--h":
+            print("\n'python -m wavepy2.tools img-sgt -l<logger mode> -p<plotter mode>\n")
+            print("* Available logger modes:\n" +
+                  "    0 Full (Message, Warning, Error)\n" +
+                  "    1 Warning (Warning, Error)\n" +
+                  "    2 Error\n" +
+                  "    3 None\n\n")
+            print("* Available plotter modes:\n" +
+                  "    0 Full (Display, Save Images)\n" +
+                  "    1 Display Only\n" +
+                  "    2 Save Images Only\n" +
+                  "    3 None\n")
+            sys.exit(0)
+        else:
+            for i in range(2, len(sys_argv)):
+                if   "-l" == sys_argv[i][:-1]: args_sgt["LOGGER_MODE"] = int(sys_argv[i][-1])
+                elif "-p" == sys_argv[i][:-1]: args_sgt["PLOTTER_MODE"] = int(sys_argv[i][-1])
+
+    return args_sgt
+
+def run_single_grating_talbot(LOGGER_MODE=LoggerMode.FULL, PLOTTER_MODE=PlotterMode.FULL):
+    print("Logger Mode: " + LoggerMode.get_logger_mode(LOGGER_MODE))
+    print("Plotter Mode: " + PlotterMode.get_plotter_mode(PLOTTER_MODE))
+
     # ==========================================================================
     # %% Script initialization
     # ==========================================================================
 
-    register_logger_single_instance(logger_mode=MAIN_LOGGER_MODE)
+    register_logger_single_instance(logger_mode=LOGGER_MODE)
     register_ini_instance(INI_MODE, ini_file_name=".single_grating_talbot.ini" if INI_MODE == IniMode.LOCAL_FILE else None)
     register_plotter_instance(plotter_mode=PLOTTER_MODE)
     register_qt_application_instance(QtApplicationMode.SHOW if PLOTTER_MODE in [PlotterMode.FULL, PlotterMode.DISPLAY_ONLY] else QtApplicationMode.HIDE)
@@ -145,3 +170,8 @@ if __name__=="__main__":
     # ==========================================================================
 
     get_registered_qt_application_instance().run_qt_application()
+
+
+if __name__=="__main__":
+    print("\n********** Warning *************:\n\nTo run this script, type:")
+    arguments_single_grating_talbot(["", "", "--h"])

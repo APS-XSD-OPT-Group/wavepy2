@@ -66,6 +66,13 @@ class LoggerMode:
     WARNING = 1
     ERROR = 2
     NONE = 3
+    
+    @classmethod
+    def get_logger_mode(cls, logger_mode=FULL):
+        if logger_mode==cls.FULL: return "Full" 
+        if logger_mode==cls.WARNING: return "Warning" 
+        if logger_mode==cls.ERROR: return "Error" 
+        if logger_mode==cls.NONE: return "None" 
 
 class LoggerColor:
     GREY = "grey"
