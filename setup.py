@@ -52,7 +52,7 @@ except AttributeError:
 
 NAME = 'wavepy2'
 
-VERSION = '0.0.1'
+VERSION = '0.0.2'
 ISRELEASED = False
 
 DESCRIPTION = 'Wavepy 2 library'
@@ -93,6 +93,7 @@ INSTALL_REQUIRES = (
     'termcolor',
     'tifffile',
     'pandas',
+    'PyQt5',
 )
 
 SETUP_REQUIRES = (
