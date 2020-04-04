@@ -120,16 +120,28 @@ if __name__=="__main__":
     integration_result = single_grating_talbot_manager.do_integration(fit_radius_dpc_result, initialization_parameters)
     plotter.show_context_window(INTEGRATION_CONTEXT_KEY)
 
+    # ==========================================================================
+
     integration_result = single_grating_talbot_manager.calc_thickness(integration_result, initialization_parameters)
     plotter.show_context_window(CALCULATE_THICKNESS_CONTEXT_KEY)
+
+    # ==========================================================================
 
     integration_result = single_grating_talbot_manager.calc_2nd_order_component_of_the_phase(integration_result, initialization_parameters)
     plotter.show_context_window(CALCULATE_2ND_ORDER_COMPONENT_OF_THE_PHASE)
 
+    # ==========================================================================
+
     integration_result = single_grating_talbot_manager.remove_2nd_order(integration_result, initialization_parameters)
     plotter.show_context_window(REMOVE_2ND_ORDER)
 
-    get_registered_ini_instance().push()
+    # ==========================================================================
+    # %% Final Operations
+    # ==========================================================================
 
+    get_registered_ini_instance().push()
     get_registered_qt_application_instance().show_application_closer()
+
+    # ==========================================================================
+
     get_registered_qt_application_instance().run_qt_application()
