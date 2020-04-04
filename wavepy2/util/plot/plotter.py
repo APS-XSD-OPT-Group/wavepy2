@@ -296,7 +296,7 @@ class __SaveOnlyPlotter(__AbstractActivePlotter):
 class __NullPlotter(__AbstractPlotter):
     def is_active(self): return False
     def register_context_window(self, context_key, context_window=None): pass
-    def push_plot_on_context(self, context_key, widget_class, **kwargs): pass
+    def push_plot_on_context(self, context_key, widget_class, **kwargs): self._build_plot(widget_class, **kwargs) # necessary for some operations
     def get_context_container_widget(self, context_key): return None
     def get_plots_of_context(self, context_key): pass
     def draw_context_on_widget(self, context_key, container_widget): pass

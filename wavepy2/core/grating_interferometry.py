@@ -310,8 +310,14 @@ def dpc_integration(dpc01, dpc10, pixelsize, shifthalfpixel=False, context_key="
     vmin = mean_plus_n_sigma(img, -3)
     vmax = mean_plus_n_sigma(img, 3)
 
-    _, idx = get_registered_plotter_instance().show_interactive_plot(CropDialogPlot, container_widget=None,
-                                                                     img=img, message=message, pixelsize=pixelsize, kargs4graph={'cmap': 'viridis', 'vmin': vmin, 'vmax': vmax})
+    plotter = get_registered_plotter_instance()
+
+    if plotter.is_active(): _, idx = get_registered_plotter_instance().show_interactive_plot(CropDialogPlot, container_widget=None,
+                                                                                             img=img,
+                                                                                             message=message,
+                                                                                             pixelsize=pixelsize,
+                                                                                             kargs4graph={'cmap': 'viridis', 'vmin': vmin, 'vmax': vmax})
+    else: idx = [0, -1, 0, -1]
 
     dpc01 = crop_matrix_at_indexes(dpc01, idx)
     dpc10 = crop_matrix_at_indexes(dpc10, idx)

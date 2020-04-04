@@ -50,16 +50,17 @@ from PyQt5.Qt import QApplication
 from PyQt5.QtWidgets import QStyleFactory
 
 class QtApplicationMode:
-    QT = 0
-    NONE = 99
+    SHOW = 0
+    HIDE = 99
 
 class QtApplicationFacade:
     def show_application_closer(self): raise NotImplementedError()
     def run_qt_application(self): raise NotImplementedError()
 
 class __NullQtApplication(QtApplicationFacade):
-    def run_qt_application(self): pass
-    def show_application_closer(self): pass
+    def __init__(self): self.__qt_application = QApplication(sys.argv)
+    def run_qt_application(self): self.__qt_application.exec_()
+    def show_application_closer(self): sys.exit(0)
 
 class __QtApplication(QtApplicationFacade):
     def __init__(self):
@@ -96,10 +97,10 @@ class __QtApplicationRegistry:
 # -----------------------------------------------------
 # Factory Methods
 
-def register_qt_application_instance(qt_application_mode=QtApplicationMode.QT, reset=False):
+def register_qt_application_instance(qt_application_mode=QtApplicationMode.SHOW, reset=False):
     if reset: __QtApplicationRegistry.Instance().reset()
-    if qt_application_mode == QtApplicationMode.QT:      __QtApplicationRegistry.Instance().register_qt_application(__QtApplication())
-    elif qt_application_mode == QtApplicationMode.NONE:  __QtApplicationRegistry.Instance().register_qt_application(__NullQtApplication())
+    if qt_application_mode == QtApplicationMode.SHOW:      __QtApplicationRegistry.Instance().register_qt_application(__QtApplication())
+    elif qt_application_mode == QtApplicationMode.HIDE:  __QtApplicationRegistry.Instance().register_qt_application(__NullQtApplication())
 
 def get_registered_qt_application_instance():
     return __QtApplicationRegistry.Instance().get_qt_application_instance()

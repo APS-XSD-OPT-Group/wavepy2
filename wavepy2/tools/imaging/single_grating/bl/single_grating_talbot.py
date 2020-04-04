@@ -259,7 +259,7 @@ class __SingleGratingTalbot(SingleGratingTalbotFacade):
         img_to_crop = np.sqrt((diffPhase01 - diffPhase01.mean())**2 + (diffPhase10 - diffPhase10.mean())**2)
 
         if self.__plotter.is_active(): _, idx2ndCrop = self.__plotter.show_interactive_plot(CropDialogPlot, container_widget=None, img=img_to_crop, pixelsize=pixelsize)
-        else: idx2ndCrop = self.__ini.get_list_from_ini("Parameters", "Crop")
+        else: idx2ndCrop = [0, -1, 0, -1] #self.__ini.get_list_from_ini("Parameters", "Crop")
 
         if idx2ndCrop != [0, -1, 0, -1]:
             int00       = common_tools.crop_matrix_at_indexes(int00, idx2ndCrop)
