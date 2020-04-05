@@ -1,5 +1,4 @@
-# wavepy2
-WavePy 2.0
+# WavePy 2.0
 
 To install:               `python3 -m pip install wavepy2`
   
