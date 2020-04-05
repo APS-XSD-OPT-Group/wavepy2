@@ -13,7 +13,7 @@ if __name__ == "__main__":
         print("To show this help:        python -m wavepy2.tools --h\n")
         print("* Available scripts:\n" +
               "    1) Imaging   - Single Grating Talbot, id: img-sgt\n" +
-              "    2) Coherence - Single Grating Z SCan, id: coh-sgz\n" +
+              "    2) Coherence - Single Grating Z Scan, id: coh-sgz\n" +
               "    3) Metrology - Fit Residual Lenses,   id: met-frl\n")
 
     if len(sys.argv) == 1 or sys.argv[1] == "--h":
