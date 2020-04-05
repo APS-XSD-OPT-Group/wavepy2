@@ -8,13 +8,13 @@ if __name__ == "__main__":
         print("=============================================================")
         print("           WELCOME TO WavePy 2 - command line mode")
         print("=============================================================\n")
-        print("To launch a script:       'python -m wavepy2.tools <script id>\n")
-        print("To show help of a script: 'python -m wavepy2.tools <script id> --h\n")
+        print("To launch a script:       python -m wavepy2.tools <script id>\n")
+        print("To show help of a script: python -m wavepy2.tools <script id> --h\n")
+        print("To show this help:        python -m wavepy2.tools --h\n")
         print("* Available scripts:\n" +
               "    1) Imaging   - Single Grating Talbot, id: img-sgt\n" +
               "    2) Coherence - Single Grating Z SCan, id: coh-sgz\n" +
               "    3) Metrology - Fit Residual Lenses,   id: met-frl\n")
-        print("'python -m wavepy2.tools --h' to show this help\n")
 
     if len(sys.argv) == 1 or sys.argv[1] == "--h":
         show_help()

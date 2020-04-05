@@ -64,7 +64,7 @@ def arguments_single_grating_talbot(sys_argv):
     args_sgt = {}
     if len(sys_argv) > 2:
         if sys_argv[2] == "--h":
-            print("\n'python -m wavepy2.tools img-sgt -l<logger mode> -p<plotter mode>\n")
+            print("\npython -m wavepy2.tools img-sgt -l<logger mode> -p<plotter mode>\n")
             print("* Available logger modes:\n" +
                   "    0 Full (Message, Warning, Error)\n" +
                   "    1 Warning (Warning, Error)\n" +
