@@ -12,5 +12,5 @@ To show help of a script: `python -m wavepy2.tools <script id> --h`
 
 * Available scripts:
     1) Imaging   - Single Grating Talbot, id: `img-sgt`
-    2) Coherence - Single Grating Z SCan, id: `coh-sgz`
+    2) Coherence - Single Grating Z Scan, id: `coh-sgz`
     3) Metrology - Fit Residual Lenses,   id: `met-frl`
