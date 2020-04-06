@@ -95,4 +95,4 @@ class MainSingleGratingCoherenceZScan(WavePyScript):
         get_registered_qt_application_instance().run_qt_application()
 
 if __name__=="__main__":
-    MainSingleGratingCoherenceZScan([]).show_help()
+    MainSingleGratingCoherenceZScan().show_help()

@@ -98,7 +98,7 @@ class WavePyScript():
     INI_MODE      = IniMode.LOCAL_FILE
     INI_FILE_NAME = ".single_grating_talbot.ini"
 
-    def __init__(self, sys_argv, **kwargs):
+    def __init__(self, sys_argv=None, **kwargs):
         self.__args = self._parse_sys_arguments(sys_argv)
         self.__args = {**self.__args, **self._parse_additional_parameters(**kwargs)}
 
@@ -135,7 +135,7 @@ class WavePyScript():
 
     def _parse_sys_arguments(self, sys_argv):
         args = {"SCRIPT_LOGGER_MODE" : LoggerMode.FULL}
-        if len(sys_argv) > 2:
+        if not sys_argv is None and len(sys_argv) > 2:
             if sys_argv[2] == "--h": self.show_help()
             else:
                 for i in range(2, len(sys_argv)):

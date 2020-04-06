@@ -137,5 +137,8 @@ class MainSingleGratingTalbot(WavePyScript):
 
         get_registered_qt_application_instance().run_qt_application()
 
+
+import os, sys
 if __name__=="__main__":
-    MainSingleGratingTalbot([]).show_help()
+    if os.getenv('WAVEPY_DEBUG', "0") == "1": MainSingleGratingTalbot(sys_argv=sys.argv).run_script()
+    else: MainSingleGratingTalbot().show_help()
