@@ -46,7 +46,7 @@ import numpy as np
 
 from wavepy2.util.common import common_tools
 from wavepy2.util.common.common_tools import hc
-from wavepy2.util.log.logger import get_registered_logger_instance, get_registered_secondary_logger, register_secondary_logger
+from wavepy2.util.log.logger import get_registered_logger_instance, get_registered_secondary_logger, register_secondary_logger, LoggerMode
 
 from wavepy2.util.plot.plotter import get_registered_plotter_instance
 from wavepy2.util.ini.initializer import get_registered_ini_instance
@@ -130,8 +130,10 @@ class __SingleGratingTalbot(SingleGratingTalbotFacade):
         plotter = get_registered_plotter_instance()
         plotter.register_save_file_prefix(initialization_parameters.get_parameter("saveFileSuf"))
 
-        register_secondary_logger(stream=open(plotter.get_save_file_prefix() + "_" + common_tools.datetime_now_str() + ".log", "wt"),
-                                  logger_mode=script_logger_mode)
+        if not script_logger_mode == LoggerMode.NONE: stream = open(plotter.get_save_file_prefix() + "_" + common_tools.datetime_now_str() + ".log", "wt")
+        else: stream = None
+
+        register_secondary_logger(stream=stream, logger_mode=script_logger_mode)
 
         self.__wavelength = hc / initialization_parameters.get_parameter("phenergy")
         self.__kwave = 2 * np.pi / self.__wavelength

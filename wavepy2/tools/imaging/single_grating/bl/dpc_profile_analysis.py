@@ -101,7 +101,7 @@ class __DPCProfileAnalysis(DPCProfileAnalysisFacade):
             saveFileSuf = fnameV.rsplit('/', 1)[0] + '/profiles/' + fnameV.rsplit('/', 1)[1]
             saveFileSuf = saveFileSuf.rsplit('_Y')[0] + '_profiles'
 
-        if not os.path.exists(saveFileSuf.rsplit('/', 1)[0]): os.makedirs(saveFileSuf.rsplit('/', 1)[0])
+        if self.__plotter.is_active() and not os.path.exists(saveFileSuf.rsplit('/', 1)[0]): os.makedirs(saveFileSuf.rsplit('/', 1)[0])
 
         n_profiles_H_V_result = WavePyData()
 
