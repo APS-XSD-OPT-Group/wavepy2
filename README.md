@@ -1,5 +1,7 @@
 # WavePy 2.0
 
+Prerequisites: `xraylib 3.3.0` - see: https://github.com/tschoonj/xraylib/wiki/Installation-instructions
+
 To install:               `python3 -m pip install wavepy2`
   
 To show help:             `python3 -m wavepy2.tools --h`
