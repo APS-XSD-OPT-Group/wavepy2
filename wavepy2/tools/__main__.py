@@ -56,7 +56,7 @@ if __name__ == "__main__":
         print("To show help of a script: python -m wavepy2.tools <script id> --h\n")
         print("To show this help:        python -m wavepy2.tools --h\n")
         print("* Available scripts:\n" +
-              "    1) Imaging   - Single Grating Talbot, id: " + MainSingleGratingTalbot.get_script_id() + "\n" +
+              "    1) Imaging   - Single Grating Talbot, id: " + MainSingleGratingTalbot([]).get_script_id() + "\n" +
               "    2) Coherence - Single Grating Z Scan, id: coh-sgz\n" +
               "    3) Metrology - Fit Residual Lenses,   id: met-frl\n")
 
