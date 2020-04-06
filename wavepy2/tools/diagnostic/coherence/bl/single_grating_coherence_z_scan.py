@@ -42,57 +42,28 @@
 # ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE         #
 # POSSIBILITY OF SUCH DAMAGE.                                             #
 # #########################################################################
+import numpy as np
 
-from wavepy2.tools.diagnostic.coherence.bl.single_grating_coherence_z_scan import create_single_grating_coherence_z_scan_manager
+from wavepy2.util.common import common_tools
+from wavepy2.util.common.common_tools import hc
+from wavepy2.util.log.logger import get_registered_logger_instance, get_registered_secondary_logger, register_secondary_logger, LoggerMode
 
-from wavepy2.util.ini.initializer import get_registered_ini_instance
-from wavepy2.util.log.logger import LoggerMode
-from wavepy2.util.plot.qt_application import get_registered_qt_application_instance
 from wavepy2.util.plot.plotter import get_registered_plotter_instance
+from wavepy2.util.ini.initializer import get_registered_ini_instance
 
-from wavepy2.tools.common.wavepy_script import WavePyScript
+from wavepy2.tools.common.wavepy_data import WavePyData
 
-class MainSingleGratingCoherenceZScan(WavePyScript):
+from wavepy2.core import grating_interferometry
 
-    def get_script_id(self): return "coh-sgz"
-    def get_ini_file_name(self): return ".single_grating_coherence_z_scan.ini"
+class SingleGratingCoherenceZScanFacade:
+    def get_initialization_parameters(self, script_logger_mode): raise NotImplementedError()
 
-    def _run_script(self, SCRIPT_LOGGER_MODE=LoggerMode.FULL, **args):
-        plotter = get_registered_plotter_instance()
+def create_single_grating_coherence_z_scan_manager():
+    return __SingleGratingCoherenceZScan()
 
-        single_grating_coherence_z_scan_manager = create_single_grating_coherence_z_scan_manager()
+class __SingleGratingCoherenceZScan(SingleGratingCoherenceZScanFacade):
 
-        # ==========================================================================
-        # %% Initialization parameters
-        # ==========================================================================
-
-        initialization_parameters = single_grating_coherence_z_scan_manager.get_initialization_parameters(SCRIPT_LOGGER_MODE)
-
-        # ==========================================================================
-        # %%
-        # ==========================================================================
-
-        #dpc_result = single_grating_talbot_manager.calculate_dpc(initialization_parameters)
-        #plotter.show_context_window(CALCULATE_DPC_CONTEXT_KEY)
-
-        # ==========================================================================
-
-
-        # ==========================================================================
-        # %%
-        # ==========================================================================
-
-
-        # ==========================================================================
-        # %% Final Operations
-        # ==========================================================================
-
-        get_registered_ini_instance().push()
-        get_registered_qt_application_instance().show_application_closer()
-
-        # ==========================================================================
-
-        get_registered_qt_application_instance().run_qt_application()
-
-if __name__=="__main__":
-    MainSingleGratingCoherenceZScan([]).show_help()
+    def __init__(self):
+        self.__plotter     = get_registered_plotter_instance()
+        self.__main_logger = get_registered_logger_instance()
+        self.__ini         = get_registered_ini_instance()

@@ -80,7 +80,7 @@ CALCULATE_2ND_ORDER_COMPONENT_OF_THE_PHASE = "Calculate 2nd order component of t
 REMOVE_2ND_ORDER                           = "Remove 2nd order"
 
 class SingleGratingTalbotFacade:
-    def get_initialization_parameters(self): raise NotImplementedError()
+    def get_initialization_parameters(self, script_logger_mode): raise NotImplementedError()
     def calculate_dpc(self, initialization_parameters): raise NotImplementedError()
     def recrop_dpc(self, dpc_result, initialization_parameters): raise NotImplementedError()
     def correct_zero_dpc(self, dpc_result, initialization_parameters): raise NotImplementedError()
