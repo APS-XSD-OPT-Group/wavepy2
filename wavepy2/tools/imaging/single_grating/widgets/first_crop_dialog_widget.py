@@ -64,7 +64,7 @@ class FirstCropDialogPlot(WavePyInteractiveWidget):
         img         = kwargs["img"]
         pixelsize   = kwargs["pixelsize"]
 
-        idx4crop = self.__ini.get_list_from_ini("Parameters", "Crop")
+        idx4crop = self.__ini.get_list_from_ini("Parameters", "Crop", default=[0, -1, 0, -1])
 
         self.__initialize(img, idx4crop)
         self.__logger.print_other(idx4crop, "Stored Crop Indexes: ", color=LoggerColor.RED)

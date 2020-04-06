@@ -1,6 +1,6 @@
 import sys
 
-from wavepy2.tools.imaging.single_grating.scripts.main_single_grating_talbot import run_single_grating_talbot, arguments_single_grating_talbot
+from wavepy2.tools.imaging.single_grating.scripts.main_single_grating_talbot import MainSingleGratingTalbot
 
 if __name__ == "__main__":
     def show_help():
@@ -12,14 +12,14 @@ if __name__ == "__main__":
         print("To show help of a script: python -m wavepy2.tools <script id> --h\n")
         print("To show this help:        python -m wavepy2.tools --h\n")
         print("* Available scripts:\n" +
-              "    1) Imaging   - Single Grating Talbot, id: img-sgt\n" +
+              "    1) Imaging   - Single Grating Talbot, id: " + MainSingleGratingTalbot.get_script_id() + "\n" +
               "    2) Coherence - Single Grating Z Scan, id: coh-sgz\n" +
               "    3) Metrology - Fit Residual Lenses,   id: met-frl\n")
 
     if len(sys.argv) == 1 or sys.argv[1] == "--h":
         show_help()
     else:
-        if sys.argv[1]   == "img-sgt": run_single_grating_talbot(**arguments_single_grating_talbot(sys.argv))
+        if sys.argv[1]   == "img-sgt": MainSingleGratingTalbot(sys_argv=sys.argv).run_script()
         elif sys.argv[1] == "coh-sgz": print("Currently not implemented")
         elif sys.argv[1] == "met-frl": print("Currently not implemented")
         else: print("Script not recognized")

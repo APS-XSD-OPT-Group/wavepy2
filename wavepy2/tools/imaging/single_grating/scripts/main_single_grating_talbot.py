@@ -54,124 +54,90 @@ from wavepy2.util.log.logger import register_logger_single_instance, LoggerMode
 from wavepy2.util.plot.qt_application import get_registered_qt_application_instance, register_qt_application_instance, QtApplicationMode
 from wavepy2.util.plot.plotter import get_registered_plotter_instance, register_plotter_instance, PlotterMode
 
+from wavepy2.tools.common.wavepy_script import WavePyScript
+
 SCRIPT_LOGGER_MODE = LoggerMode.FULL
-INI_MODE           = IniMode.LOCAL_FILE
-INI_FILE_NAME      = ".single_grating_talbot.ini"
 
-import sys
+class MainSingleGratingTalbot(WavePyScript):
 
-def arguments_single_grating_talbot(sys_argv):
-    args_sgt = {}
-    if len(sys_argv) > 2:
-        if sys_argv[2] == "--h":
-            print("\npython -m wavepy2.tools img-sgt -l<logger mode> -p<plotter mode>\n")
-            print("* Available logger modes:\n" +
-                  "    0 Full (Message, Warning, Error)\n" +
-                  "    1 Warning (Warning, Error)\n" +
-                  "    2 Error\n" +
-                  "    3 None\n\n")
-            print("* Available plotter modes:\n" +
-                  "    0 Full (Display, Save Images)\n" +
-                  "    1 Display Only\n" +
-                  "    2 Save Images Only\n" +
-                  "    3 None\n")
-            sys.exit(0)
-        else:
-            for i in range(2, len(sys_argv)):
-                if   "-l" == sys_argv[i][:-1]: args_sgt["LOGGER_MODE"] = int(sys_argv[i][-1])
-                elif "-p" == sys_argv[i][:-1]: args_sgt["PLOTTER_MODE"] = int(sys_argv[i][-1])
+    def get_script_id(self): return "img-sgt"
+    def get_ini_file_name(self): return ".single_grating_talbot.ini"
 
-    return args_sgt
+    def _run_script(self, **args):
+        plotter = get_registered_plotter_instance()
 
-def run_single_grating_talbot(LOGGER_MODE=LoggerMode.FULL, PLOTTER_MODE=PlotterMode.FULL):
-    print("Logger Mode: " + LoggerMode.get_logger_mode(LOGGER_MODE))
-    print("Plotter Mode: " + PlotterMode.get_plotter_mode(PLOTTER_MODE))
+        single_grating_talbot_manager = create_single_grating_talbot_manager()
 
-    # ==========================================================================
-    # %% Script initialization
-    # ==========================================================================
+        # ==========================================================================
+        # %% Initialization parameters
+        # ==========================================================================
 
-    register_logger_single_instance(logger_mode=LOGGER_MODE)
-    register_ini_instance(INI_MODE, ini_file_name=".single_grating_talbot.ini" if INI_MODE == IniMode.LOCAL_FILE else None)
-    register_plotter_instance(plotter_mode=PLOTTER_MODE)
-    register_qt_application_instance(QtApplicationMode.SHOW if PLOTTER_MODE in [PlotterMode.FULL, PlotterMode.DISPLAY_ONLY] else QtApplicationMode.HIDE)
+        initialization_parameters = single_grating_talbot_manager.get_initialization_parameters(SCRIPT_LOGGER_MODE)
 
-    plotter = get_registered_plotter_instance()
+        # ==========================================================================
+        # %% DPC Analysis
+        # ==========================================================================
 
-    single_grating_talbot_manager = create_single_grating_talbot_manager()
+        dpc_result = single_grating_talbot_manager.calculate_dpc(initialization_parameters)
+        plotter.show_context_window(CALCULATE_DPC_CONTEXT_KEY)
 
-    # ==========================================================================
-    # %% Initialization parameters
-    # ==========================================================================
+        # ==========================================================================
 
-    initialization_parameters = single_grating_talbot_manager.get_initialization_parameters(SCRIPT_LOGGER_MODE)
+        recrop_dpc_result = single_grating_talbot_manager.recrop_dpc(dpc_result, initialization_parameters)
+        plotter.show_context_window(RECROP_DPC_CONTEXT_KEY)
 
-    # ==========================================================================
-    # %% DPC Analysis
-    # ==========================================================================
+        # ==========================================================================
 
-    dpc_result = single_grating_talbot_manager.calculate_dpc(initialization_parameters)
-    plotter.show_context_window(CALCULATE_DPC_CONTEXT_KEY)
+        correct_zero_dpc_result = single_grating_talbot_manager.correct_zero_dpc(recrop_dpc_result, initialization_parameters)
+        plotter.show_context_window(CORRECT_ZERO_DPC_CONTEXT_KEY)
 
-    # ==========================================================================
+        # ==========================================================================
 
-    recrop_dpc_result = single_grating_talbot_manager.recrop_dpc(dpc_result, initialization_parameters)
-    plotter.show_context_window(RECROP_DPC_CONTEXT_KEY)
+        remove_linear_fit_result = single_grating_talbot_manager.remove_linear_fit(correct_zero_dpc_result, initialization_parameters)
+        plotter.show_context_window(REMOVE_LINEAR_FIT_CONTEXT_KEY)
 
-    # ==========================================================================
+        # ==========================================================================
 
-    correct_zero_dpc_result = single_grating_talbot_manager.correct_zero_dpc(recrop_dpc_result, initialization_parameters)
-    plotter.show_context_window(CORRECT_ZERO_DPC_CONTEXT_KEY)
+        dpc_profile_analysis_result = single_grating_talbot_manager.dpc_profile_analysis(remove_linear_fit_result, initialization_parameters)
+        plotter.show_context_window(DPC_PROFILE_ANALYSYS_CONTEXT_KEY)
 
-    # ==========================================================================
+        # ==========================================================================
 
-    remove_linear_fit_result = single_grating_talbot_manager.remove_linear_fit(correct_zero_dpc_result, initialization_parameters)
-    plotter.show_context_window(REMOVE_LINEAR_FIT_CONTEXT_KEY)
+        fit_radius_dpc_result = single_grating_talbot_manager.fit_radius_dpc(dpc_profile_analysis_result, initialization_parameters)
+        plotter.show_context_window(FIT_RADIUS_DPC_CONTEXT_KEY)
 
-    # ==========================================================================
+        # ==========================================================================
+        # %% Integration
+        # ==========================================================================
 
-    dpc_profile_analysis_result = single_grating_talbot_manager.dpc_profile_analysis(remove_linear_fit_result, initialization_parameters)
-    plotter.show_context_window(DPC_PROFILE_ANALYSYS_CONTEXT_KEY)
+        integration_result = single_grating_talbot_manager.do_integration(fit_radius_dpc_result, initialization_parameters)
+        plotter.show_context_window(INTEGRATION_CONTEXT_KEY)
 
-    # ==========================================================================
+        # ==========================================================================
 
-    fit_radius_dpc_result = single_grating_talbot_manager.fit_radius_dpc(dpc_profile_analysis_result, initialization_parameters)
-    plotter.show_context_window(FIT_RADIUS_DPC_CONTEXT_KEY)
+        integration_result = single_grating_talbot_manager.calc_thickness(integration_result, initialization_parameters)
+        plotter.show_context_window(CALCULATE_THICKNESS_CONTEXT_KEY)
 
-    # ==========================================================================
-    # %% Integration
-    # ==========================================================================
+        # ==========================================================================
 
-    integration_result = single_grating_talbot_manager.do_integration(fit_radius_dpc_result, initialization_parameters)
-    plotter.show_context_window(INTEGRATION_CONTEXT_KEY)
+        integration_result = single_grating_talbot_manager.calc_2nd_order_component_of_the_phase(integration_result, initialization_parameters)
+        plotter.show_context_window(CALCULATE_2ND_ORDER_COMPONENT_OF_THE_PHASE)
 
-    # ==========================================================================
+        # ==========================================================================
 
-    integration_result = single_grating_talbot_manager.calc_thickness(integration_result, initialization_parameters)
-    plotter.show_context_window(CALCULATE_THICKNESS_CONTEXT_KEY)
+        integration_result = single_grating_talbot_manager.remove_2nd_order(integration_result, initialization_parameters)
+        plotter.show_context_window(REMOVE_2ND_ORDER)
 
-    # ==========================================================================
+        # ==========================================================================
+        # %% Final Operations
+        # ==========================================================================
 
-    integration_result = single_grating_talbot_manager.calc_2nd_order_component_of_the_phase(integration_result, initialization_parameters)
-    plotter.show_context_window(CALCULATE_2ND_ORDER_COMPONENT_OF_THE_PHASE)
+        get_registered_ini_instance().push()
+        get_registered_qt_application_instance().show_application_closer()
 
-    # ==========================================================================
+        # ==========================================================================
 
-    integration_result = single_grating_talbot_manager.remove_2nd_order(integration_result, initialization_parameters)
-    plotter.show_context_window(REMOVE_2ND_ORDER)
-
-    # ==========================================================================
-    # %% Final Operations
-    # ==========================================================================
-
-    get_registered_ini_instance().push()
-    get_registered_qt_application_instance().show_application_closer()
-
-    # ==========================================================================
-
-    get_registered_qt_application_instance().run_qt_application()
-
+        get_registered_qt_application_instance().run_qt_application()
 
 if __name__=="__main__":
-    print("\n********** Warning *************:\n\nTo run this script, type:")
-    arguments_single_grating_talbot(["", "", "--h"])
+    MainSingleGratingTalbot([]).show_help()
