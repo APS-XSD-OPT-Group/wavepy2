@@ -149,6 +149,7 @@ class WavePyInteractiveWidget(QDialog, WavePyGenericWidget):
 
 class PlotterFacade:
     def is_active(self): raise NotImplementedError()
+    def is_saving(self): raise NotImplementedError()
     def register_context_window(self, context_key, context_window=None): raise NotImplementedError()
     def register_save_file_prefix(self, save_file_prefix): raise NotImplementedError()
     def push_plot_on_context(self, context_key, widget_class, **kwargs): raise NotImplementedError()
@@ -280,18 +281,21 @@ class __AbstractActivePlotter(__AbstractPlotter):
         else: pass
 
 class __FullPlotter(__AbstractActivePlotter):
+    def is_saving(self): return True
     def push_plot_on_context(self, context_key, widget_class, **kwargs):
         plot_widget_instance = self._build_plot(widget_class, **kwargs)
         self._register_plot(context_key, plot_widget_instance)
         self._save_images(plot_widget_instance, **kwargs)
 
 class __DisplayOnlyPlotter(__AbstractActivePlotter):
+    def is_saving(self): return False
     def push_plot_on_context(self, context_key, widget_class, **kwargs): self._register_plot(context_key, self._build_plot(widget_class, **kwargs))
     def save_sdf_file(self, array, pixelsize=[1, 1], file_prefix=None, file_suffix="", extraHeader={}): return self._get_file_name(file_prefix, file_suffix, "sdf")
     def save_csv_file(self, array_list, file_prefix=None, file_suffix="", headerList=[], comments=""): return self._get_file_name(file_prefix, file_suffix, "csv")
 
 class __SaveOnlyPlotter(__AbstractActivePlotter):
     def is_active(self): return False
+    def is_saving(self): return True
     def register_context_window(self, context_key, context_window=None): pass
     def push_plot_on_context(self, context_key, widget_class, **kwargs): self._save_images(self._build_plot(widget_class, **kwargs))
     def get_context_container_widget(self, context_key): return None
@@ -302,6 +306,7 @@ class __SaveOnlyPlotter(__AbstractActivePlotter):
 
 class __NullPlotter(__AbstractPlotter):
     def is_active(self): return False
+    def is_saving(self): return False
     def register_context_window(self, context_key, context_window=None): pass
     def push_plot_on_context(self, context_key, widget_class, **kwargs): self._build_plot(widget_class, **kwargs) # necessary for some operations
     def get_context_container_widget(self, context_key): return None

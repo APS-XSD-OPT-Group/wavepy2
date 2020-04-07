@@ -52,7 +52,7 @@ except AttributeError:
 
 NAME = 'wavepy2'
 
-VERSION = '0.0.6'
+VERSION = '0.0.8'
 ISRELEASED = False
 
 DESCRIPTION = 'Wavepy 2 library'
