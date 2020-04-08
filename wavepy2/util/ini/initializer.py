@@ -89,13 +89,13 @@ class __LocalIniFile(IniFacade):
         self.__config_parser = ConfigParser()
         self.__config_parser.read(self.__ini_file_name)
 
-    def __get_from_ini(self, section, key, default):
+    def __get_from_ini(self, section, key, default=None):
         try:
             value = self.__config_parser[section][key]
             value = value.strip()
             return None if value.lower() == "none" else value
         except:
-            return str(default)
+            return str(default) if not default is None else None
 
     def set_value_at_ini(self, section, key, value):
         try:
@@ -103,6 +103,15 @@ class __LocalIniFile(IniFacade):
         except:
             if not self.__config_parser.has_section(section): self.__config_parser.add_section(section)
             if not self.__config_parser.has_option(section, key): self.__config_parser.set(section, key, "None" if value is None else str(value))
+
+    def set_list_at_ini(self, section, key, values_list=[]):
+        if values_list is None: values_string = "None"
+        else:
+            values_string = ""
+            for value in values_list: values_string += str(value) + ", "
+            values_string = values_string[:-2]
+
+        self.set_value_at_ini(section, key, values_string)
 
     def get_string_from_ini(self, section, key, default="None"):
         value = self.__get_from_ini(section, key, default)
@@ -116,22 +125,13 @@ class __LocalIniFile(IniFacade):
         value = self.__get_from_ini(section, key, default)
         return float(default) if value is None else float(value.strip())
 
-    def get_list_from_ini(self, section, key, default=[]):
-        value = self.__get_from_ini(section, key, default)
-        return default if value is None else list(map(int, self.__get_from_ini(section, key, default).split(',')))
-
     def get_boolean_from_ini(self, section, key, default=False):
         value = self.__get_from_ini(section, key, default)
         return default if value is None else (True if value.strip().lower() == "true" else False)
 
-    def set_list_at_ini(self, section, key, values_list=[]):
-        if values_list is None: values_string = "None"
-        else:
-            values_string = ""
-            for value in values_list: values_string += str(value) + ", "
-            values_string = values_string[:-2]
-
-        self.set_value_at_ini(section, key, values_string)
+    def get_list_from_ini(self, section, key, default=[]):
+        value = self.__get_from_ini(section, key, default=None)
+        return default if value is None else list(map(int, self.__get_from_ini(section, key).split(',')))
 
     def dump(self):
         text = "Dump of file: " + self.__ini_file_name + "\n"
