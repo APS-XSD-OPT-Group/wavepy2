@@ -44,6 +44,7 @@
 # #########################################################################
 import numpy as np
 import os
+from wavepy2.util.common.common_tools import PATH_SEPARATOR
 
 from wavepy2.util.log.logger import get_registered_logger_instance, get_registered_secondary_logger
 from wavepy2.util.plot.plotter import get_registered_plotter_instance
@@ -95,13 +96,13 @@ class __DPCProfileAnalysis(DPCProfileAnalysisFacade):
 
         if fnameV is None:
             diffPhaseV = diffPhaseH*np.nan
-            saveFileSuf = fnameH.rsplit('/', 1)[0] + '/profiles/' + fnameH.rsplit('/', 1)[1]
+            saveFileSuf = fnameH.rsplit(PATH_SEPARATOR, 1)[0] + PATH_SEPARATOR + 'profiles' + PATH_SEPARATOR + fnameH.rsplit(PATH_SEPARATOR, 1)[1]
             saveFileSuf = saveFileSuf.rsplit('_X')[0] + '_profiles'
         else:
-            saveFileSuf = fnameV.rsplit('/', 1)[0] + '/profiles/' + fnameV.rsplit('/', 1)[1]
+            saveFileSuf = fnameV.rsplit(PATH_SEPARATOR, 1)[0] + PATH_SEPARATOR + 'profiles' + PATH_SEPARATOR + fnameV.rsplit(PATH_SEPARATOR, 1)[1]
             saveFileSuf = saveFileSuf.rsplit('_Y')[0] + '_profiles'
 
-        if self.__plotter.is_saving() and not os.path.exists(saveFileSuf.rsplit('/', 1)[0]): os.makedirs(saveFileSuf.rsplit('/', 1)[0])
+        if self.__plotter.is_saving() and not os.path.exists(saveFileSuf.rsplit(PATH_SEPARATOR, 1)[0]): os.makedirs(saveFileSuf.rsplit(PATH_SEPARATOR, 1)[0])
 
         n_profiles_H_V_result = WavePyData()
 

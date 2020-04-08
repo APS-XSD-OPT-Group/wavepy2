@@ -81,6 +81,8 @@ class FourierTransform:
 # ---------------------------------------------------------------------------
 # MISCELLANEA (FROM WAVEPY)
 
+PATH_SEPARATOR = "/" # Windows works in Anaconda Prompt...
+
 from scipy import constants
 
 hc = constants.value('inverse meter-electron volt relationship')  # hc
@@ -112,7 +114,7 @@ def get_unique_filename(patternforname, extension='txt', width=2, isFolder=False
     '''
 
     if isFolder:
-        extension = os.sep
+        extension = PATH_SEPARATOR
         if os.sep in patternforname[-1]: patternforname = patternforname[:-1]
     else:
         if '.' not in extension: extension = '.' + extension

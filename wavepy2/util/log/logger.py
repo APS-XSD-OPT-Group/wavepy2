@@ -104,16 +104,21 @@ class LoggerAttributes:
     REVERSE = "reverse"
     CONCEALED = "concealed"
 
+import platform
+
 class __FullLogger(LoggerFacade):
     def __init__(self, stream=DEFAULT_STREAM):
         self.__stream = stream
 
-        if stream == DEFAULT_STREAM:
-            self.__color_active = True
-        elif isinstance(stream, LogStream):
-            self.__color_active = stream.is_color_active()
-        else:
+        if platform.system() == 'Windows':
             self.__color_active = False
+        else:
+            if stream == DEFAULT_STREAM:
+                self.__color_active = True
+            elif isinstance(stream, LogStream):
+                self.__color_active = stream.is_color_active()
+            else:
+                self.__color_active = False
 
     def print(self, message):
         self.__stream.write(message + "\n")

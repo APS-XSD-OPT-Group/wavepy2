@@ -44,6 +44,7 @@
 # #########################################################################
 import numpy as np
 import sys, os
+from wavepy2.util.common.common_tools import PATH_SEPARATOR
 
 from wavepy2.util.common import common_tools
 from wavepy2.util.ini.initializer import get_registered_ini_instance
@@ -94,10 +95,10 @@ def generate_initialization_parameters(img_file_name,
 
     img = img - imgBlank
 
-    if '/' in img_file_name:
-        saveFileSuf = img_file_name.rsplit('/', 1)[0] + '/' + img_file_name.rsplit('/', 1)[1].split('.')[0] + '_output/'
+    if PATH_SEPARATOR in img_file_name:
+        saveFileSuf = img_file_name.rsplit(PATH_SEPARATOR, 1)[0] + PATH_SEPARATOR + img_file_name.rsplit(PATH_SEPARATOR, 1)[1].split('.')[0] + '_output' + PATH_SEPARATOR
     else:
-        saveFileSuf = img_file_name.rsplit('/', 1)[1].split('.')[0] + '_output/'
+        saveFileSuf = img_file_name.rsplit(PATH_SEPARATOR, 1)[1].split('.')[0] + '_output' + PATH_SEPARATOR
 
     if os.path.isdir(saveFileSuf): saveFileSuf = common_tools.get_unique_filename(saveFileSuf, isFolder=True)
 
