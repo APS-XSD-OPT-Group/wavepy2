@@ -60,25 +60,25 @@ from PyQt5.QtWidgets import QWidget
 MODES    = ["Relative", "Absolute"]
 PATTERNS = ["Diagonal half pi", "Edge pi"]
 
-def generate_initialization_parameters(img_file_name,
-                                       imgRef_file_name,
-                                       imgBlank_file_name,
-                                       mode,
-                                       pixel,
-                                       gratingPeriod,
-                                       pattern,
-                                       distDet2sample,
-                                       phenergy,
-                                       sourceDistance,
-                                       correct_pi_jump,
-                                       remove_mean,
-                                       correct_dpc_center,
-                                       remove_linear,
-                                       do_integration,
-                                       calc_thickness,
-                                       remove_2nd_order,
-                                       material_idx,
-                                       widget=None):
+def generate_initialization_parameters_sgz(img_file_name,
+                                           imgRef_file_name,
+                                           imgBlank_file_name,
+                                           mode,
+                                           pixel,
+                                           gratingPeriod,
+                                           pattern,
+                                           distDet2sample,
+                                           phenergy,
+                                           sourceDistance,
+                                           correct_pi_jump,
+                                           remove_mean,
+                                           correct_dpc_center,
+                                           remove_linear,
+                                           do_integration,
+                                           calc_thickness,
+                                           remove_2nd_order,
+                                           material_idx,
+                                           widget=None):
     img = read_tiff(img_file_name)
     imgRef = None if (mode == MODES[1] or common_tools.is_empty_file_name(imgRef_file_name)) else read_tiff(imgRef_file_name)
     imgBlank = None if common_tools.is_empty_file_name(imgBlank_file_name) else read_tiff(imgBlank_file_name)
@@ -148,12 +148,12 @@ def generate_initialization_parameters(img_file_name,
                       remove_2nd_order=remove_2nd_order,
                       material_idx=material_idx)
 
-class InputParametersWidget(WavePyInteractiveWidget):
+class SGZInputParametersWidget(WavePyInteractiveWidget):
     WIDTH  = 800
     HEIGHT = 430
 
     def __init__(self, parent):
-        super(InputParametersWidget, self).__init__(parent, message="Input Parameters", title="Input Parameters")
+        super(SGZInputParametersWidget, self).__init__(parent, message="Input Parameters", title="Input Parameters")
         self.__ini     = get_registered_ini_instance()
         self.__logger  = get_registered_logger_instance()
 
@@ -269,25 +269,25 @@ class InputParametersWidget(WavePyInteractiveWidget):
 
         self.__ini.push()
 
-        return generate_initialization_parameters(self.img,
-                                                  self.imgRef,
-                                                  self.imgBlank,
-                                                  MODES[self.mode],
-                                                  self.pixel,
-                                                  self.gratingPeriod,
-                                                  PATTERNS[self.pattern],
-                                                  self.distDet2sample,
-                                                  self.phenergy,
-                                                  self.sourceDistance,
-                                                  self.correct_pi_jump,
-                                                  self.remove_mean,
-                                                  self.correct_dpc_center,
-                                                  self.remove_linear,
-                                                  self.do_integration,
-                                                  self.calc_thickness,
-                                                  self.remove_2nd_order,
-                                                  self.material_idx,
-                                                  widget=self)
+        return generate_initialization_parameters_sgz(self.img,
+                                                      self.imgRef,
+                                                      self.imgBlank,
+                                                      MODES[self.mode],
+                                                      self.pixel,
+                                                      self.gratingPeriod,
+                                                      PATTERNS[self.pattern],
+                                                      self.distDet2sample,
+                                                      self.phenergy,
+                                                      self.sourceDistance,
+                                                      self.correct_pi_jump,
+                                                      self.remove_mean,
+                                                      self.correct_dpc_center,
+                                                      self.remove_linear,
+                                                      self.do_integration,
+                                                      self.calc_thickness,
+                                                      self.remove_2nd_order,
+                                                      self.material_idx,
+                                                      widget=self)
 
     def get_rejected_output(self):
         self.__logger.print_error("Initialization Canceled, Program exit")

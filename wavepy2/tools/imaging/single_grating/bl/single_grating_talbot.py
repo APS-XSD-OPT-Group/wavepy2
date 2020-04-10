@@ -60,7 +60,7 @@ from wavepy2.core.widgets.crop_dialog_widget import CropDialogPlot
 from wavepy2.core.widgets.plot_integration_widget import PlotIntegration
 from wavepy2.tools.common.physical_properties import get_delta
 from wavepy2.tools.imaging.single_grating.widgets.plot_DPC_widget import PlotDPC
-from wavepy2.tools.imaging.single_grating.widgets.input_parameters_widget import InputParametersWidget, generate_initialization_parameters
+from wavepy2.tools.imaging.single_grating.widgets.sgt_input_parameters_widget import SGTInputParametersWidget, generate_initialization_parameters_sgt
 from wavepy2.tools.imaging.single_grating.widgets.first_crop_dialog_widget import FirstCropDialogPlot
 from wavepy2.tools.imaging.single_grating.widgets.show_cropped_figure_widget import ShowCroppedFigure
 from wavepy2.tools.imaging.single_grating.widgets.correct_DPC_widgets import CorrectDPC, CorrectDPCHistos, CorrectDPCCenter
@@ -106,26 +106,26 @@ class __SingleGratingTalbot(SingleGratingTalbotFacade):
 
     def get_initialization_parameters(self, script_logger_mode):
         if self.__plotter.is_active():
-            initialization_parameters = self.__plotter.show_interactive_plot(InputParametersWidget, container_widget=None)
+            initialization_parameters = self.__plotter.show_interactive_plot(SGTInputParametersWidget, container_widget=None)
         else:
-            initialization_parameters = generate_initialization_parameters(img_file_name      = self.__ini.get_string_from_ini("Files", "sample"),
-                                                                           imgRef_file_name   = self.__ini.get_string_from_ini("Files", "reference"),
-                                                                           imgBlank_file_name = self.__ini.get_string_from_ini("Files", "blank"),
-                                                                           mode               = self.__ini.get_string_from_ini("Parameters", "mode", default="Relative"),
-                                                                           pixel              = self.__ini.get_float_from_ini("Parameters", "pixel size", default=6.5e-07),
-                                                                           gratingPeriod      = self.__ini.get_float_from_ini("Parameters", "checkerboard grating period", default=4.8e-06),
-                                                                           pattern            = self.__ini.get_string_from_ini("Parameters", "pattern", default="Diagonal half pi"),
-                                                                           distDet2sample     = self.__ini.get_float_from_ini("Parameters", "distance detector to gr", default=0.33),
-                                                                           phenergy           = self.__ini.get_float_from_ini("Parameters", "photon energy", default=14000.0),
-                                                                           sourceDistance     = self.__ini.get_float_from_ini("Parameters", "source distance", default=32.0),
-                                                                           correct_pi_jump    = self.__ini.get_boolean_from_ini("Runtime", "correct pi jump", default=False),
-                                                                           remove_mean        = self.__ini.get_boolean_from_ini("Runtime", "remove mean", default=False),
-                                                                           correct_dpc_center = self.__ini.get_boolean_from_ini("Runtime", "correct dpc center", default=False),
-                                                                           remove_linear      = self.__ini.get_boolean_from_ini("Runtime", "remove linear", default=False),
-                                                                           do_integration     = self.__ini.get_boolean_from_ini("Runtime", "do integration", default=False),
-                                                                           calc_thickness     = self.__ini.get_boolean_from_ini("Runtime", "calc thickness", default=False),
-                                                                           remove_2nd_order   = self.__ini.get_boolean_from_ini("Runtime", "remove 2nd order", default=False),
-                                                                           material_idx       = self.__ini.get_int_from_ini("Runtime", "material idx", default=0))
+            initialization_parameters = generate_initialization_parameters_sgt(img_file_name      = self.__ini.get_string_from_ini("Files", "sample"),
+                                                                               imgRef_file_name   = self.__ini.get_string_from_ini("Files", "reference"),
+                                                                               imgBlank_file_name = self.__ini.get_string_from_ini("Files", "blank"),
+                                                                               mode               = self.__ini.get_string_from_ini("Parameters", "mode", default="Relative"),
+                                                                               pixel              = self.__ini.get_float_from_ini("Parameters", "pixel size", default=6.5e-07),
+                                                                               gratingPeriod      = self.__ini.get_float_from_ini("Parameters", "checkerboard grating period", default=4.8e-06),
+                                                                               pattern            = self.__ini.get_string_from_ini("Parameters", "pattern", default="Diagonal half pi"),
+                                                                               distDet2sample     = self.__ini.get_float_from_ini("Parameters", "distance detector to gr", default=0.33),
+                                                                               phenergy           = self.__ini.get_float_from_ini("Parameters", "photon energy", default=14000.0),
+                                                                               sourceDistance     = self.__ini.get_float_from_ini("Parameters", "source distance", default=32.0),
+                                                                               correct_pi_jump    = self.__ini.get_boolean_from_ini("Runtime", "correct pi jump", default=False),
+                                                                               remove_mean        = self.__ini.get_boolean_from_ini("Runtime", "remove mean", default=False),
+                                                                               correct_dpc_center = self.__ini.get_boolean_from_ini("Runtime", "correct dpc center", default=False),
+                                                                               remove_linear      = self.__ini.get_boolean_from_ini("Runtime", "remove linear", default=False),
+                                                                               do_integration     = self.__ini.get_boolean_from_ini("Runtime", "do integration", default=False),
+                                                                               calc_thickness     = self.__ini.get_boolean_from_ini("Runtime", "calc thickness", default=False),
+                                                                               remove_2nd_order   = self.__ini.get_boolean_from_ini("Runtime", "remove 2nd order", default=False),
+                                                                               material_idx       = self.__ini.get_int_from_ini("Runtime", "material idx", default=0))
 
         plotter = get_registered_plotter_instance()
         plotter.register_save_file_prefix(initialization_parameters.get_parameter("saveFileSuf"))
