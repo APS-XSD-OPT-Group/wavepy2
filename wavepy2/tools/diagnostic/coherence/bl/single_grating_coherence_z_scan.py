@@ -59,6 +59,7 @@ from wavepy2.core import grating_interferometry
 
 class SingleGratingCoherenceZScanFacade:
     def get_initialization_parameters(self, script_logger_mode): raise NotImplementedError()
+    def calculate_harmonic_periods(self, initialization_parameters): raise NotImplementedError()
 
 def create_single_grating_coherence_z_scan_manager():
     return __SingleGratingCoherenceZScan()
