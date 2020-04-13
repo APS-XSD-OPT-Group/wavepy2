@@ -131,7 +131,7 @@ def save_sdf_file(array, pixelsize=[1, 1], fname='output.sdf', extraHeader={}):
         raise ValueError('Function save_sdf: array must be 2-dimensional')
 
     header = 'aBCR-0.0\n' + \
-             'ManufacID\t=\tgrizolli@anl.gov\n' + \
+             'ManufacID\t=\tWavePy2\n' + \
              'CreateDate\t=\t' + \
              common_tools.datetime_now_str()[:-2].replace('_', '') + '\n' + \
              'ModDate\t=\t' + \

@@ -94,5 +94,9 @@ class MainSingleGratingCoherenceZScan(WavePyScript):
 
         get_registered_qt_application_instance().run_qt_application()
 
+
+
+import os, sys
 if __name__=="__main__":
-    MainSingleGratingCoherenceZScan().show_help()
+    if os.getenv('WAVEPY_DEBUG', "0") == "1": MainSingleGratingCoherenceZScan(sys_argv=sys.argv).run_script()
+    else: MainSingleGratingCoherenceZScan().show_help()

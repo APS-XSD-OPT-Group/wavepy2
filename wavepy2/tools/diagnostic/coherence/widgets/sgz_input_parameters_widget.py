@@ -44,8 +44,9 @@
 # #########################################################################
 import numpy as np
 import sys, os
-from wavepy2.util.common.common_tools import PATH_SEPARATOR
+import glob
 
+from wavepy2.util.common.common_tools import PATH_SEPARATOR
 from wavepy2.util.common import common_tools
 from wavepy2.util.ini.initializer import get_registered_ini_instance
 from wavepy2.util.log.logger import get_registered_logger_instance
@@ -57,126 +58,100 @@ from wavepy2.tools.common.wavepy_data import WavePyData
 
 from PyQt5.QtWidgets import QWidget
 
-MODES    = ["Relative", "Absolute"]
-PATTERNS = ["Diagonal half pi", "Edge pi"]
+ZVEC_FROM = ["Calculated", "Tabled"]
+PATTERNS  = ["Diagonal", "Edge"]
 
-def generate_initialization_parameters_sgz(img_file_name,
-                                           imgRef_file_name,
-                                           imgBlank_file_name,
-                                           mode,
-                                           pixel,
+def generate_initialization_parameters_sgz(dataFolder,
+                                           samplefileName,
+                                           zvec_from,
+                                           startDist,
+                                           step_z_scan,
+                                           image_per_point,
+                                           strideFile,
+                                           zvec_file,
+                                           pixelSize,
                                            gratingPeriod,
                                            pattern,
-                                           distDet2sample,
-                                           phenergy,
-                                           sourceDistance,
-                                           correct_pi_jump,
-                                           remove_mean,
-                                           correct_dpc_center,
-                                           remove_linear,
-                                           do_integration,
-                                           calc_thickness,
-                                           remove_2nd_order,
-                                           material_idx,
-                                           widget=None):
-    img = read_tiff(img_file_name)
-    imgRef = None if (mode == MODES[1] or common_tools.is_empty_file_name(imgRef_file_name)) else read_tiff(imgRef_file_name)
-    imgBlank = None if common_tools.is_empty_file_name(imgBlank_file_name) else read_tiff(imgBlank_file_name)
+                                           sourceDistanceV,
+                                           sourceDistanceH,
+                                           unFilterSize,
+                                           searchRegion,
+                                           logger=None):
 
-    pixelsize = [pixel, pixel]
+    out_dir = dataFolder + PATH_SEPARATOR + "output" + PATH_SEPARATOR
+    if not os.path.exists(out_dir): os.mkdir(out_dir)
 
-    if imgBlank is None:
-        defaultBlankV = np.int(np.mean(img[0:100, 0:100]))
-        defaultBlankV = plot_tools.ValueDialog.get_value(widget,
-                                                         message="No Dark File. Value of Dark [counts]\n(Default is the mean value of the 100x100 pixels top-left corner)",
-                                                         title='Experimental Values',
-                                                         default=defaultBlankV)
-        imgBlank = img * 0.0 + defaultBlankV
+    file_prefix = samplefileName.rsplit("_", 1)[0].rsplit(PATH_SEPARATOR, 1)[1]
 
-    img = img - imgBlank
+    fname2save = dataFolder + PATH_SEPARATOR + "output" + PATH_SEPARATOR + file_prefix
 
-    if PATH_SEPARATOR in img_file_name:
-        saveFileSuf = img_file_name.rsplit(PATH_SEPARATOR, 1)[0] + PATH_SEPARATOR + img_file_name.rsplit(PATH_SEPARATOR, 1)[1].split('.')[0] + '_output' + PATH_SEPARATOR
+    logger.print_message("Loading files " + dataFolder + PATH_SEPARATOR + file_prefix + "*.tif")
+
+    listOfDataFiles = glob.glob(dataFolder + PATH_SEPARATOR + file_prefix + "*.tif")
+    listOfDataFiles.sort()
+
+    nfiles = len(listOfDataFiles)
+
+    img = read_tiff(samplefileName)
+
+    if zvec_from == ZVEC_FROM[0]: # Calculated
+        zvec = np.linspace(startDist,
+                           startDist + step_z_scan*(nfiles/image_per_point-1),
+                           int(nfiles/image_per_point))
+        zvec = zvec.repeat(image_per_point)
+
+        listOfDataFiles = listOfDataFiles[0::strideFile]
+        zvec            = zvec[0::strideFile]
+    elif zvec_from == ZVEC_FROM[1]:# Tabled
+        zvec        = np.loadtxt(zvec_file)*1e-3
+        step_z_scan = np.mean(np.diff(zvec))
+
+    if step_z_scan > 0:
+        pass
     else:
-        saveFileSuf = img_file_name.rsplit(PATH_SEPARATOR, 1)[1].split('.')[0] + '_output' + PATH_SEPARATOR
-
-    if os.path.isdir(saveFileSuf): saveFileSuf = common_tools.get_unique_filename(saveFileSuf, isFolder=True)
-
-    os.makedirs(saveFileSuf, exist_ok=True)
-
-    if imgRef is None:
-        saveFileSuf += 'WF_'
-    else:
-        imgRef = imgRef - imgBlank
-        saveFileSuf += 'TalbotImaging_'
-
-    if pattern == PATTERNS[0]:  # 'Diagonal half pi':
-        gratingPeriod *= 1.0 / np.sqrt(2.0)
-        phaseShift = 'halfPi'
-    elif pattern == PATTERNS[1]:  # 'Edge pi':
-        gratingPeriod *= 1.0 / 2.0
-        phaseShift = 'Pi'
-
-    saveFileSuf += 'cb{:.2f}um_'.format(gratingPeriod * 1e6)
-    saveFileSuf += phaseShift
-    saveFileSuf += '_d{:.0f}mm_'.format(distDet2sample * 1e3)
-    saveFileSuf += '{:.1f}KeV'.format(phenergy * 1e-3)
-    saveFileSuf = saveFileSuf.replace('.', 'p')
-
-    # calculate the theoretical position of the hamonics
-    period_harm_Vert = np.int(pixelsize[0] / gratingPeriod * img.shape[0] / (sourceDistance + distDet2sample) * sourceDistance)
-    period_harm_Hor = np.int(pixelsize[1] / gratingPeriod * img.shape[1] / (sourceDistance + distDet2sample) * sourceDistance)
+        listOfDataFiles = listOfDataFiles[::-1]
+        zvec = zvec[::-1]
 
     return WavePyData(img=img,
-                      imgRef=imgRef,
-                      imgBlank=imgBlank,
-                      mode=mode,
-                      pixelsize=pixelsize,
+                      startDist=startDist,
+                      step_z_scan=step_z_scan,
+                      image_per_point=image_per_point,
+                      strideFile=strideFile,
+                      listOfDataFiles=listOfDataFiles,
+                      zvec=zvec,
+                      pixelSize=pixelSize,
                       gratingPeriod=gratingPeriod,
                       pattern=pattern,
-                      distDet2sample=distDet2sample,
-                      phenergy=phenergy,
-                      sourceDistance=sourceDistance,
-                      period_harm=[period_harm_Vert, period_harm_Hor],
-                      saveFileSuf=saveFileSuf,
-                      correct_pi_jump =correct_pi_jump,
-                      remove_mean=remove_mean,
-                      correct_dpc_center=correct_dpc_center,
-                      remove_linear=remove_linear,
-                      do_integration=do_integration,
-                      calc_thickness=calc_thickness,
-                      remove_2nd_order=remove_2nd_order,
-                      material_idx=material_idx)
+                      sourceDistanceV=sourceDistanceV,
+                      sourceDistanceH=sourceDistanceH,
+                      unFilterSize=unFilterSize,
+                      searchRegion=searchRegion,
+                      saveFileSuf=fname2save)
 
 class SGZInputParametersWidget(WavePyInteractiveWidget):
     WIDTH  = 800
-    HEIGHT = 430
+    HEIGHT = 520
 
     def __init__(self, parent):
         super(SGZInputParametersWidget, self).__init__(parent, message="Input Parameters", title="Input Parameters")
         self.__ini     = get_registered_ini_instance()
         self.__logger  = get_registered_logger_instance()
 
-        self.img                = self.__ini.get_string_from_ini("Files", "sample")
-        self.imgRef             = self.__ini.get_string_from_ini("Files", "reference")
-        self.imgBlank           = self.__ini.get_string_from_ini("Files", "blank")
-        self.mode               = MODES.index(self.__ini.get_string_from_ini("Parameters", "Mode", default="Relative"))
-        self.pixel              = self.__ini.get_float_from_ini("Parameters", "pixel size", default=6.5e-07)
+        self.dataDirectory      = self.__ini.get_string_from_ini("Files", "data directory")
+        self.samplefileName     = self.__ini.get_string_from_ini("Files", "sample file name")
+        self.zvec_from          = ZVEC_FROM.index(self.__ini.get_string_from_ini("Parameters", "z distances from", default="Calculated"))
+        self.startDist          = self.__ini.get_float_from_ini("Parameters", "starting distance scan", default=20*1e-3)
+        self.step_z_scan        = self.__ini.get_float_from_ini("Parameters", "step size scan", default=5*1e-3)
+        self.image_per_point    = self.__ini.get_int_from_ini("Parameters", "number of images per step", default=1)
+        self.strideFile         = self.__ini.get_int_from_ini("Parameters", "stride", default=1)
+        self.zvec_file          = self.__ini.get_string_from_ini("Parameters", "z distances file")
+        self.pixelSize          = self.__ini.get_float_from_ini("Parameters", "pixel size", default=6.5e-07)
         self.gratingPeriod      = self.__ini.get_float_from_ini("Parameters", "checkerboard grating period", default=4.8e-06)
-        self.pattern            = PATTERNS.index(self.__ini.get_string_from_ini("Parameters", "pattern", default="Diagonal half pi"))
-        self.distDet2sample     = self.__ini.get_float_from_ini("Parameters", "distance detector to gr", default=0.33)
-        self.phenergy           = self.__ini.get_float_from_ini("Parameters", "photon energy", default=14000.0)
-        self.sourceDistance     = self.__ini.get_float_from_ini("Parameters", "source distance", default=32.0)
-
-        self.correct_pi_jump    = self.__ini.get_boolean_from_ini("Runtime", "correct pi jump", default=False)
-        self.remove_mean        = self.__ini.get_boolean_from_ini("Runtime", "remove mean", default=False)
-        self.correct_dpc_center = self.__ini.get_boolean_from_ini("Runtime", "correct dpc center", default=False)
-        self.remove_linear      = self.__ini.get_boolean_from_ini("Runtime", "remove linear", default=False)
-        self.do_integration     = self.__ini.get_boolean_from_ini("Runtime", "do integration", default=False)
-        self.calc_thickness     = self.__ini.get_boolean_from_ini("Runtime", "calc thickness", default=False)
-        self.remove_2nd_order   = self.__ini.get_boolean_from_ini("Runtime", "remove 2nd order", default=False)
-        self.material_idx       = self.__ini.get_int_from_ini("Runtime", "material idx", default=0)
-
+        self.pattern            = PATTERNS.index(self.__ini.get_string_from_ini("Parameters", "pattern", default="Diagonal"))
+        self.sourceDistanceV    = self.__ini.get_float_from_ini("Parameters", "source distance v", default=-0.73)
+        self.sourceDistanceH    = self.__ini.get_float_from_ini("Parameters", "source distance h", default=34.0)
+        self.unFilterSize       = self.__ini.get_int_from_ini("Parameters", "size for uniform filter", default=1)
+        self.searchRegion       = self.__ini.get_int_from_ini("Parameters", "size for region for searching", default=1)
 
     def build_widget(self, **kwargs):
         self.setFixedWidth(self.WIDTH)
@@ -192,102 +167,93 @@ class SGZInputParametersWidget(WavePyInteractiveWidget):
         runtime_widget.setFixedWidth(self.WIDTH-10)
 
         plot_tools.createTabPage(tabs, "Initialization Parameter", widgetToAdd=ini_widget)
-        plot_tools.createTabPage(tabs, "Runtime Parameter", widgetToAdd=runtime_widget)
 
         main_box = plot_tools.widgetBox(ini_widget, "", width=self.WIDTH-70, height=self.HEIGHT-50)
 
-        plot_tools.comboBox(main_box, self, "mode", label="Mode", items=MODES, callback=self.set_mode, orientation="horizontal")
+        select_dataDirectory_box = plot_tools.widgetBox(main_box, orientation="horizontal")
+        self.le_dataDirectory = plot_tools.lineEdit(select_dataDirectory_box, self, "dataDirectory", label="Data Directory", labelWidth=150, valueType=str, orientation="horizontal")
+        plot_tools.button(select_dataDirectory_box, self, "...", callback=self.selectDataDirectory)
 
         select_file_img_box = plot_tools.widgetBox(main_box, orientation="horizontal")
-        self.le_img = plot_tools.lineEdit(select_file_img_box, self, "img", label="Image File", labelWidth=150, valueType=str, orientation="horizontal")
+        self.le_img = plot_tools.lineEdit(select_file_img_box, self, "samplefileName", label="Image File for Cropping", labelWidth=150, valueType=str, orientation="horizontal")
         plot_tools.button(select_file_img_box, self, "...", callback=self.selectImgFile)
 
-        self.select_file_imgRef_box = plot_tools.widgetBox(main_box, orientation="horizontal")
-        self.le_imgRef = plot_tools.lineEdit(self.select_file_imgRef_box, self, "imgRef", label="Reference Image File", labelWidth=150, valueType=str, orientation="horizontal")
-        plot_tools.button(self.select_file_imgRef_box, self, "...", callback=self.selectImgRefFile)
+        plot_tools.comboBox(main_box, self, "zvec_from", label="Z distances", items=ZVEC_FROM, callback=self.set_zvec_from, orientation="horizontal")
 
-        self.select_file_imgBlank_box = plot_tools.widgetBox(main_box, orientation="horizontal")
-        self.le_imgBlank = plot_tools.lineEdit(self.select_file_imgBlank_box, self, "imgBlank", label="Blank Image File", labelWidth=150, valueType=str, orientation="horizontal")
-        plot_tools.button(self.select_file_imgBlank_box, self, "...", callback=self.selectImgBlankFile)
+        self.zvec_box_1 = plot_tools.widgetBox(main_box, orientation="vertical", height=110)
+        
+        plot_tools.lineEdit(self.zvec_box_1, self, "startDist",       label="Starting distance scan [m]", labelWidth=400, valueType=float, orientation="horizontal")
+        plot_tools.lineEdit(self.zvec_box_1, self, "step_z_scan",     label="Step size scan [m]", labelWidth=400, valueType=float, orientation="horizontal")
+        plot_tools.lineEdit(self.zvec_box_1, self, "image_per_point", label="Number of images per step", labelWidth=400, valueType=float, orientation="horizontal")
+        plot_tools.lineEdit(self.zvec_box_1, self, "strideFile",      label="Stride (Use only every XX files)", labelWidth=400, valueType=float, orientation="horizontal")
 
-        self.set_mode()
+        self.zvec_box_2 = plot_tools.widgetBox(main_box, orientation="vertical", height=110)
 
-        plot_tools.lineEdit(main_box, self, "pixel", label="Pixel Size", labelWidth=250, valueType=float, orientation="horizontal")
-        plot_tools.lineEdit(main_box, self, "gratingPeriod", label="Grating Period", labelWidth=250, valueType=float, orientation="horizontal")
+        select_zvec_file_box = plot_tools.widgetBox(self.zvec_box_2, orientation="horizontal")
+        self.le_zvec_file = plot_tools.lineEdit(select_zvec_file_box, self, "zvec_file", label="Table with the z distance values in mm", labelWidth=150, valueType=str, orientation="horizontal")
+        plot_tools.button(select_zvec_file_box, self, "...", callback=self.selectZVecFile)
 
-        plot_tools.comboBox(main_box, self, "pattern", label="Pattern", items=PATTERNS, orientation="horizontal")
+        self.set_zvec_from()
 
-        plot_tools.lineEdit(main_box, self, "distDet2sample", label="Distance Detector to Grating", labelWidth=250, valueType=float, orientation="horizontal")
-        plot_tools.lineEdit(main_box, self, "phenergy", label="Photon Energy", labelWidth=250, valueType=float, orientation="horizontal")
-        plot_tools.lineEdit(main_box, self, "sourceDistance", label="Source Distance", labelWidth=250, valueType=float, orientation="horizontal")
-
-        #--------------------------------------------------
-        main_box = plot_tools.widgetBox(runtime_widget, "", width=self.WIDTH-70, height=self.HEIGHT-50)
-
-        plot_tools.checkBox(main_box, self, "correct_pi_jump", "Correct pi jump in DPC signal")
-        plot_tools.checkBox(main_box, self, "remove_mean", "Remove mean DPC")
-        plot_tools.checkBox(main_box, self, "correct_dpc_center", "Correct DPC center")
-        plot_tools.checkBox(main_box, self, "remove_linear", "Remove 2D linear fit from DPC")
-        plot_tools.checkBox(main_box, self, "do_integration", "Calculate Frankot-Chellappa integration")
-        plot_tools.checkBox(main_box, self, "calc_thickness", "Convert phase to thickness")
-        plot_tools.checkBox(main_box, self, "remove_2nd_order", "Remove 2nd order polynomial from integrated Phase")
-        plot_tools.comboBox(main_box, self, "material_idx", items=["Diamond", "Beryllium"], label="Material", labelWidth=200, orientation="horizontal")
+        plot_tools.lineEdit(main_box, self, "pixelSize", label="Pixel Size", labelWidth=400, valueType=float, orientation="horizontal")
+        plot_tools.lineEdit(main_box, self, "gratingPeriod", label="CB Grating Period", labelWidth=400, valueType=float, orientation="horizontal")
+        plot_tools.comboBox(main_box, self, "pattern", label="CB Grating Pattern", items=PATTERNS, orientation="horizontal")
+        plot_tools.lineEdit(main_box, self, "sourceDistanceV", label="Source Distance Vertical Direction [m]", labelWidth=400, valueType=float, orientation="horizontal")
+        plot_tools.lineEdit(main_box, self, "sourceDistanceH", label="Source Distance Horizontal Direction [m]", labelWidth=400, valueType=float, orientation="horizontal")
+        plot_tools.lineEdit(main_box, self, "unFilterSize", label="Size for Uniform Filter [Pixels] (Enter 1 to NOT use the filter)", labelWidth=400, valueType=int, orientation="horizontal")
+        plot_tools.lineEdit(main_box, self, "searchRegion", label="Size of Region for Searching the Peak [Pixels]", labelWidth=400, valueType=int, orientation="horizontal")
 
         self.update()
 
-    def set_mode(self):
-        self.select_file_imgRef_box.setEnabled(self.mode == 0)
+    def set_zvec_from(self):
+        self.zvec_box_1.setVisible(self.zvec_from == 0)
+        self.zvec_box_2.setVisible(self.zvec_from == 1)
+
+    def selectDataDirectory(self):
+        self.le_dataDirectory.setText(plot_tools.selectDirectoryFromDialog(self, self.dataDirectory, "Select Data Directory"))
 
     def selectImgFile(self):
-        self.le_img.setText(plot_tools.selectFileFromDialog(self, self.img, "Open Image File"))
+        self.le_img.setText(plot_tools.selectFileFromDialog(self, self.samplefileName, "Open Image File for Cropping"))
 
-    def selectImgRefFile(self):
-        self.le_imgRef.setText(plot_tools.selectFileFromDialog(self, self.imgRef, "Open Reference Image File"))
-
-    def selectImgBlankFile(self):
-        self.le_imgBlank.setText(plot_tools.selectFileFromDialog(self, self.imgBlank, "Open Blank Image File"))
+    def selectZVecFile(self):
+        self.le_zvec_file.setText(plot_tools.selectFileFromDialog(self, self.zvec_file, "Table with the z distance values"))
 
     def get_accepted_output(self):
-        self.__ini.set_value_at_ini('Files', 'sample', self.img)
-        self.__ini.set_value_at_ini('Files', 'reference', self.imgRef)
-        self.__ini.set_value_at_ini('Files', 'blank', self.imgBlank)
-        self.__ini.set_value_at_ini('Parameters', 'Mode', MODES[self.mode])
-        self.__ini.set_value_at_ini('Parameters', 'Pixel Size', self.pixel)
-        self.__ini.set_value_at_ini('Parameters', 'Checkerboard Grating Period', self.gratingPeriod)
-        self.__ini.set_value_at_ini('Parameters', 'Pattern', PATTERNS[self.pattern])
-        self.__ini.set_value_at_ini('Parameters', 'Distance Detector to Gr', self.distDet2sample)
-        self.__ini.set_value_at_ini('Parameters', 'Photon Energy', self.phenergy)
-        self.__ini.set_value_at_ini('Parameters', 'Source Distance', self.sourceDistance)
-        self.__ini.set_value_at_ini("Runtime", "correct pi jump", self.correct_pi_jump)
-        self.__ini.set_value_at_ini("Runtime", "remove mean", self.remove_mean)
-        self.__ini.set_value_at_ini("Runtime", "correct dpc center", self.correct_dpc_center)
-        self.__ini.set_value_at_ini("Runtime", "remove linear", self.remove_linear)
-        self.__ini.set_value_at_ini("Runtime", "do integration", self.do_integration)
-        self.__ini.set_value_at_ini("Runtime", "calc thickness", self.calc_thickness)
-        self.__ini.set_value_at_ini("Runtime", "remove 2nd order", self.remove_2nd_order)
-        self.__ini.set_value_at_ini("Runtime", "material idx", self.material_idx)
+        self.__ini.set_value_at_ini("Files", "data directory", self.dataDirectory)
+        self.__ini.set_value_at_ini("Files", "sample file name", self.samplefileName)
+        
+        self.__ini.set_value_at_ini("Parameters", "z distances from", ZVEC_FROM[self.zvec_from])
+        self.__ini.set_value_at_ini("Parameters", "starting distance scan", self.startDist)
+        self.__ini.set_value_at_ini("Parameters", "step size scan", self.step_z_scan)
+        self.__ini.set_value_at_ini("Parameters", "number of images per step", self.image_per_point)
+        self.__ini.set_value_at_ini("Parameters", "stride", self.strideFile)
+        self.__ini.set_value_at_ini("Parameters", "z distances file", self.zvec_file)
+        self.__ini.set_value_at_ini("Parameters", "pixel size", self.pixelSize)
+        self.__ini.set_value_at_ini("Parameters", "checkerboard grating period", self.gratingPeriod)
+        self.__ini.set_value_at_ini("Parameters", "Pattern", PATTERNS[self.pattern])
+        self.__ini.set_value_at_ini("Parameters", "source distance v", self.sourceDistanceV)
+        self.__ini.set_value_at_ini("Parameters", "source distance h", self.sourceDistanceH)
+        self.__ini.set_value_at_ini("Parameters", "size for uniform filter", self.unFilterSize)
+        self.__ini.set_value_at_ini("Parameters", "size for region for searching", self.searchRegion)
 
         self.__ini.push()
 
-        return generate_initialization_parameters_sgz(self.img,
-                                                      self.imgRef,
-                                                      self.imgBlank,
-                                                      MODES[self.mode],
-                                                      self.pixel,
+        return generate_initialization_parameters_sgz(self.dataDirectory,
+                                                      self.samplefileName,
+                                                      ZVEC_FROM[self.zvec_from],
+                                                      self.startDist,
+                                                      self.step_z_scan,
+                                                      self.image_per_point,
+                                                      self.strideFile,
+                                                      self.zvec_file,
+                                                      self.pixelSize,
                                                       self.gratingPeriod,
                                                       PATTERNS[self.pattern],
-                                                      self.distDet2sample,
-                                                      self.phenergy,
-                                                      self.sourceDistance,
-                                                      self.correct_pi_jump,
-                                                      self.remove_mean,
-                                                      self.correct_dpc_center,
-                                                      self.remove_linear,
-                                                      self.do_integration,
-                                                      self.calc_thickness,
-                                                      self.remove_2nd_order,
-                                                      self.material_idx,
-                                                      widget=self)
+                                                      self.sourceDistanceV,
+                                                      self.sourceDistanceH,
+                                                      self.unFilterSize,
+                                                      self.searchRegion,
+                                                      logger=self.__logger)
 
     def get_rejected_output(self):
         self.__logger.print_error("Initialization Canceled, Program exit")
