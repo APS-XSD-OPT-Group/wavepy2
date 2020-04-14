@@ -42,9 +42,9 @@
 # ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE         #
 # POSSIBILITY OF SUCH DAMAGE.                                             #
 # #########################################################################
-from wavepy2.util.plot.widgets.figure_slide_colorbar import FigureSlideColorbar
-from wavepy2.util.plot.widgets.graphical_roi_idx import GraphicalRoiIdx
-from wavepy2.util.plot.widgets.simple_plot import SimplePlot
+from wavepy2.tools.common.widgets.figure_slide_colorbar import FigureSlideColorbar
+from wavepy2.tools.common.widgets.graphical_roi_idx import GraphicalRoiIdx
+from wavepy2.tools.common.widgets.simple_plot import SimplePlot
 from wavepy2.util.common import common_tools
 from wavepy2.util.ini.initializer import get_registered_ini_instance
 from wavepy2.util.log.logger import get_registered_logger_instance, LoggerColor
@@ -52,17 +52,20 @@ from wavepy2.util.plot import plot_tools
 from wavepy2.util.plot.plotter import WavePyInteractiveWidget
 
 
-class FirstCropDialogPlot(WavePyInteractiveWidget):
+class ColorbarCropDialogPlot(WavePyInteractiveWidget):
     __initialized = False
 
     def __init__(self, parent):
-        super(FirstCropDialogPlot, self).__init__(parent, message="New Crop?", title="Crop Image")
+        super(ColorbarCropDialogPlot, self).__init__(parent, message="New Crop?", title="Crop Image")
         self.__ini     = get_registered_ini_instance()
         self.__logger  = get_registered_logger_instance()
 
     def build_widget(self, **kwargs):
         img         = kwargs["img"]
         pixelsize   = kwargs["pixelsize"]
+
+        try: self.setWindowTitle(kwargs["message"])
+        except: pass
 
         idx4crop = self.__ini.get_list_from_ini("Parameters", "Crop", default=[0, -1, 0, -1])
 

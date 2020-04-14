@@ -42,12 +42,11 @@
 # ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE         #
 # POSSIBILITY OF SUCH DAMAGE.                                             #
 # #########################################################################
-import wavepy2.util.plot.widgets.graphical_roi_idx
 from wavepy2.util.common import common_tools
 from wavepy2.util.log.logger import get_registered_logger_instance
 from wavepy2.util.plot import plot_tools
 from wavepy2.util.plot.plotter import WavePyInteractiveWidget
-from wavepy2.util.plot.widgets.graphical_roi_idx import GraphicalRoiIdx
+from wavepy2.tools.common.widgets.graphical_roi_idx import GraphicalRoiIdx
 
 FIXED_WIDTH=800
 

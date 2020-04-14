@@ -95,8 +95,8 @@ class CorrectDPCHistos(WavePyWidget):
 
 from wavepy2.util.log.logger import get_registered_logger_instance, LoggerColor
 from wavepy2.util.plot.plot_tools import WIDGET_FIXED_WIDTH
-from wavepy2.util.plot.widgets.graphical_select_point_idx import GraphicalSelectPointIdx
-from PyQt5.QtWidgets import QHBoxLayout
+from wavepy2.tools.common.widgets import GraphicalSelectPointIdx
+
 
 class CorrectDPCCenter(WavePyInteractiveWidget):
     __harmonic = ["01", "10"]

@@ -50,7 +50,7 @@ from matplotlib.figure import Figure
 from matplotlib.widgets import RectangleSelector
 
 from wavepy2.util.log.logger import get_registered_logger_instance
-from wavepy2.util.plot.widgets.image_to_change import ImageToChange
+from wavepy2.tools.common.widgets.image_to_change import ImageToChange
 
 
 class GraphicalRoiIdx(QWidget):

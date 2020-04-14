@@ -47,7 +47,6 @@ import sys, os
 import glob
 
 from wavepy2.util.common.common_tools import PATH_SEPARATOR
-from wavepy2.util.common import common_tools
 from wavepy2.util.ini.initializer import get_registered_ini_instance
 from wavepy2.util.log.logger import get_registered_logger_instance
 from wavepy2.util.plot import plot_tools
@@ -113,11 +112,14 @@ def generate_initialization_parameters_sgz(dataFolder,
         zvec = zvec[::-1]
 
     return WavePyData(img=img,
+                      dataFolder=dataFolder,
                       startDist=startDist,
                       step_z_scan=step_z_scan,
                       image_per_point=image_per_point,
                       strideFile=strideFile,
                       listOfDataFiles=listOfDataFiles,
+                      nfiles=nfiles,
+                      zvec_from=zvec_from,
                       zvec=zvec,
                       pixelSize=pixelSize,
                       gratingPeriod=gratingPeriod,

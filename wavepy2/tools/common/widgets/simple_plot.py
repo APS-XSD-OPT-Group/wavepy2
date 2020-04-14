@@ -44,37 +44,41 @@
 # #########################################################################
 
 from PyQt5.QtCore import Qt
-from PyQt5.QtWidgets import QHBoxLayout
+from PyQt5.QtWidgets import QWidget, QVBoxLayout
+from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
+from matplotlib.figure import Figure
 
-import wavepy2.util.plot.widgets.simple_plot
-from wavepy2.util.common import common_tools
-from wavepy2.util.plot import plot_tools
-from wavepy2.util.plot.plotter import WavePyWidget, FigureToSave
+from wavepy2.util.plot.plot_tools import WIDGET_FIXED_WIDTH
+from wavepy2.tools.common.widgets.image_to_change import ImageToChange
 
-class ShowCroppedFigure(WavePyWidget):
-    def get_plot_tab_name(self): return self.__title
 
-    def build_widget(self, **kwargs):
-        img                = kwargs["img"]
-        pixelsize          = kwargs["pixelsize"]
-        try:
-            self.__title = kwargs["title"]
-        except:
-            self.__title = "Raw Image with New Crop"
+class SimplePlot(QWidget):
+    def __init__(self, parent, image, title='', xlabel='', ylabel='', **kwargs4imshow):
+        super(SimplePlot, self).__init__(parent)
 
-        layout = QHBoxLayout()
+        self.setFixedWidth(WIDGET_FIXED_WIDTH)
+
+        figure_canvas = FigureCanvas(Figure())
+        mpl_figure = figure_canvas.figure
+
+        ax = mpl_figure.subplots(1, 1)
+        mpl_image = ax.imshow(image, cmap='viridis', **kwargs4imshow)
+        mpl_image.cmap.set_over('#FF0000')  # Red
+        mpl_image.cmap.set_under('#8B008B')  # Light Cyan
+
+        ax.set_title(title, fontsize=18, weight='bold')
+        ax.set_xlabel(xlabel)
+        ax.set_ylabel(ylabel)
+
+        mpl_figure.colorbar(mpl_image, ax=ax, orientation="vertical")
+
+        self.__image_to_change = ImageToChange(mpl_image=mpl_image, mpl_figure=mpl_figure)
+
+        layout = QVBoxLayout()
+        layout.addWidget(figure_canvas)
         layout.setAlignment(Qt.AlignCenter)
-
-        widget = wavepy2.util.plot.widgets.simple_plot.SimplePlot(self,
-                                                                  image=img,
-                                                                  title="Cropped Raw Image",
-                                                                  xlabel=r'x [$\mu m$ ]',
-                                                                  ylabel=r'y [$\mu m$ ]',
-                                                                  extent=common_tools.extent_func(img, pixelsize)*1e6)
-        layout.addWidget(widget)
 
         self.setLayout(layout)
 
-        self.append_mpl_figure_to_save(widget.get_image_to_change().get_mpl_figure())
-
-
+    def get_image_to_change(self):
+        return self.__image_to_change

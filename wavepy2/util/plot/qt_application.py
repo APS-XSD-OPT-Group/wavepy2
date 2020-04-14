@@ -43,7 +43,7 @@
 # POSSIBILITY OF SUCH DAMAGE.                                             #
 # #########################################################################
 from wavepy2.util import Singleton, synchronized_method
-from wavepy2.util.plot.widgets.close_app_widget import CloseApp
+from wavepy2.tools.common.widgets.close_app_widget import CloseApp
 
 import sys
 from PyQt5.Qt import QApplication

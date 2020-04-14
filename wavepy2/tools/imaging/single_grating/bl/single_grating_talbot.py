@@ -56,13 +56,15 @@ from wavepy2.tools.common.wavepy_data import WavePyData
 from wavepy2.core import grating_interferometry
 from wavepy2.core.widgets.plot_intensities_harms_widget import PlotIntensitiesHarms
 from wavepy2.core.widgets.plot_dark_field_widget import PlotDarkField
-from wavepy2.core.widgets.crop_dialog_widget import CropDialogPlot
 from wavepy2.core.widgets.plot_integration_widget import PlotIntegration
+
 from wavepy2.tools.common.physical_properties import get_delta
+from wavepy2.core.widgets.crop_dialog_widget import CropDialogPlot
+from wavepy2.tools.common.widgets.colorbar_crop_dialog_widget import ColorbarCropDialogPlot
+from wavepy2.tools.common.widgets.show_cropped_figure_widget import ShowCroppedFigure
+
 from wavepy2.tools.imaging.single_grating.widgets.plot_DPC_widget import PlotDPC
 from wavepy2.tools.imaging.single_grating.widgets.sgt_input_parameters_widget import SGTInputParametersWidget, generate_initialization_parameters_sgt
-from wavepy2.tools.imaging.single_grating.widgets.first_crop_dialog_widget import FirstCropDialogPlot
-from wavepy2.tools.imaging.single_grating.widgets.show_cropped_figure_widget import ShowCroppedFigure
 from wavepy2.tools.imaging.single_grating.widgets.correct_DPC_widgets import CorrectDPC, CorrectDPCHistos, CorrectDPCCenter
 from wavepy2.tools.imaging.single_grating.widgets.fit_radius_dpc_widget import FitRadiusDPC
 
@@ -159,7 +161,7 @@ class __SingleGratingTalbot(SingleGratingTalbotFacade):
         img_size_o = np.shape(img)
 
         if self.__plotter.is_active():
-            img, idx4crop = self.__plotter.show_interactive_plot(FirstCropDialogPlot, container_widget=None, img=img, pixelsize=pixelsize)
+            img, idx4crop = self.__plotter.show_interactive_plot(ColorbarCropDialogPlot, container_widget=None, img=img, pixelsize=pixelsize)
         else:
             idx4crop = self.__ini.get_list_from_ini("Parameters", "Crop")
             img = common_tools.crop_matrix_at_indexes(img, idx4crop)
@@ -261,7 +263,7 @@ class __SingleGratingTalbot(SingleGratingTalbotFacade):
         img_to_crop = np.sqrt((diffPhase01 - diffPhase01.mean())**2 + (diffPhase10 - diffPhase10.mean())**2)
 
         if self.__plotter.is_active(): _, idx2ndCrop = self.__plotter.show_interactive_plot(CropDialogPlot, container_widget=None, img=img_to_crop, pixelsize=pixelsize)
-        else: idx2ndCrop = [0, -1, 0, -1] #self.__ini.get_list_from_ini("Parameters", "Crop")
+        else: idx2ndCrop = [0, -1, 0, -1]
 
         if idx2ndCrop != [0, -1, 0, -1]:
             int00       = common_tools.crop_matrix_at_indexes(int00, idx2ndCrop)

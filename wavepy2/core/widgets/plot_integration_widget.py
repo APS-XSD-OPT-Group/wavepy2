@@ -1,6 +1,5 @@
 import numpy as np
 import pickle
-import copy
 
 from matplotlib.figure import Figure
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
@@ -15,8 +14,8 @@ from PyQt5.QtCore import Qt
 
 from wavepy2.util.common import common_tools
 from wavepy2.util.plot import plot_tools
-from wavepy2.util.plot.plotter import WavePyWidget, FigureToSave, get_registered_plotter_instance
-from wavepy2.util.plot.widgets.plot_profile import PlotProfile
+from wavepy2.util.plot.plotter import WavePyWidget
+from wavepy2.tools.common.widgets import PlotProfile
 
 from warnings import filterwarnings
 filterwarnings("ignore")
