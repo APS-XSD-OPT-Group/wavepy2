@@ -161,7 +161,7 @@ class __SingleGratingTalbot(SingleGratingTalbotFacade):
         img_size_o = np.shape(img)
 
         if self.__plotter.is_active():
-            img, idx4crop = self.__plotter.show_interactive_plot(ColorbarCropDialogPlot, container_widget=None, img=img, pixelsize=pixelsize)
+            img, idx4crop, _, _ = self.__plotter.show_interactive_plot(ColorbarCropDialogPlot, container_widget=None, img=img, pixelsize=pixelsize)
         else:
             idx4crop = self.__ini.get_list_from_ini("Parameters", "Crop")
             img = common_tools.crop_matrix_at_indexes(img, idx4crop)

@@ -116,14 +116,19 @@ class __SingleGratingCoherenceZScan(SingleGratingCoherenceZScanFacade):
         self.__plotter.register_context_window(CALCULATE_HARMONIC_PERIODS_CONTEXT_KEY)
 
         if self.__plotter.is_active():
-            img, idx4crop = self.__plotter.show_interactive_plot(ColorbarCropDialogPlot, container_widget=None, img=imgOriginal, pixelsize=[pixelSize, pixelSize], message="Crop for all Images")
-        else:
-            idx4crop = self.__ini.get_list_from_ini("Parameters", "Crop")
-            img      = common_tools.crop_matrix_at_indexes(imgOriginal, idx4crop)
+            img, idx4crop, cmap, colorlimit = self.__plotter.show_interactive_plot(ColorbarCropDialogPlot, container_widget=None, img=imgOriginal, pixelsize=[pixelSize, pixelSize], message="Crop for all Images")
 
-        if self.__plotter.is_active():
-            _, idx4cropDark = self.__plotter.show_interactive_plot(CropDialogPlot, container_widget=None, img=imgOriginal, pixelsize=[pixelSize, pixelSize], message="Crop for Dark ")
+            _, idx4cropDark = self.__plotter.show_interactive_plot(CropDialogPlot,
+                                                                   container_widget=None,
+                                                                   img=imgOriginal,
+                                                                   pixelsize=[pixelSize, pixelSize],
+                                                                   message="Crop for Dark ",
+                                                                   default_idx4crop=[0, 20, 0, 20],
+                                                                   kwargs4graph={'cmap': cmap, 'vmin': colorlimit[0], 'vmax': colorlimit[1]})
+            self.__ini.push()
         else:
+            idx4crop     = self.__ini.get_list_from_ini("Parameters", "Crop")
+            img          = common_tools.crop_matrix_at_indexes(imgOriginal, idx4crop)
             idx4cropDark = [0, 20, 0, 20]
 
         self.__main_logger.print_message("Idx for cropping: " + str(idx4crop))

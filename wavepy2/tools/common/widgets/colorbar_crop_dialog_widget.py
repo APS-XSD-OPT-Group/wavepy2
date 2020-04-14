@@ -79,9 +79,9 @@ class ColorbarCropDialogPlot(WavePyInteractiveWidget):
                                             ylabel=r'$[\mu m]$',
                                             extent=common_tools.extent_func(self.__cropped_img, pixelsize) * 1e6)
 
-        crop_image = GraphicalRoiIdx(self,
-                                     image=img,
-                                     set_crop_output_listener=self.create_cropped_output)
+        self.crop_image = GraphicalRoiIdx(self,
+                                          image=img,
+                                          set_crop_output_listener=self.create_cropped_output)
 
         figure_slide_colorbar = FigureSlideColorbar(self,
                                                     image=img,
@@ -90,29 +90,29 @@ class ColorbarCropDialogPlot(WavePyInteractiveWidget):
                                                     ylabel=r'y [$\mu m$ ]',
                                                     extent=common_tools.extent_func(img, pixelsize)*1e6)
 
-        figure_slide_colorbar.set_images_to_change([crop_image.get_image_to_change()])
+        figure_slide_colorbar.set_images_to_change([self.crop_image.get_image_to_change()])
 
         tab_widget = plot_tools.tabWidget(self.get_central_widget())
 
         plot_tools.createTabPage(tab_widget, "Raw Image",  original_cropped_image)
         plot_tools.createTabPage(tab_widget, "Colormap",   figure_slide_colorbar)
-        plot_tools.createTabPage(tab_widget, "Crop Image", crop_image)
+        plot_tools.createTabPage(tab_widget, "Crop Image", self.crop_image)
 
-        self.setFixedWidth(max(original_cropped_image.width(), figure_slide_colorbar.width(), crop_image.width())*1.1)
+        self.setFixedWidth(max(original_cropped_image.width(), figure_slide_colorbar.width(), self.crop_image.width())*1.1)
 
         self.update()
 
     def get_accepted_output(self):
         if self.__initialized: self.__ini.set_list_at_ini('Parameters', 'Crop', self.__idx4crop)
 
-        return self.__cropped_img, self.__idx4crop
+        return self.__cropped_img, self.__idx4crop, self.crop_image.get_image_to_change().get_mpl_image().cmap, self.crop_image.get_image_to_change().get_mpl_image().get_clim()
 
     def get_rejected_output(self):
         if self.__initialized: self.__ini.set_list_at_ini('Parameters', 'Crop', self.__initial_idx4crop)
 
         cropped_img = common_tools.crop_matrix_at_indexes(self.__uncropped_img, self.__initial_idx4crop)
 
-        return  cropped_img, self.__initial_idx4crop
+        return  cropped_img, self.__initial_idx4crop, self.crop_image.get_image_to_change().get_mpl_image().cmap, self.crop_image.get_image_to_change().get_mpl_image().get_clim()
 
     def create_cropped_output(self, idx4crop):
         self.__cropped_img = common_tools.crop_matrix_at_indexes(self.__uncropped_img, idx4crop)

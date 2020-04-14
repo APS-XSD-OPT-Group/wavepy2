@@ -63,7 +63,10 @@ class CropDialogPlot(WavePyInteractiveWidget):
         try: self.setWindowTitle(kwargs["message"])
         except: pass
 
-        self.__initialize(img)
+        try:    default_idx4crop = kwargs["default_idx4crop"]
+        except: default_idx4crop = [0, -1, 0, -1]
+
+        self.__initialize(img, default_idx4crop)
 
         try:    crop_image = GraphicalRoiIdx(self, image=img, set_crop_output_listener=self.create_cropped_output, kwargs4graph=kwargs["kwargs4graph"])
         except: crop_image = GraphicalRoiIdx(self, image=img, set_crop_output_listener=self.create_cropped_output)
@@ -86,8 +89,8 @@ class CropDialogPlot(WavePyInteractiveWidget):
         self.__img      = common_tools.crop_matrix_at_indexes(self.__initial_img, idx4crop)
         self.__idx4crop = idx4crop
 
-    def __initialize(self, img):
+    def __initialize(self, img, default_idx4crop):
         self.__initial_img      = img
-        self.__initial_idx4crop = [0, -1, 0, -1]
+        self.__initial_idx4crop = default_idx4crop
         self.__img      = self.__initial_img
         self.__idx4crop = self.__initial_idx4crop
