@@ -149,7 +149,7 @@ class __SingleGratingCoherenceZScan(SingleGratingCoherenceZScanFacade):
             idx4cropDark = [0, 20, 0, 20]
 
         # Plot Image AFTER crop
-        self.__plotter.push_plot_on_context(CALCULATE_HARMONIC_PERIODS_CONTEXT_KEY, ShowCroppedFigure, img=img, pixelsize=[pixelSize, pixelSize])
+        self.__plotter.push_plot_on_context(CALCULATE_HARMONIC_PERIODS_CONTEXT_KEY, ShowCroppedFigure, img=img, pixelsize=[pixelSize, pixelSize], allows_saving=False)
 
         self.__main_logger.print_message("Idx for cropping: " + str(idx4crop))
 
