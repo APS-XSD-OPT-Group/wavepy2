@@ -89,7 +89,7 @@ class __SingleGratingCoherenceZScan(SingleGratingCoherenceZScanFacade):
         self.__main_logger = get_registered_logger_instance()
         self.__ini         = get_registered_ini_instance()
 
-    def get_initialization_parameters(self, script_logger_mode):
+    def get_initialization_parameters(self, script_logger_mode, show_fourier=False):
         if self.__plotter.is_active():
             initialization_parameters = self.__plotter.show_interactive_plot(SGZInputParametersWidget, container_widget=None)
         else:
@@ -108,6 +108,8 @@ class __SingleGratingCoherenceZScan(SingleGratingCoherenceZScanFacade):
                                                                                sourceDistanceH    = self.__ini.get_float_from_ini("Parameters", "source distance h", default=34.0),
                                                                                unFilterSize       = self.__ini.get_int_from_ini("Parameters", "size for uniform filter", default=1),
                                                                                searchRegion       = self.__ini.get_int_from_ini("Parameters", "size for region for searching", default=1))
+
+        initialization_parameters.set_parameter("show_fourier", show_fourier)
 
         plotter = get_registered_plotter_instance()
         plotter.register_save_file_prefix(initialization_parameters.get_parameter("saveFileSuf"))
@@ -221,6 +223,7 @@ class __SingleGratingCoherenceZScan(SingleGratingCoherenceZScanFacade):
         idx4crop         = harm_periods_result.get_parameter("idx4crop")
         idx4cropDark     = harm_periods_result.get_parameter("idx4cropDark")
 
+        show_fourier    = initialization_parameters.get_parameter("show_fourier", False)
         listOfDataFiles = initialization_parameters.get_parameter("listOfDataFiles")
         zvec = initialization_parameters.get_parameter("zvec")
         sourceDistanceV = initialization_parameters.get_parameter("sourceDistanceV")
@@ -245,8 +248,8 @@ class __SingleGratingCoherenceZScan(SingleGratingCoherenceZScanFacade):
             harmonicPeriod = result[i]["harmonicPeriod"]
             image_name     = result[i]["image_name"]
 
-            self.__plotter.push_plot_on_context(RUN_CALCULATION_CONTEXT_KEY, HarmonicGridPlot, imgFFT=imgFFT, harmonicPeriod=harmonicPeriod, image_name=image_name)
-            self.__plotter.push_plot_on_context(RUN_CALCULATION_CONTEXT_KEY, HarmonicPeakPlot, imgFFT=imgFFT, harmonicPeriod=harmonicPeriod, image_name=image_name)
+            self.__plotter.push_plot_on_context(RUN_CALCULATION_CONTEXT_KEY, HarmonicGridPlot, imgFFT=imgFFT, harmonicPeriod=harmonicPeriod, image_name=image_name, allows_saving=False)
+            self.__plotter.push_plot_on_context(RUN_CALCULATION_CONTEXT_KEY, HarmonicPeakPlot, imgFFT=imgFFT, harmonicPeriod=harmonicPeriod, image_name=image_name, allows_saving=False)
 
         self.__draw_context(RUN_CALCULATION_CONTEXT_KEY)
 

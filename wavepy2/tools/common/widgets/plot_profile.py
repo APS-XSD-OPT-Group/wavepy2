@@ -52,7 +52,7 @@ from matplotlib.pyplot import subplot2grid
 
 from wavepy2.util.plot import plot_tools
 
-from matplotlib.pyplot import xticks, yticks, silent_list
+from matplotlib.pyplot import silent_list
 
 """
 Plot contourf in the main graph plus profiles over vertical and horizontal

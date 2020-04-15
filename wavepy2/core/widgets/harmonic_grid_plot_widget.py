@@ -45,7 +45,7 @@
 import numpy as np
 from matplotlib.figure import Figure
 from wavepy2.util.common.common_tools import extent_func, get_idxPeak_ij, is_empty_string
-from wavepy2.util.plot.plotter import WavePyWidget, FigureToSave
+from wavepy2.util.plot.plotter import WavePyWidget
 
 
 class HarmonicGridPlot(WavePyWidget):

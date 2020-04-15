@@ -59,7 +59,22 @@ class MainSingleGratingCoherenceZScan(WavePyScript):
     def get_script_id(self): return "coh-sgz"
     def get_ini_file_name(self): return ".single_grating_coherence_z_scan.ini"
 
+    def _parse_additional_sys_argument(self, sys_argument, args):
+        if "-f" == sys_argument[:-1]: args["SHOW_FOURIER"] = int(sys_argument[-1]) > 0
+        else: args["SHOW_FOURIER"] = False
+
+    def _help_additional_parameters(self):
+        return "  -f<show fourier images>\n\n" + \
+               "   show fourier images:\n" + \
+               "     0 False - Default value\n" +\
+               "     1 True\n"
+
     def _run_script(self, SCRIPT_LOGGER_MODE=LoggerMode.FULL, **args):
+        try: SHOW_FOURIER = args["SHOW_FOURIER"]
+        except: SHOW_FOURIER = False
+
+        print("Show Fourier Images: " + str(SHOW_FOURIER))
+
         plotter = get_registered_plotter_instance()
 
         single_grating_coherence_z_scan_manager = create_single_grating_coherence_z_scan_manager()
@@ -68,7 +83,7 @@ class MainSingleGratingCoherenceZScan(WavePyScript):
         # %% Initialization parameters
         # ==========================================================================
 
-        initialization_parameters = single_grating_coherence_z_scan_manager.get_initialization_parameters(SCRIPT_LOGGER_MODE)
+        initialization_parameters = single_grating_coherence_z_scan_manager.get_initialization_parameters(SCRIPT_LOGGER_MODE, SHOW_FOURIER)
 
         # ==========================================================================
 

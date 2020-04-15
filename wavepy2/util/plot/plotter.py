@@ -67,7 +67,7 @@ class WavePyWidget(QWidget, WavePyGenericWidget):
     def __init__(self, parent=None):
         super(WavePyWidget, self).__init__(parent=parent)
 
-        self.__allows_save = True
+        self.__allows_saving = True
 
     def get_plot_tab_name(self): raise NotImplementedError()
 
@@ -75,7 +75,7 @@ class WavePyWidget(QWidget, WavePyGenericWidget):
         layout = QHBoxLayout()
         layout.setAlignment(Qt.AlignCenter)
 
-        try: self.__allows_save = kwargs["allows_save"]
+        try: self.__allows_saving = kwargs["allows_saving"]
         except: pass
 
         canvas = FigureCanvas(self.build_mpl_figure(**kwargs))
@@ -98,7 +98,7 @@ class WavePyWidget(QWidget, WavePyGenericWidget):
 
     def build_mpl_figure(self, **kwargs): raise NotImplementedError()
 
-    def allows_saving(self): self.__allows_save
+    def allows_saving(self): return self.__allows_saving
 
     def get_figures_to_save(self):
         if self.allows_saving(): return self.__figures_to_save

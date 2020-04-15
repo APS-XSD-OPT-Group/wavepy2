@@ -121,6 +121,8 @@ class WavePyScript():
               "     1 Display Only\n" +
               "     2 Save Images Only\n" +
               "     3 None\n")
+        print(self._help_additional_parameters())
+
         sys.exit(0)
 
     def get_script_id(self): raise NotImplementedError
@@ -128,6 +130,8 @@ class WavePyScript():
 
     ######################################################################
     # PROTECTED
+
+    def _help_additional_parameters(self): return ""
 
     def _parse_additional_parameters(self, **kwargs): return {}
 
@@ -143,14 +147,14 @@ class WavePyScript():
                     elif "-p" == sys_argv[i][:-1]: args["PLOTTER_MODE"]       = int(sys_argv[i][-1])
                     elif "-i" == sys_argv[i][:-1]: args["INI_MODE"]           = int(sys_argv[i][-1])
                     elif "-s" == sys_argv[i][:-1]: args["SCRIPT_LOGGER_MODE"] = int(sys_argv[i][-1])
-                    else: self.__parse_additional_sys_argument(sys_argv[i], args)
+                    else: self._parse_additional_sys_argument(sys_argv[i], args)
 
         return args
 
     ######################################################################
     # PRIVATE
 
-    def __parse_additional_sys_argument(self, sys_argument, args): pass
+    def _parse_additional_sys_argument(self, sys_argument, args): pass
 
     def __initialize_utils(self, LOGGER_MODE=LoggerMode.FULL, PLOTTER_MODE=PlotterMode.FULL, INI_MODE=IniMode.LOCAL_FILE, **args):
         print("Logger Mode : " + LoggerMode.get_logger_mode(LOGGER_MODE))

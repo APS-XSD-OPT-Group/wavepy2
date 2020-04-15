@@ -52,7 +52,7 @@ from PyQt5.QtCore import Qt
 
 from wavepy2.util.common import common_tools
 from wavepy2.util.plot import plot_tools
-from wavepy2.util.plot.plotter import WavePyWidget, FigureToSave, get_registered_plotter_instance
+from wavepy2.util.plot.plotter import WavePyWidget, get_registered_plotter_instance
 
 from warnings import filterwarnings
 filterwarnings("ignore")
