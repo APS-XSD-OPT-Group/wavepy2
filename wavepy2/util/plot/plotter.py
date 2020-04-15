@@ -264,11 +264,16 @@ class __AbstractActivePlotter(__AbstractPlotter):
                 tab.layout().addWidget(plot_widget_instance)
                 widths.append(plot_widget_instance.width())
                 heights.append(plot_widget_instance.height())
+        else:
+            label = plot_tools.widgetLabel(tab_widget, "\n\n\n\n\n                     Nothing to Display")
+            label.setStyleSheet("font: 30pt")
+            widths.append(500)
+            heights.append(370)
 
-        tab_widget.setFixedWidth(max(widths)*1.05)
-        tab_widget.setFixedHeight(max(heights)*1.05)
-        container_widget.setFixedWidth(max(widths)*1.07)
-        container_widget.setFixedHeight(max(heights)*1.1)
+        tab_widget.setFixedWidth(max(widths)+20)
+        tab_widget.setFixedHeight(max(heights)+35)
+        container_widget.setFixedWidth(tab_widget.width()+25)
+        container_widget.setFixedHeight(tab_widget.height()+40)
 
         container_widget.update()
 

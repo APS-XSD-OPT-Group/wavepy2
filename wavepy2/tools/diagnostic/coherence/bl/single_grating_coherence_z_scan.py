@@ -107,7 +107,8 @@ class __SingleGratingCoherenceZScan(SingleGratingCoherenceZScanFacade):
                                                                                sourceDistanceV    = self.__ini.get_float_from_ini("Parameters", "source distance v", default=-0.73),
                                                                                sourceDistanceH    = self.__ini.get_float_from_ini("Parameters", "source distance h", default=34.0),
                                                                                unFilterSize       = self.__ini.get_int_from_ini("Parameters", "size for uniform filter", default=1),
-                                                                               searchRegion       = self.__ini.get_int_from_ini("Parameters", "size for region for searching", default=1))
+                                                                               searchRegion       = self.__ini.get_int_from_ini("Parameters", "size for region for searching", default=1),
+                                                                               logger=self.__main_logger)
 
         initialization_parameters.set_parameter("show_fourier", show_fourier)
 
@@ -252,7 +253,7 @@ class __SingleGratingCoherenceZScan(SingleGratingCoherenceZScanFacade):
                 self.__plotter.push_plot_on_context(RUN_CALCULATION_CONTEXT_KEY, HarmonicGridPlot, imgFFT=imgFFT, harmonicPeriod=harmonicPeriod, image_name=image_name, allows_saving=False)
                 self.__plotter.push_plot_on_context(RUN_CALCULATION_CONTEXT_KEY, HarmonicPeakPlot, imgFFT=imgFFT, harmonicPeriod=harmonicPeriod, image_name=image_name, allows_saving=False)
 
-            self.__draw_context(RUN_CALCULATION_CONTEXT_KEY)
+        self.__draw_context(RUN_CALCULATION_CONTEXT_KEY)
 
         return WavePyData(res=[res_i["visib_1st_harmonics"] for res_i in result], img=sample_img)
 
