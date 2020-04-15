@@ -243,15 +243,16 @@ class __SingleGratingCoherenceZScan(SingleGratingCoherenceZScanFacade):
                                            searchRegion,
                                            np.min(zvec))
 
-        for i in range(len(result)):
-            imgFFT         = FourierTransform.fft2d(result[i]["img"])
-            harmonicPeriod = result[i]["harmonicPeriod"]
-            image_name     = result[i]["image_name"]
+        if show_fourier:
+            for i in range(len(result)):
+                imgFFT         = FourierTransform.fft2d(result[i]["img"])
+                harmonicPeriod = result[i]["harmonicPeriod"]
+                image_name     = result[i]["image_name"]
 
-            self.__plotter.push_plot_on_context(RUN_CALCULATION_CONTEXT_KEY, HarmonicGridPlot, imgFFT=imgFFT, harmonicPeriod=harmonicPeriod, image_name=image_name, allows_saving=False)
-            self.__plotter.push_plot_on_context(RUN_CALCULATION_CONTEXT_KEY, HarmonicPeakPlot, imgFFT=imgFFT, harmonicPeriod=harmonicPeriod, image_name=image_name, allows_saving=False)
+                self.__plotter.push_plot_on_context(RUN_CALCULATION_CONTEXT_KEY, HarmonicGridPlot, imgFFT=imgFFT, harmonicPeriod=harmonicPeriod, image_name=image_name, allows_saving=False)
+                self.__plotter.push_plot_on_context(RUN_CALCULATION_CONTEXT_KEY, HarmonicPeakPlot, imgFFT=imgFFT, harmonicPeriod=harmonicPeriod, image_name=image_name, allows_saving=False)
 
-        self.__draw_context(RUN_CALCULATION_CONTEXT_KEY)
+            self.__draw_context(RUN_CALCULATION_CONTEXT_KEY)
 
         return WavePyData(res=[res_i["visib_1st_harmonics"] for res_i in result], img=sample_img)
 
@@ -378,7 +379,9 @@ def _run_calculation(parameters):
         searchRegion, \
         unFilterSize = parameters
 
-        get_registered_logger_instance().print_message("loop " + str(i) + ": " + data_file_i)
+        # python3.8 do not share the same environment, so the Singleton is not active
+        try: get_registered_logger_instance().print_message("loop " + str(i) + ": " + data_file_i)
+        except: print("loop " + str(i) + ": " + data_file_i)
 
         img = read_tiff(data_file_i)
 
