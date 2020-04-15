@@ -301,6 +301,68 @@ def single_2Dgrating_analyses(img, img_ref=None, harmonicPeriod=None, unwrapFlag
             darkField01, darkField10,
             arg01, arg10]
 
+from scipy.ndimage.filters import uniform_filter
+
+def visib_1st_harmonics(img, harmonicPeriod, searchRegion=20, unFilterSize=1):
+    """
+    This function obtain the visibility in a grating imaging experiment by the
+    ratio of the amplitudes of the first and zero harmonics. See
+    https://doi.org/10.1364/OE.22.014041 .
+
+    Note
+    ----
+    Note that the absolute visibility also depends on the higher harmonics, and
+    for a absolute value of visibility all of them must be considered.
+
+
+    Parameters
+    ----------
+    img : 	ndarray – Data (data_exchange format)
+        Experimental image, whith proper blank image, crop and rotation already
+        applied.
+
+    harmonicPeriod : list of integers in the format [periodVert, periodHor]
+        ``periodVert`` and ``periodVert`` are the period of the harmonics in
+        the reciprocal space in pixels. For the checked board grating,
+        periodVert = sqrt(2) * pixel Size / grating Period * number of
+        rows in the image. For 1D grating, set one of the values to negative or
+        zero (it will set the period to number of rows or colunms).
+
+    searchRegion: int
+        search for the peak will be in a region of harmonicPeriod/searchRegion
+        around the theoretical peak position. See also
+        `:py:func:`wavepy.grating_interferometry.plot_harmonic_grid`
+
+    verbose: Boolean
+        verbose flag.
+
+
+    Returns
+    -------
+    (float, float)
+        horizontal and vertical visibilities respectivelly from
+        harmonics 01 and 10
+
+
+    """
+
+    imgFFT = FourierTransform.fft2d(img)
+
+    _idxPeak_ij_exp00 = get_idxPeak_ij_exp(imgFFT, 0, 0, harmonicPeriod[0], harmonicPeriod[1], searchRegion)
+    _idxPeak_ij_exp10 = get_idxPeak_ij_exp(imgFFT, 1, 0, harmonicPeriod[0], harmonicPeriod[1], searchRegion)
+    _idxPeak_ij_exp01 = get_idxPeak_ij_exp(imgFFT, 0, 1, harmonicPeriod[0], harmonicPeriod[1], searchRegion)
+
+    arg_imgFFT = np.abs(imgFFT)
+
+    if unFilterSize > 1: arg_imgFFT = uniform_filter(arg_imgFFT, unFilterSize)
+
+    peak00 = arg_imgFFT[_idxPeak_ij_exp00[0], _idxPeak_ij_exp00[1]]
+    peak10 = arg_imgFFT[_idxPeak_ij_exp10[0], _idxPeak_ij_exp10[1]]
+    peak01 = arg_imgFFT[_idxPeak_ij_exp01[0], _idxPeak_ij_exp01[1]]
+
+    return 2*peak10/peak00, 2*peak01/peak00, _idxPeak_ij_exp00, _idxPeak_ij_exp10, _idxPeak_ij_exp01
+
+
 from wavepy2.core.surface_from_grad import frankotchellappa, error_integration
 from wavepy2.core.widgets.crop_dialog_widget import CropDialogPlot
 

@@ -48,25 +48,32 @@ from wavepy2.util.common import common_tools
 from wavepy2.util.log.logger import get_registered_logger_instance, get_registered_secondary_logger, register_secondary_logger, LoggerMode
 from wavepy2.util.plot.plotter import get_registered_plotter_instance
 from wavepy2.util.ini.initializer import get_registered_ini_instance
-
-from wavepy2.core import grating_interferometry
-from wavepy2.core.widgets.crop_dialog_widget import CropDialogPlot
+from wavepy2.util.io.read_write_file import read_tiff
 
 from wavepy2.tools.common.wavepy_data import WavePyData
 
-from wavepy2.tools.diagnostic.coherence.widgets.sgz_input_parameters_widget import SGZInputParametersWidget, generate_initialization_parameters_sgz, PATTERNS, ZVEC_FROM
-from wavepy2.tools.common.widgets.colorbar_crop_dialog_widget import ColorbarCropDialogPlot
+from wavepy2.core import grating_interferometry
 
+from wavepy2.core.widgets.crop_dialog_widget import CropDialogPlot
+from wavepy2.core.widgets.harmonic_grid_plot_widget import HarmonicGridPlot
+from wavepy2.core.widgets.harmonic_peak_plot_widget import HarmonicPeakPlot
+from wavepy2.tools.common.widgets.colorbar_crop_dialog_widget import ColorbarCropDialogPlot
+from wavepy2.tools.common.widgets.show_cropped_figure_widget import ShowCroppedFigure
+from wavepy2.tools.diagnostic.coherence.widgets.sgz_input_parameters_widget import SGZInputParametersWidget, generate_initialization_parameters_sgz, PATTERNS, ZVEC_FROM
+
+SINGLE_THREAD = 0
+MULTI_TREAD = 1
 
 class SingleGratingCoherenceZScanFacade:
     def get_initialization_parameters(self, script_logger_mode): raise NotImplementedError()
     def calculate_harmonic_periods(self, initialization_parameters): raise NotImplementedError()
+    def run_calculation(self, harm_periods_result, initialization_parameters): raise NotImplementedError()
 
-def create_single_grating_coherence_z_scan_manager():
-    return __SingleGratingCoherenceZScan()
-
+def create_single_grating_coherence_z_scan_manager(mode=MULTI_TREAD):
+    return __SingleGratingCoherenceZScanMultiThread() if mode==MULTI_TREAD else __SingleGratingCoherenceZScanSingleThread()
 
 CALCULATE_HARMONIC_PERIODS_CONTEXT_KEY = "Calculate Harmonic Periods"
+RUN_CALCULATION_CONTEXT_KEY            = "Run Calculation"
 
 class __SingleGratingCoherenceZScan(SingleGratingCoherenceZScanFacade):
 
@@ -82,8 +89,8 @@ class __SingleGratingCoherenceZScan(SingleGratingCoherenceZScanFacade):
             initialization_parameters = generate_initialization_parameters_sgz(dataFolder         = self.__ini.get_string_from_ini("Files", "data directory"),
                                                                                samplefileName     = self.__ini.get_string_from_ini("Files", "sample file name"),
                                                                                zvec_from          = self.__ini.get_string_from_ini("Parameters", "z distances from", default="Calculated"),
-                                                                               startDist          = self.__ini.get_float_from_ini("Parameters", "starting distance scan", default=20*1e-3),
-                                                                               step_z_scan        = self.__ini.get_float_from_ini("Parameters", "step size scan", default=5*1e-3),
+                                                                               startDist          = self.__ini.get_float_from_ini("Parameters", "starting distance scan", default=20 * 1e-3),
+                                                                               step_z_scan        = self.__ini.get_float_from_ini("Parameters", "step size scan", default=5 * 1e-3),
                                                                                image_per_point    = self.__ini.get_int_from_ini("Parameters", "number of images per step", default=1),
                                                                                strideFile         = self.__ini.get_int_from_ini("Parameters", "stride", default=1),
                                                                                zvec_file          = self.__ini.get_string_from_ini("Parameters", "z distances file"),
@@ -108,8 +115,8 @@ class __SingleGratingCoherenceZScan(SingleGratingCoherenceZScanFacade):
         return initialization_parameters
 
     def calculate_harmonic_periods(self, initialization_parameters):
-        imgOriginal       = initialization_parameters.get_parameter("img")
-        pattern    = initialization_parameters.get_parameter("pattern")
+        imgOriginal    = initialization_parameters.get_parameter("img")
+        pattern        = initialization_parameters.get_parameter("pattern")
         gratingPeriod  = initialization_parameters.get_parameter("gratingPeriod")
         pixelSize      = initialization_parameters.get_parameter("pixelSize")
 
@@ -130,6 +137,9 @@ class __SingleGratingCoherenceZScan(SingleGratingCoherenceZScanFacade):
             idx4crop     = self.__ini.get_list_from_ini("Parameters", "Crop")
             img          = common_tools.crop_matrix_at_indexes(imgOriginal, idx4crop)
             idx4cropDark = [0, 20, 0, 20]
+
+        # Plot Image AFTER crop
+        self.__plotter.push_plot_on_context(CALCULATE_HARMONIC_PERIODS_CONTEXT_KEY, ShowCroppedFigure, img=img, pixelsize=[pixelSize, pixelSize])
 
         self.__main_logger.print_message("Idx for cropping: " + str(idx4crop))
 
@@ -188,4 +198,206 @@ class __SingleGratingCoherenceZScan(SingleGratingCoherenceZScanFacade):
         self.__script_logger.print('Uniform Filter Size : {:d}'.format(unFilterSize))
         self.__script_logger.print('Search Region : {:d}'.format(searchRegion))
 
-        return WavePyData(period_harm_Vert=period_harm_Vert, period_harm_Horz=period_harm_Horz)
+        self.__draw_context(CALCULATE_HARMONIC_PERIODS_CONTEXT_KEY)
+
+        return WavePyData(period_harm_Vert=period_harm_Vert, period_harm_Horz=period_harm_Horz, img=img, idx4crop=idx4crop, idx4cropDark=idx4cropDark)
+
+
+    def run_calculation(self, harm_periods_result, initialization_parameters):
+        self.__plotter.register_context_window(RUN_CALCULATION_CONTEXT_KEY)
+
+        period_harm_Vert = harm_periods_result.get_parameter("period_harm_Vert")
+        period_harm_Horz = harm_periods_result.get_parameter("period_harm_Horz")
+        idx4crop = harm_periods_result.get_parameter("idx4crop")
+        idx4cropDark = harm_periods_result.get_parameter("idx4cropDark")
+
+        listOfDataFiles = initialization_parameters.get_parameter("listOfDataFiles")
+        zvec = initialization_parameters.get_parameter("zvec")
+        sourceDistanceV = initialization_parameters.get_parameter("sourceDistanceV")
+        sourceDistanceH = initialization_parameters.get_parameter("sourceDistanceH")
+        unFilterSize = initialization_parameters.get_parameter("unFilterSize")
+        searchRegion = initialization_parameters.get_parameter("searchRegion")
+
+        result = self._get_calculation_result(period_harm_Vert,
+                                           period_harm_Horz,
+                                           idx4crop,
+                                           idx4cropDark,
+                                           listOfDataFiles,
+                                           zvec,
+                                           sourceDistanceV,
+                                           sourceDistanceH,
+                                           unFilterSize,
+                                           searchRegion,
+                                           np.min(zvec))
+
+        for i in range(len(result)):
+            img            = result[i]["img"]
+            harmonicPeriod = result[i]["harmonicPeriod"]
+            image_name     = result[i]["image_name"]
+
+            self.__plotter.push_plot_on_context(RUN_CALCULATION_CONTEXT_KEY, HarmonicGridPlot, imgFFT=img, harmonicPeriod=harmonicPeriod, image_name=image_name)
+            self.__plotter.push_plot_on_context(RUN_CALCULATION_CONTEXT_KEY, HarmonicPeakPlot, imgFFT=img, harmonicPeriod=harmonicPeriod, image_name=image_name)
+
+        self.__draw_context(RUN_CALCULATION_CONTEXT_KEY)
+
+        return WavePyData(res=[res_i["visib_1st_harmonics"] for res_i in result])
+
+    def _get_calculation_result(self,
+                                period_harm_Vert,
+                                period_harm_Horz,
+                                idx4crop,
+                                idx4cropDark,
+                                listOfDataFiles,
+                                zvec,
+                                sourceDistanceV,
+                                sourceDistanceH,
+                                unFilterSize,
+                                searchRegion,
+                                min_zvec): raise NotImplementedError()
+
+    ###################################################################
+    # PRIVATE METHODS
+
+    def __draw_context(self, context_key):
+        self.__plotter.draw_context_on_widget(context_key, container_widget=self.__plotter.get_context_container_widget(context_key))
+
+def _run_calculation(parameters):
+        i, \
+        data_file_i, \
+        zvec_i, \
+        min_zvec, \
+        idx4cropDark, \
+        idx4crop, \
+        period_harm_Vert, \
+        sourceDistanceV, \
+        period_harm_Horz, \
+        sourceDistanceH, \
+        searchRegion, \
+        unFilterSize = parameters
+
+        get_registered_logger_instance().print_message("loop " + str(i) + ": " + data_file_i)
+
+        img = read_tiff(data_file_i)
+
+        darkMeanValue = np.mean(common_tools.crop_matrix_at_indexes(img, idx4cropDark))
+
+        # TODO xshi, need to add option of input one value
+        img = img - darkMeanValue  # calculate and remove dark
+        img = common_tools.crop_matrix_at_indexes(img, idx4crop)
+
+        pv = int(period_harm_Vert / (sourceDistanceV + zvec_i) * (sourceDistanceV + min_zvec))
+        ph = int(period_harm_Horz / (sourceDistanceH + zvec_i) * (sourceDistanceH + min_zvec))
+
+        result = {}
+        result["img"] = img
+        result["harmonicPeriod"]=[pv, ph]
+        result["image_name"] = 'FFT_{:.0f}mm'.format(zvec_i * 1e3)
+        result["visib_1st_harmonics"] =  grating_interferometry.visib_1st_harmonics(img, [pv, ph], searchRegion=searchRegion, unFilterSize=unFilterSize)
+
+        return result
+
+#=========================================================================================
+# SINGLE THREAD
+#=========================================================================================
+
+class __SingleGratingCoherenceZScanSingleThread(__SingleGratingCoherenceZScan):
+    def _get_calculation_result(self,
+                                period_harm_Vert,
+                                period_harm_Horz,
+                                idx4crop,
+                                idx4cropDark,
+                                listOfDataFiles,
+                                zvec,
+                                sourceDistanceV,
+                                sourceDistanceH,
+                                unFilterSize,
+                                searchRegion,
+                                min_zvec):
+        res = []
+        for i in range(len(listOfDataFiles)):
+            res.append(_run_calculation([i,
+                                         listOfDataFiles[i],
+                                         zvec[i],
+                                         min_zvec,
+                                         idx4cropDark,
+                                         idx4crop,
+                                         period_harm_Vert,
+                                         sourceDistanceV,
+                                         period_harm_Horz,
+                                         sourceDistanceH,
+                                         searchRegion,
+                                         unFilterSize]))
+        return res
+
+
+#=========================================================================================
+# MULTI THREAD
+#=========================================================================================
+
+from multiprocessing import Pool, cpu_count
+import time
+
+class __SingleGratingCoherenceZScanMultiThread(__SingleGratingCoherenceZScan):
+    def _get_calculation_result(self,
+                                period_harm_Vert,
+                                period_harm_Horz,
+                                idx4crop,
+                                idx4cropDark,
+                                listOfDataFiles,
+                                zvec,
+                                sourceDistanceV,
+                                sourceDistanceH,
+                                unFilterSize,
+                                searchRegion,
+                                min_zvec):
+
+        ncpus = cpu_count() - 2
+        tzero = time.time()
+        pool = Pool(ncpus)
+
+        get_registered_logger_instance().print_message("%d cpu's available" % ncpus)
+
+        parameters = []
+        for i in range(len(listOfDataFiles)): parameters.append([i,
+                                                                 listOfDataFiles[i],
+                                                                 zvec[i],
+                                                                 min_zvec,
+                                                                 idx4cropDark,
+                                                                 idx4crop,
+                                                                 period_harm_Vert,
+                                                                 sourceDistanceV,
+                                                                 period_harm_Horz,
+                                                                 sourceDistanceH,
+                                                                 searchRegion,
+                                                                 unFilterSize])
+        res = pool.map(_run_calculation, parameters)
+        pool.close()
+
+        get_registered_logger_instance().print_message("Time spent: {0:.3f} s".format(time.time() - tzero))
+
+        return res
+'''
+    # =============================================================================
+    # %% multiprocessing
+    # =============================================================================
+    
+    ncpus = cpu_count()
+
+    wpu.print_blue("MESSAGE: %d cpu's available" % ncpus)
+
+    tzero = time.time()
+
+    p = Pool(ncpus-2)
+
+    indexes = range(len(listOfDataFiles))
+    parameters = []
+
+    for i in indexes:
+        parameters.append([i, listOfDataFiles, zvec, idx4cropDark, idx4crop, period_harm_Vert, sourceDistanceV, period_harm_Horz, sourceDistanceH, searchRegion, unFilterSize])
+
+    res = p.map(_func, parameters)
+    p.close()
+
+    wpu.print_blue('MESSAGE: Time spent: {0:.3f} s'.format(time.time() - tzero))
+
+'''

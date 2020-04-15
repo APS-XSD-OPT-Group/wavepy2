@@ -44,16 +44,18 @@
 # #########################################################################
 import numpy as np
 from matplotlib.figure import Figure
-from wavepy2.util.common.common_tools import get_idxPeak_ij
+from wavepy2.util.common.common_tools import get_idxPeak_ij, is_empty_string
 from wavepy2.util.plot.plotter import WavePyWidget
 
 class HarmonicPeakPlot(WavePyWidget):
-    def get_plot_tab_name(self): return "Harmonic Peak"
+    def get_plot_tab_name(self): return self.__image_name + "Harmonic Peak"
 
     def build_mpl_figure(self, **kwargs):
         imgFFT         = kwargs["imgFFT"]
         harmonicPeriod = kwargs["harmonicPeriod"]
-        fname          = kwargs["fname"]
+        image_name     = kwargs["image_name"]
+
+        self.__image_name = "" if is_empty_string(image_name) else image_name + ": "
 
         (nRows, nColumns) = imgFFT.shape
 
@@ -88,7 +90,5 @@ class HarmonicPeakPlot(WavePyWidget):
         ax2.set_ylabel(r'$| FFT |$ ')
         ax2.legend(loc=1, fontsize='xx-small')
         ax2.title.set_text('Vert')
-
-        if fname is not None: figure.savefig(fname, transparent=True)
 
         return figure
