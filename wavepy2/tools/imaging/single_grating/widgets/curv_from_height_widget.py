@@ -1,19 +1,14 @@
 import numpy as np
 
-from matplotlib.pyplot import rcParams
 from matplotlib.figure import Figure
-from matplotlib.patches import Rectangle
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 
-from PyQt5.QtWidgets import QWidget, QDialog, QVBoxLayout, QHBoxLayout, QMessageBox, QDialogButtonBox
+from PyQt5.QtWidgets import QHBoxLayout
 from PyQt5.QtCore import Qt
-
-from scipy.ndimage.filters import uniform_filter1d
 
 from wavepy2.util.common import common_tools
 from wavepy2.util.plot import plot_tools
-from wavepy2.util.plot.plotter import WavePyWidget, FigureToSave, get_registered_plotter_instance
-
+from wavepy2.util.plot.plotter import WavePyWidget, get_registered_plotter_instance
 
 from warnings import filterwarnings
 filterwarnings("ignore")

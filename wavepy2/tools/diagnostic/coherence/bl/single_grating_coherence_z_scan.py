@@ -59,7 +59,9 @@ from wavepy2.core.widgets.harmonic_grid_plot_widget import HarmonicGridPlot
 from wavepy2.core.widgets.harmonic_peak_plot_widget import HarmonicPeakPlot
 from wavepy2.tools.common.widgets.colorbar_crop_dialog_widget import ColorbarCropDialogPlot
 from wavepy2.tools.common.widgets.show_cropped_figure_widget import ShowCroppedFigure
+
 from wavepy2.tools.diagnostic.coherence.widgets.sgz_input_parameters_widget import SGZInputParametersWidget, generate_initialization_parameters_sgz, PATTERNS, ZVEC_FROM
+from wavepy2.tools.diagnostic.coherence.widgets.visibility_widget import VisibilityPlot
 
 SINGLE_THREAD = 0
 MULTI_TREAD = 1
@@ -68,12 +70,14 @@ class SingleGratingCoherenceZScanFacade:
     def get_initialization_parameters(self, script_logger_mode): raise NotImplementedError()
     def calculate_harmonic_periods(self, initialization_parameters): raise NotImplementedError()
     def run_calculation(self, harm_periods_result, initialization_parameters): raise NotImplementedError()
+    def sort_calculation_result(self, run_calculation_result, initialization_parameters): raise NotImplementedError()
 
 def create_single_grating_coherence_z_scan_manager(mode=MULTI_TREAD):
     return __SingleGratingCoherenceZScanMultiThread() if mode==MULTI_TREAD else __SingleGratingCoherenceZScanSingleThread()
 
 CALCULATE_HARMONIC_PERIODS_CONTEXT_KEY = "Calculate Harmonic Periods"
 RUN_CALCULATION_CONTEXT_KEY            = "Run Calculation"
+SORT_CALCULATION_RESULT_CONTEXT_KEY                = "Sort Calculation Result"
 
 class __SingleGratingCoherenceZScan(SingleGratingCoherenceZScanFacade):
 
@@ -208,8 +212,9 @@ class __SingleGratingCoherenceZScan(SingleGratingCoherenceZScanFacade):
 
         period_harm_Vert = harm_periods_result.get_parameter("period_harm_Vert")
         period_harm_Horz = harm_periods_result.get_parameter("period_harm_Horz")
-        idx4crop = harm_periods_result.get_parameter("idx4crop")
-        idx4cropDark = harm_periods_result.get_parameter("idx4cropDark")
+        sample_img       = harm_periods_result.get_parameter("img")
+        idx4crop         = harm_periods_result.get_parameter("idx4crop")
+        idx4cropDark     = harm_periods_result.get_parameter("idx4cropDark")
 
         listOfDataFiles = initialization_parameters.get_parameter("listOfDataFiles")
         zvec = initialization_parameters.get_parameter("zvec")
@@ -240,7 +245,39 @@ class __SingleGratingCoherenceZScan(SingleGratingCoherenceZScanFacade):
 
         self.__draw_context(RUN_CALCULATION_CONTEXT_KEY)
 
-        return WavePyData(res=[res_i["visib_1st_harmonics"] for res_i in result])
+        return WavePyData(res=[res_i["visib_1st_harmonics"] for res_i in result], img=sample_img)
+
+    def sort_calculation_result(self, run_calculation_result, initialization_parameters):
+        self.__plotter.register_context_window(SORT_CALCULATION_RESULT_CONTEXT_KEY)
+
+        pixelSize = initialization_parameters.get_parameter("pixelSize")
+        zvec      = initialization_parameters.get_parameter("zvec")
+
+        img       = run_calculation_result.get_parameter("img")
+        res       = run_calculation_result.get_parameter("res")
+
+        contrastV = np.asarray([x[0] for x in res])
+        contrastH = np.asarray([x[1] for x in res])
+
+        p0 = np.asarray([x[2] for x in res])
+        pv = np.asarray([x[3] for x in res])
+        ph = np.asarray([x[4] for x in res])
+
+        pattern_period_Vert_z = pixelSize/(pv[:, 0] - p0[:, 0])*img.shape[0]
+        pattern_period_Horz_z = pixelSize/(ph[:, 1] - p0[:, 1])*img.shape[1]
+
+        self.__plotter.save_csv_file(np.c_[zvec.T, contrastV.T, contrastH.T, pattern_period_Vert_z.T, pattern_period_Horz_z.T],
+                                     headerList=['z [m]', 'Vert Contrast', 'Horz Contrast', 'Vert Period [m]', 'Horz Period [m]'])
+
+        self.__plotter.push_plot_on_context(SORT_CALCULATION_RESULT_CONTEXT_KEY, VisibilityPlot, zvec=zvec, contrastV=contrastV, contrastH=contrastH)
+
+        self.__draw_context(SORT_CALCULATION_RESULT_CONTEXT_KEY)
+
+        return WavePyData(pattern_period_Vert_z=pattern_period_Vert_z, pattern_period_Horz_z=pattern_period_Horz_z, contrastV=contrastV, contrastH=contrastH)
+
+
+    ###################################################################
+    # PRIVATE METHODS
 
     def _get_calculation_result(self,
                                 period_harm_Vert,
@@ -255,11 +292,13 @@ class __SingleGratingCoherenceZScan(SingleGratingCoherenceZScanFacade):
                                 searchRegion,
                                 min_zvec): raise NotImplementedError()
 
-    ###################################################################
-    # PRIVATE METHODS
 
     def __draw_context(self, context_key):
         self.__plotter.draw_context_on_widget(context_key, container_widget=self.__plotter.get_context_container_widget(context_key))
+
+#=========================================================================================
+# MULTI-THREADING SECTION
+#=========================================================================================
 
 def _run_calculation(parameters):
         i, \
@@ -376,28 +415,3 @@ class __SingleGratingCoherenceZScanMultiThread(__SingleGratingCoherenceZScan):
         get_registered_logger_instance().print_message("Time spent: {0:.3f} s".format(time.time() - tzero))
 
         return res
-'''
-    # =============================================================================
-    # %% multiprocessing
-    # =============================================================================
-    
-    ncpus = cpu_count()
-
-    wpu.print_blue("MESSAGE: %d cpu's available" % ncpus)
-
-    tzero = time.time()
-
-    p = Pool(ncpus-2)
-
-    indexes = range(len(listOfDataFiles))
-    parameters = []
-
-    for i in indexes:
-        parameters.append([i, listOfDataFiles, zvec, idx4cropDark, idx4crop, period_harm_Vert, sourceDistanceV, period_harm_Horz, sourceDistanceH, searchRegion, unFilterSize])
-
-    res = p.map(_func, parameters)
-    p.close()
-
-    wpu.print_blue('MESSAGE: Time spent: {0:.3f} s'.format(time.time() - tzero))
-
-'''
