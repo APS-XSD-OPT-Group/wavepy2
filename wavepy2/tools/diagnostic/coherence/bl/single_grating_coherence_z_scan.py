@@ -45,6 +45,7 @@
 import numpy as np
 
 from wavepy2.util.common import common_tools
+from wavepy2.util.common.common_tools import FourierTransform
 from wavepy2.util.log.logger import get_registered_logger_instance, get_registered_secondary_logger, register_secondary_logger, LoggerMode
 from wavepy2.util.plot.plotter import get_registered_plotter_instance
 from wavepy2.util.ini.initializer import get_registered_ini_instance
@@ -62,6 +63,7 @@ from wavepy2.tools.common.widgets.show_cropped_figure_widget import ShowCroppedF
 
 from wavepy2.tools.diagnostic.coherence.widgets.sgz_input_parameters_widget import SGZInputParametersWidget, generate_initialization_parameters_sgz, PATTERNS, ZVEC_FROM
 from wavepy2.tools.diagnostic.coherence.widgets.visibility_widget import VisibilityPlot
+from wavepy2.tools.diagnostic.coherence.widgets.fit_period_vs_z_widget import FitPeriodVsZPlot
 
 SINGLE_THREAD = 0
 MULTI_TREAD = 1
@@ -77,7 +79,8 @@ def create_single_grating_coherence_z_scan_manager(mode=MULTI_TREAD):
 
 CALCULATE_HARMONIC_PERIODS_CONTEXT_KEY = "Calculate Harmonic Periods"
 RUN_CALCULATION_CONTEXT_KEY            = "Run Calculation"
-SORT_CALCULATION_RESULT_CONTEXT_KEY                = "Sort Calculation Result"
+SORT_CALCULATION_RESULT_CONTEXT_KEY    = "Sort Calculation Result"
+FIT_CALCULATION_RESULT_CONTEXT_KEY     = "Fit Calculation Result"
 
 class __SingleGratingCoherenceZScan(SingleGratingCoherenceZScanFacade):
 
@@ -162,17 +165,19 @@ class __SingleGratingCoherenceZScan(SingleGratingCoherenceZScanFacade):
 
         self.__main_logger.print_message('MESSAGE: Obtain harmonic 10 experimentally')
 
-        (period_harm_Vert, _) = grating_interferometry.exp_harm_period(img, [period_harm_Vert, period_harm_Horz],
+        (period_harm_Vert, _) = grating_interferometry.exp_harm_period(img,
+                                                                       [period_harm_Vert, period_harm_Horz],
                                                                        harmonic_ij=['1', '0'],
                                                                        searchRegion=40,
                                                                        isFFT=False)
 
         self.__main_logger.print_message('Obtain harmonic 01 experimentally')
 
-        (_, period_harm_Horz) = grating_interferometry.exp_harm_period(img, [period_harm_Vert, period_harm_Horz],
-                                                                      harmonic_ij=['0', '1'],
-                                                                      searchRegion=40,
-                                                                      isFFT=False)
+        (_, period_harm_Horz) = grating_interferometry.exp_harm_period(img,
+                                                                       [period_harm_Vert, period_harm_Horz],
+                                                                       harmonic_ij=['0', '1'],
+                                                                       searchRegion=40,
+                                                                       isFFT=False)
 
         dataFolder = initialization_parameters.get_parameter("dataFolder")
         startDist = initialization_parameters.get_parameter("startDist")
@@ -236,12 +241,12 @@ class __SingleGratingCoherenceZScan(SingleGratingCoherenceZScanFacade):
                                            np.min(zvec))
 
         for i in range(len(result)):
-            img            = result[i]["img"]
+            imgFFT         = FourierTransform.fft2d(result[i]["img"])
             harmonicPeriod = result[i]["harmonicPeriod"]
             image_name     = result[i]["image_name"]
 
-            self.__plotter.push_plot_on_context(RUN_CALCULATION_CONTEXT_KEY, HarmonicGridPlot, imgFFT=img, harmonicPeriod=harmonicPeriod, image_name=image_name)
-            self.__plotter.push_plot_on_context(RUN_CALCULATION_CONTEXT_KEY, HarmonicPeakPlot, imgFFT=img, harmonicPeriod=harmonicPeriod, image_name=image_name)
+            self.__plotter.push_plot_on_context(RUN_CALCULATION_CONTEXT_KEY, HarmonicGridPlot, imgFFT=imgFFT, harmonicPeriod=harmonicPeriod, image_name=image_name)
+            self.__plotter.push_plot_on_context(RUN_CALCULATION_CONTEXT_KEY, HarmonicPeakPlot, imgFFT=imgFFT, harmonicPeriod=harmonicPeriod, image_name=image_name)
 
         self.__draw_context(RUN_CALCULATION_CONTEXT_KEY)
 
@@ -275,6 +280,34 @@ class __SingleGratingCoherenceZScan(SingleGratingCoherenceZScanFacade):
 
         return WavePyData(pattern_period_Vert_z=pattern_period_Vert_z, pattern_period_Horz_z=pattern_period_Horz_z, contrastV=contrastV, contrastH=contrastH)
 
+    def fit_calculation_result(self, sort_calculation_result, initialization_parameters):
+        self.__plotter.register_context_window(FIT_CALCULATION_RESULT_CONTEXT_KEY)
+
+        zvec                   = initialization_parameters.get_parameter("zvec")
+
+        pattern_period_Vert_z  = sort_calculation_result.get_parameter("pattern_period_Vert_z")
+        contrastV              = sort_calculation_result.get_parameter("contrastV")
+        pattern_period_Horz_z  = sort_calculation_result.get_parameter("pattern_period_Horz_z")
+        contrastH              = sort_calculation_result.get_parameter("contrastH")
+
+        sourceDistance_from_fit_V, patternPeriodFromData_V = self.__fit_period_vs_z(zvec,
+                                                                                    pattern_period_Vert_z,
+                                                                                    contrastV,
+                                                                                    direction='Vertical',
+                                                                                    threshold=0.002)
+
+        sourceDistance_from_fit_H, patternPeriodFromData_H = self.__fit_period_vs_z(zvec,
+                                                                                    pattern_period_Horz_z,
+                                                                                    contrastH,
+                                                                                    direction='Horizontal',
+                                                                                    threshold=0.0005)
+
+        self.__draw_context(FIT_CALCULATION_RESULT_CONTEXT_KEY)
+
+        return WavePyData(sourceDistance_from_fit_V=sourceDistance_from_fit_V,
+                          patternPeriodFromData_V=patternPeriodFromData_V,
+                          sourceDistance_from_fit_H=sourceDistance_from_fit_H,
+                          patternPeriodFromData_H=patternPeriodFromData_H)
 
     ###################################################################
     # PRIVATE METHODS
@@ -292,6 +325,34 @@ class __SingleGratingCoherenceZScan(SingleGratingCoherenceZScanFacade):
                                 searchRegion,
                                 min_zvec): raise NotImplementedError()
 
+    def __fit_period_vs_z(self, zvec, pattern_period_z, contrast, direction, threshold=0.005, context_key=FIT_CALCULATION_RESULT_CONTEXT_KEY):
+        args_for_NOfit = np.argwhere(contrast < threshold).flatten()
+        args_for_fit = np.argwhere(contrast >= threshold).flatten()
+
+        if 'Hor' in direction:
+            ls1 = '-ro'
+            lx = 'r'
+            lc2 = 'm'
+        else:
+            ls1 = '-ko'
+            lx = 'k'
+            lc2 = 'c'
+
+        output_data = WavePyData()
+
+        self.__plotter.push_plot_on_context(context_key, FitPeriodVsZPlot,
+                                            zvec=zvec,
+                                            args_for_NOfit=args_for_NOfit,
+                                            args_for_fit=args_for_fit,
+                                            pattern_period_z=pattern_period_z,
+                                            lx=lx,
+                                            ls1=ls1,
+                                            lc2=lc2,
+                                            direction=direction,
+                                            output_data=output_data)
+
+
+        return output_data.get_parameter("sourceDistance"), output_data.get_parameter("patternPeriodFromData")
 
     def __draw_context(self, context_key):
         self.__plotter.draw_context_on_widget(context_key, container_widget=self.__plotter.get_context_container_widget(context_key))

@@ -44,7 +44,8 @@
 # #########################################################################
 
 from wavepy2.tools.diagnostic.coherence.bl.single_grating_coherence_z_scan import create_single_grating_coherence_z_scan_manager
-from wavepy2.tools.diagnostic.coherence.bl.single_grating_coherence_z_scan import CALCULATE_HARMONIC_PERIODS_CONTEXT_KEY, RUN_CALCULATION_CONTEXT_KEY, SORT_CALCULATION_RESULT_CONTEXT_KEY
+from wavepy2.tools.diagnostic.coherence.bl.single_grating_coherence_z_scan import \
+    CALCULATE_HARMONIC_PERIODS_CONTEXT_KEY, RUN_CALCULATION_CONTEXT_KEY, SORT_CALCULATION_RESULT_CONTEXT_KEY, FIT_CALCULATION_RESULT_CONTEXT_KEY
 
 from wavepy2.util.ini.initializer import get_registered_ini_instance
 from wavepy2.util.log.logger import LoggerMode
@@ -84,6 +85,10 @@ class MainSingleGratingCoherenceZScan(WavePyScript):
         sort_calculation_result = single_grating_coherence_z_scan_manager.sort_calculation_result(run_calculation_result, initialization_parameters)
         plotter.show_context_window(SORT_CALCULATION_RESULT_CONTEXT_KEY)
 
+        # ==========================================================================
+
+        fit_calculation_result = single_grating_coherence_z_scan_manager.fit_calculation_result(sort_calculation_result, initialization_parameters)
+        plotter.show_context_window(FIT_CALCULATION_RESULT_CONTEXT_KEY)
 
         # ==========================================================================
         # %% Final Operations
