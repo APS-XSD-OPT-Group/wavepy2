@@ -352,10 +352,13 @@ class __SingleGratingTalbot(SingleGratingTalbotFacade):
 
             self.__plotter.push_plot_on_context(CORRECT_ZERO_DPC_CONTEXT_KEY, PlotDPC, dpc01=dpc01, dpc10=dpc10, pixelsize=virtual_pixelsize, titleStr="Correct \u03c0 jump")
 
-        self.__main_logger.print_message('mean angle/pi 0: {:} pi'.format(np.mean(angle[0]/np.pi)))
-        self.__main_logger.print_message('mean angle/pi 1: {:} pi'.format(np.mean(angle[1]/np.pi)))
-        self.__script_logger.print('Horz Mean angle/pi : {:} pi'.format(np.mean(angle[0]/np.pi)))
-        self.__script_logger.print('Vert Mean angle/pi : {:} pi'.format(np.mean(angle[1]/np.pi)))
+        h_mean_angle_over_pi = np.mean(angle[0]/np.pi)
+        v_mean_angle_over_pi = np.mean(angle[1]/np.pi)
+
+        self.__main_logger.print_message('mean angle/pi 0: {:} pi'.format(h_mean_angle_over_pi))
+        self.__main_logger.print_message('mean angle/pi 1: {:} pi'.format(v_mean_angle_over_pi))
+        self.__script_logger.print('Horz Mean angle/pi : {:} pi'.format(h_mean_angle_over_pi))
+        self.__script_logger.print('Vert Mean angle/pi : {:} pi'.format(v_mean_angle_over_pi))
 
         if remove_mean:
             angle[0] -= np.mean(angle[0])
