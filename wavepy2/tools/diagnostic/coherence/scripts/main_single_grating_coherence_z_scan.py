@@ -69,10 +69,10 @@ class MainSingleGratingCoherenceZScan(WavePyScript):
                "   show fourier images:\n" + \
                "     0 False - Default value\n" +\
                "     1 True\n\n" + \
-               "  -m<threading mode>\n\n" + \
+               "  -t<threading mode>\n\n" + \
                "   threading modes:\n" + \
-               "     0 Multi-Thread - Default Value\n" + \
-               "     1 Single-Thread\n\n" + \
+               "     0 Single-Thread\n" + \
+               "     1 Multi-Thread - Default Value\n" + \
                "  -n<nr. of cpus> (Multi-Thread only)\n\n" + \
                "   nr. of cpus:\n" + \
                "     - an positive integer number < number of cpus available, or \n" + \

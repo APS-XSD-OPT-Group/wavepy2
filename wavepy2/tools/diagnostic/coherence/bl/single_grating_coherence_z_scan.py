@@ -449,9 +449,11 @@ class __SingleGratingCoherenceZScanMultiThread(__SingleGratingCoherenceZScan):
         super().__init__()
         available_cpus = cpu_count()
         if not n_cpus is None and n_cpus > 0:
-            if n_cpus > available_cpus - 1: raise ValueError("Max number of CPUs available = " + str(available_cpus))
+            if n_cpus > available_cpus - 1: raise ValueError("Max number of CPUs available = " + str(available_cpus-1))
             self.__n_cpus = n_cpus
-        else: self.__n_cpus = available_cpus - 2
+        else:
+            self.__n_cpus = available_cpus - 2
+            if self.__n_cpus < 2: raise ValueError("Auto Nr. CPUs available < 2: Multi-Thread mode not possible")
 
     def _get_calculation_result(self,
                                 period_harm_Vert,
