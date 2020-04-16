@@ -54,6 +54,8 @@ from wavepy2.util.plot.plotter import get_registered_plotter_instance
 
 from wavepy2.tools.common.wavepy_script import WavePyScript
 
+from multiprocessing import cpu_count
+
 class MainSingleGratingCoherenceZScan(WavePyScript):
 
     def get_script_id(self): return "coh-sgz"
@@ -72,11 +74,11 @@ class MainSingleGratingCoherenceZScan(WavePyScript):
                "  -t<threading mode>\n\n" + \
                "   threading modes:\n" + \
                "     0 Single-Thread\n" + \
-               "     1 Multi-Thread - Default Value\n" + \
+               "     1 Multi-Thread - Default Value\n\n" + \
                "  -n<nr. of cpus> (Multi-Thread only)\n\n" + \
                "   nr. of cpus:\n" + \
-               "     - an positive integer number < number of cpus available, or \n" + \
-               "     - skip the option for default: number of cpus available - 2 \n"
+               "     - an positive integer number < " + str(cpu_count()) + ", or \n" + \
+               "     - skip the option for default: " + str(cpu_count()-2) + "\n"
 
     def _run_script(self, SCRIPT_LOGGER_MODE=LoggerMode.FULL, **args):
         try: SHOW_FOURIER = args["SHOW_FOURIER"]
