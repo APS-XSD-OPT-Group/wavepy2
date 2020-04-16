@@ -66,7 +66,7 @@ from wavepy2.tools.diagnostic.coherence.widgets.visibility_widget import Visibil
 from wavepy2.tools.diagnostic.coherence.widgets.fit_period_vs_z_widget import FitPeriodVsZPlot
 
 SINGLE_THREAD = 0
-MULTI_TREAD = 1
+MULTI_THREAD = 1
 
 class SingleGratingCoherenceZScanFacade:
     def get_initialization_parameters(self, script_logger_mode): raise NotImplementedError()
@@ -74,8 +74,8 @@ class SingleGratingCoherenceZScanFacade:
     def run_calculation(self, harm_periods_result, initialization_parameters): raise NotImplementedError()
     def sort_calculation_result(self, run_calculation_result, initialization_parameters): raise NotImplementedError()
 
-def create_single_grating_coherence_z_scan_manager(mode=MULTI_TREAD):
-    return __SingleGratingCoherenceZScanMultiThread() if mode==MULTI_TREAD else __SingleGratingCoherenceZScanSingleThread()
+def create_single_grating_coherence_z_scan_manager(mode=MULTI_THREAD, n_cpus=None):
+    return __SingleGratingCoherenceZScanMultiThread(n_cpus) if mode == MULTI_THREAD else __SingleGratingCoherenceZScanSingleThread()
 
 CALCULATE_HARMONIC_PERIODS_CONTEXT_KEY = "Calculate Harmonic Periods"
 RUN_CALCULATION_CONTEXT_KEY            = "Run Calculation"
@@ -445,6 +445,14 @@ from multiprocessing import Pool, cpu_count
 import time
 
 class __SingleGratingCoherenceZScanMultiThread(__SingleGratingCoherenceZScan):
+    def __init__(self, n_cpus=None):
+        super().__init__()
+        available_cpus = cpu_count()
+        if not n_cpus is None and n_cpus > 0:
+            if n_cpus > available_cpus - 1: raise ValueError("Max number of CPUs available = " + str(available_cpus))
+            self.__n_cpus = n_cpus
+        else: self.__n_cpus = available_cpus - 2
+
     def _get_calculation_result(self,
                                 period_harm_Vert,
                                 period_harm_Horz,
@@ -458,11 +466,10 @@ class __SingleGratingCoherenceZScanMultiThread(__SingleGratingCoherenceZScan):
                                 searchRegion,
                                 min_zvec):
 
-        ncpus = cpu_count() - 2
         tzero = time.time()
-        pool = Pool(ncpus)
+        pool = Pool(self.__n_cpus)
 
-        get_registered_logger_instance().print_message("%d cpu's available" % ncpus)
+        get_registered_logger_instance().print_message("%d cpu used for this calculation" % self.__n_cpus)
 
         parameters = []
         for i in range(len(listOfDataFiles)): parameters.append([i,

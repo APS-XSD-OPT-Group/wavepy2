@@ -143,10 +143,10 @@ class WavePyScript():
             if sys_argv[2] == "--h": self.show_help()
             else:
                 for i in range(2, len(sys_argv)):
-                    if   "-l" == sys_argv[i][:-1]: args["LOGGER_MODE"]        = int(sys_argv[i][-1])
-                    elif "-p" == sys_argv[i][:-1]: args["PLOTTER_MODE"]       = int(sys_argv[i][-1])
-                    elif "-i" == sys_argv[i][:-1]: args["INI_MODE"]           = int(sys_argv[i][-1])
-                    elif "-s" == sys_argv[i][:-1]: args["SCRIPT_LOGGER_MODE"] = int(sys_argv[i][-1])
+                    if   "-l" == sys_argv[i][:2]: args["LOGGER_MODE"]        = int(sys_argv[i][2:])
+                    elif "-p" == sys_argv[i][:2]: args["PLOTTER_MODE"]       = int(sys_argv[i][2:])
+                    elif "-i" == sys_argv[i][:2]: args["INI_MODE"]           = int(sys_argv[i][2:])
+                    elif "-s" == sys_argv[i][:2]: args["SCRIPT_LOGGER_MODE"] = int(sys_argv[i][2:])
                     else: self._parse_additional_sys_argument(sys_argv[i], args)
 
         return args

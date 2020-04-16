@@ -43,7 +43,7 @@
 # POSSIBILITY OF SUCH DAMAGE.                                             #
 # #########################################################################
 
-from wavepy2.tools.diagnostic.coherence.bl.single_grating_coherence_z_scan import create_single_grating_coherence_z_scan_manager
+from wavepy2.tools.diagnostic.coherence.bl.single_grating_coherence_z_scan import create_single_grating_coherence_z_scan_manager, SINGLE_THREAD, MULTI_THREAD
 from wavepy2.tools.diagnostic.coherence.bl.single_grating_coherence_z_scan import \
     CALCULATE_HARMONIC_PERIODS_CONTEXT_KEY, RUN_CALCULATION_CONTEXT_KEY, SORT_CALCULATION_RESULT_CONTEXT_KEY, FIT_CALCULATION_RESULT_CONTEXT_KEY
 
@@ -60,62 +60,83 @@ class MainSingleGratingCoherenceZScan(WavePyScript):
     def get_ini_file_name(self): return ".single_grating_coherence_z_scan.ini"
 
     def _parse_additional_sys_argument(self, sys_argument, args):
-        if "-f" == sys_argument[:-1]: args["SHOW_FOURIER"] = int(sys_argument[-1]) > 0
-        else: args["SHOW_FOURIER"] = False
+        if   "-f" == sys_argument[:2]: args["SHOW_FOURIER"] = int(sys_argument[2:]) > 0
+        elif "-t" == sys_argument[:2]: args["THREADING"]    = int(sys_argument[2:])
+        elif "-n" == sys_argument[:2]: args["N_CPUS"]       = int(sys_argument[2:])
 
     def _help_additional_parameters(self):
         return "  -f<show fourier images>\n\n" + \
                "   show fourier images:\n" + \
                "     0 False - Default value\n" +\
-               "     1 True\n"
+               "     1 True\n\n" + \
+               "  -m<threading mode>\n\n" + \
+               "   threading modes:\n" + \
+               "     0 Multi-Thread - Default Value\n" + \
+               "     1 Single-Thread\n\n" + \
+               "  -n<nr. of cpus> (Multi-Thread only)\n\n" + \
+               "   nr. of cpus:\n" + \
+               "     - an positive integer number < number of cpus available, or \n" + \
+               "     - skip the option for default: number of cpus available - 2 \n"
 
     def _run_script(self, SCRIPT_LOGGER_MODE=LoggerMode.FULL, **args):
         try: SHOW_FOURIER = args["SHOW_FOURIER"]
         except: SHOW_FOURIER = False
 
+        try: THREADING = args["THREADING"]
+        except: THREADING = MULTI_THREAD
+
+        if THREADING == MULTI_THREAD:
+            try: N_CPUS    = args["N_CPUS"]
+            except: N_CPUS = None
+        else: N_CPUS = None
+
         print("Show Fourier Images: " + str(SHOW_FOURIER))
+        print("Threading Mode: " + "Multi-Thread" if THREADING == MULTI_THREAD else "Single-Thread")
+        print("Nr. of CPUs: " + str(N_CPUS) if not N_CPUS is None else "Automatic")
 
         plotter = get_registered_plotter_instance()
 
-        single_grating_coherence_z_scan_manager = create_single_grating_coherence_z_scan_manager()
+        try:
+            single_grating_coherence_z_scan_manager = create_single_grating_coherence_z_scan_manager(THREADING, N_CPUS)
 
-        # ==========================================================================
-        # %% Initialization parameters
-        # ==========================================================================
+            # ==========================================================================
+            # %% Initialization parameters
+            # ==========================================================================
 
-        initialization_parameters = single_grating_coherence_z_scan_manager.get_initialization_parameters(SCRIPT_LOGGER_MODE, SHOW_FOURIER)
+            initialization_parameters = single_grating_coherence_z_scan_manager.get_initialization_parameters(SCRIPT_LOGGER_MODE, SHOW_FOURIER)
 
-        # ==========================================================================
+            # ==========================================================================
 
-        harm_periods_result = single_grating_coherence_z_scan_manager.calculate_harmonic_periods(initialization_parameters)
-        plotter.show_context_window(CALCULATE_HARMONIC_PERIODS_CONTEXT_KEY)
+            harm_periods_result = single_grating_coherence_z_scan_manager.calculate_harmonic_periods(initialization_parameters)
+            plotter.show_context_window(CALCULATE_HARMONIC_PERIODS_CONTEXT_KEY)
 
-        # ==========================================================================
+            # ==========================================================================
 
-        run_calculation_result = single_grating_coherence_z_scan_manager.run_calculation(harm_periods_result, initialization_parameters)
-        plotter.show_context_window(RUN_CALCULATION_CONTEXT_KEY)
+            run_calculation_result = single_grating_coherence_z_scan_manager.run_calculation(harm_periods_result, initialization_parameters)
+            plotter.show_context_window(RUN_CALCULATION_CONTEXT_KEY)
 
-        # ==========================================================================
+            # ==========================================================================
 
-        sort_calculation_result = single_grating_coherence_z_scan_manager.sort_calculation_result(run_calculation_result, initialization_parameters)
-        plotter.show_context_window(SORT_CALCULATION_RESULT_CONTEXT_KEY)
+            sort_calculation_result = single_grating_coherence_z_scan_manager.sort_calculation_result(run_calculation_result, initialization_parameters)
+            plotter.show_context_window(SORT_CALCULATION_RESULT_CONTEXT_KEY)
 
-        # ==========================================================================
+            # ==========================================================================
 
-        fit_calculation_result = single_grating_coherence_z_scan_manager.fit_calculation_result(sort_calculation_result, initialization_parameters)
-        plotter.show_context_window(FIT_CALCULATION_RESULT_CONTEXT_KEY)
+            fit_calculation_result = single_grating_coherence_z_scan_manager.fit_calculation_result(sort_calculation_result, initialization_parameters)
+            plotter.show_context_window(FIT_CALCULATION_RESULT_CONTEXT_KEY)
 
-        # ==========================================================================
-        # %% Final Operations
-        # ==========================================================================
+            # ==========================================================================
+            # %% Final Operations
+            # ==========================================================================
 
-        get_registered_ini_instance().push()
-        get_registered_qt_application_instance().show_application_closer()
+            get_registered_ini_instance().push()
+            get_registered_qt_application_instance().show_application_closer()
 
-        # ==========================================================================
+            # ==========================================================================
 
-        get_registered_qt_application_instance().run_qt_application()
-
+            get_registered_qt_application_instance().run_qt_application()
+        except Exception as e:
+            print("\n*** Program terminated with the following exception: " + str(e))
 
 
 import os, sys
