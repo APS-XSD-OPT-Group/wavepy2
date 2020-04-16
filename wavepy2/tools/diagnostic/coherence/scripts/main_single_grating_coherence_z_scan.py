@@ -67,6 +67,7 @@ class MainSingleGratingCoherenceZScan(WavePyScript):
         elif "-n" == sys_argument[:2]: args["N_CPUS"]       = int(sys_argument[2:])
 
     def _help_additional_parameters(self):
+        available_cpus = cpu_count()
         return "  -f<show fourier images>\n\n" + \
                "   show fourier images:\n" + \
                "     0 False - Default value\n" +\
@@ -77,8 +78,10 @@ class MainSingleGratingCoherenceZScan(WavePyScript):
                "     1 Multi-Thread - Default Value\n\n" + \
                "  -n<nr. of cpus> (Multi-Thread only)\n\n" + \
                "   nr. of cpus:\n" + \
-               "     - an positive integer number < " + str(cpu_count()) + ", or \n" + \
-               "     - skip the option for default: " + str(cpu_count()-2) + "\n"
+               "     - an positive integer number <= " + str(available_cpus-1) + ", or \n" + \
+               "     - skip the option for default: "  + str(available_cpus-2) + "\n" + \
+               "   ** Warning: Multi-Thread not possible: not enough CPUs in this computer\n" if cpu_count()-2 < 2 else ""
+
 
     def _run_script(self, SCRIPT_LOGGER_MODE=LoggerMode.FULL, **args):
         try: SHOW_FOURIER = args["SHOW_FOURIER"]
