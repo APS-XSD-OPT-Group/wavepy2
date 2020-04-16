@@ -76,14 +76,13 @@ class MainSingleGratingCoherenceZScan(WavePyScript):
                "   threading modes:\n" + \
                "     0 Single-Thread\n" + \
                "     1 Multi-Thread - Default Value\n\n" + \
+              ("   ** Warning: Multi-Thread not possible: not enough CPUs in this computer\n" if cpu_count() - 2 < 2 else \
                "  -n<nr. of cpus> (Multi-Thread only)\n\n" + \
                "   nr. of cpus:\n" + \
                "     - an positive integer number <= " + str(available_cpus-1) + ", or \n" + \
-               "     - skip the option for default: "  + str(available_cpus-2) + "\n" + \
-               "   ** Warning: Multi-Thread not possible: not enough CPUs in this computer\n" if cpu_count()-2 < 2 else ""
+               "     - skip the option for default: "  + str(available_cpus-2) + "\n")
 
-
-    def _run_script(self, SCRIPT_LOGGER_MODE=LoggerMode.FULL, **args):
+    def __parse_args(self, **args):
         try: SHOW_FOURIER = args["SHOW_FOURIER"]
         except: SHOW_FOURIER = False
 
@@ -96,8 +95,13 @@ class MainSingleGratingCoherenceZScan(WavePyScript):
         else: N_CPUS = None
 
         print("Show Fourier Images: " + str(SHOW_FOURIER))
-        print("Threading Mode: " + "Multi-Thread" if THREADING == MULTI_THREAD else "Single-Thread")
-        print("Nr. of CPUs: " + str(N_CPUS) if not N_CPUS is None else "Automatic")
+        print("Threading Mode: " + ("Multi-Thread" if THREADING == MULTI_THREAD else "Single-Thread"))
+        print("Nr. of CPUs: " + (str(N_CPUS) if not N_CPUS is None else "Automatic"))
+
+        return SHOW_FOURIER, THREADING, N_CPUS
+
+    def _run_script(self, SCRIPT_LOGGER_MODE=LoggerMode.FULL, **args):
+        SHOW_FOURIER, THREADING, N_CPUS = self.__parse_args(**args)
 
         plotter = get_registered_plotter_instance()
 
