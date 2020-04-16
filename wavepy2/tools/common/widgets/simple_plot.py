@@ -56,8 +56,6 @@ class SimplePlot(QWidget):
     def __init__(self, parent, image, title='', xlabel='', ylabel='', **kwargs4imshow):
         super(SimplePlot, self).__init__(parent)
 
-        self.setFixedWidth(WIDGET_FIXED_WIDTH)
-
         figure_canvas = FigureCanvas(Figure())
         mpl_figure = figure_canvas.figure
 
