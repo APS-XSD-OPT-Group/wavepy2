@@ -6,7 +6,7 @@ To install:               `python3 -m pip install wavepy2`
   
 To show help:             `python3 -m wavepy2.tools --h`
 
-To run a script:          `python3 -m wavepy2.tools <script id>`
+To run a script:          `python3 -m wavepy2.tools <script id> <options>`
   
 To show help of a script: `python -m wavepy2.tools <script id> --h`
   
