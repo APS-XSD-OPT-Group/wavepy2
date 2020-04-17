@@ -134,7 +134,8 @@ class __LocalIniFile(IniFacade):
         return default if value is None else list(map(int, self.__get_from_ini(section, key).split(',')))
 
     def dump(self):
-        text = "Dump of file: " + self.__ini_file_name + "\n"
+        text = "Dump of file: " + self.__ini_file_name + "\n" + \
+               "%============================================================"
 
         for section in self.__config_parser.sections():
             text += "\n[" + section + "]\n"
@@ -142,7 +143,9 @@ class __LocalIniFile(IniFacade):
             for option in self.__config_parser.options(section):
                 text += option + " = " + str(self.__config_parser.get(section, option)) + "\n"
 
-        return text[:-1]
+        text += "%============================================================\n"
+
+        return text
 
     def push(self):
         with open(self.__ini_file_name, "w") as ini_file: self.__config_parser.write(ini_file)

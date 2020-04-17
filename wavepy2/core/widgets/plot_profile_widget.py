@@ -45,14 +45,149 @@
 
 import numpy as np
 from PyQt5.QtWidgets import QWidget, QHBoxLayout
+from PyQt5.QtCore import Qt
+
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.figure import Figure
 from matplotlib.widgets import Cursor
-from matplotlib.pyplot import subplot2grid
+from matplotlib.pyplot import subplot2grid, silent_list
 
 from wavepy2.util.plot import plot_tools
+from wavepy2.util.plot.plotter import WavePyWidget, WavePyInteractiveWidget
 
-from matplotlib.pyplot import silent_list
+from warnings import filterwarnings
+filterwarnings("ignore")
+
+class PlotProfile(WavePyWidget):
+    def allows_saving(self): return False
+
+    def get_plot_tab_name(self):
+        return self.__title
+
+    def build_widget(self, **kwargs):
+        try: self.__title = kwargs["title"]
+        except: self.__title = "Profile Plot"
+
+        xmatrix = kwargs["xmatrix"]
+        ymatrix = kwargs["ymatrix"]
+        zmatrix = kwargs["zmatrix"]
+        try:    xlabel = kwargs["xlabel"]
+        except: xlabel = "x"
+        try:    ylabel = kwargs["ylabel"]
+        except: ylabel = "y"
+        try:    zlabel = kwargs["zlabel"]
+        except: zlabel = "z"
+        try:    xo = kwargs["xo"]
+        except: xo = None
+        try:    yo = kwargs["yo"]
+        except: yo = None
+        try:    xunit = kwargs["xunit"]
+        except: xunit = ''
+        try:    yunit = kwargs["yunit"]
+        except: yunit = ''
+        try:    do_fwhm = kwargs["do_fwhm"]
+        except: do_fwhm = True
+        try:    arg4main = kwargs["arg4main"]
+        except: arg4main = {'cmap': 'viridis'}
+        try:    arg4top = kwargs["arg4top"]
+        except: arg4top = {}
+        try:    arg4side = kwargs["arg4side"]
+        except: arg4side = {}
+
+        layout = QHBoxLayout()
+        layout.setAlignment(Qt.AlignCenter)
+
+        self.setLayout(layout)
+
+        plot_profile_widget = PlotProfileWidget(self,
+                                                xmatrix=xmatrix,
+                                                ymatrix=ymatrix,
+                                                zmatrix=zmatrix,
+                                                xlabel=xlabel,
+                                                ylabel=ylabel,
+                                                title=self.__title,
+                                                xo=xo,
+                                                yo=yo,
+                                                xunit=xunit,
+                                                yunit=yunit,
+                                                do_fwhm=do_fwhm,
+                                                arg4main=arg4main,
+                                                arg4top=arg4top,
+                                                arg4side=arg4side)
+
+        self.setFixedWidth(plot_profile_widget.width())
+        self.setFixedHeight(plot_profile_widget.height())
+
+        self.update()
+
+
+class PlotProfileInteractive(WavePyInteractiveWidget):
+    def get_plot_tab_name(self):
+        return self.__title
+
+    def build_widget(self, **kwargs):
+        try:
+            self.__title = kwargs["title"]
+        except:
+            self.__title = "Profile Plot"
+
+        xmatrix = kwargs["xmatrix"]
+        ymatrix = kwargs["ymatrix"]
+        zmatrix = kwargs["zmatrix"]
+        try: xlabel = kwargs["xlabel"]
+        except: xlabel = "x"
+        try: ylabel = kwargs["ylabel"]
+        except: ylabel = "y"
+        try: zlabel = kwargs["zlabel"]
+        except: zlabel = "z"
+        try: xo = kwargs["xo"]
+        except: xo = None
+        try: yo = kwargs["yo"]
+        except: yo = None
+        try: xunit = kwargs["xunit"]
+        except: xunit = ''
+        try: yunit = kwargs["yunit"]
+        except: yunit = ''
+        try: do_fwhm = kwargs["do_fwhm"]
+        except: do_fwhm = True
+        try: arg4main = kwargs["arg4main"]
+        except: arg4main = {'cmap': 'viridis'}
+        try: arg4top = kwargs["arg4top"]
+        except: arg4top = {}
+        try: arg4side = kwargs["arg4side"]
+        except: arg4side = {}
+
+        layout = QHBoxLayout()
+        layout.setAlignment(Qt.AlignCenter)
+
+        self.setLayout(layout)
+
+        self.__plot_profile_widget = PlotProfileWidget(self.get_central_widget(),
+                                                       xmatrix=xmatrix,
+                                                       ymatrix=ymatrix,
+                                                       zmatrix=zmatrix,
+                                                       xlabel=xlabel,
+                                                       ylabel=ylabel,
+                                                       title=self.__title,
+                                                       xo=xo,
+                                                       yo=yo,
+                                                       xunit=xunit,
+                                                       yunit=yunit,
+                                                       do_fwhm=do_fwhm,
+                                                       arg4main=arg4main,
+                                                       arg4top=arg4top,
+                                                       arg4side=arg4side)
+
+        self.setFixedWidth(self.__plot_profile_widget.width())
+        self.setFixedHeight(self.__plot_profile_widget.height())
+
+        self.update()
+
+    def get_accepted_output(self):
+        return self.__plot_profile_widget.get_ouput_data()
+
+    def get_rejected_output(self):
+        return None
 
 """
 Plot contourf in the main graph plus profiles over vertical and horizontal
@@ -116,12 +251,12 @@ Animation of the example above:
 .. image:: img/plot_profile_animation.gif
 
 """
-class PlotProfile(QWidget):
+class PlotProfileWidget(QWidget):
     def __init__(self, parent, xmatrix, ymatrix, zmatrix,
                  xlabel='x', ylabel='y', zlabel='z', title='Title',
                  xo=None, yo=None, xunit='', yunit='', do_fwhm=True,
                  arg4main={'cmap': 'viridis'}, arg4top={}, arg4side={}):
-        super(PlotProfile, self).__init__(parent)
+        super(PlotProfileWidget, self).__init__(parent)
 
         layout = QHBoxLayout()
 
@@ -141,7 +276,6 @@ class PlotProfile(QWidget):
         ax_main.get_xaxis().set_tick_params(which='both', direction='out')
         ax_main.set_xlabel(xlabel)
         ax_main.set_ylabel(ylabel)
-
 
         main_plot = main_subplot.contourf(xmatrix, ymatrix, zmatrix, 256, **arg4main)
 
@@ -271,6 +405,9 @@ class PlotProfile(QWidget):
 
         self.__figure_canvas = figure_canvas
         self.__output_data = [ax_main, ax_top, ax_side, delta_x, delta_y]
+
+        self.setFixedWidth(self.__figure_canvas.get_width_height()[0])
+        self.setFixedHeight(self.__figure_canvas.get_width_height()[1])
 
         layout.addWidget(figure_canvas)
 

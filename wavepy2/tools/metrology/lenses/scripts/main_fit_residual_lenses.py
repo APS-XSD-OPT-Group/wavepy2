@@ -43,11 +43,6 @@
 # POSSIBILITY OF SUCH DAMAGE.                                             #
 # #########################################################################
 
-from wavepy2.tools.imaging.single_grating.bl.single_grating_talbot import create_single_grating_talbot_manager, \
-    CALCULATE_DPC_CONTEXT_KEY, CORRECT_ZERO_DPC_CONTEXT_KEY, RECROP_DPC_CONTEXT_KEY, REMOVE_LINEAR_FIT_CONTEXT_KEY, FIT_RADIUS_DPC_CONTEXT_KEY, \
-    INTEGRATION_CONTEXT_KEY, CALCULATE_THICKNESS_CONTEXT_KEY, CALCULATE_2ND_ORDER_COMPONENT_OF_THE_PHASE, REMOVE_2ND_ORDER
-
-from wavepy2.tools.imaging.single_grating.bl.dpc_profile_analysis import DPC_PROFILE_ANALYSYS_CONTEXT_KEY
 
 from wavepy2.util.ini.initializer import get_registered_ini_instance
 from wavepy2.util.log.logger import LoggerMode
@@ -56,75 +51,27 @@ from wavepy2.util.plot.plotter import get_registered_plotter_instance
 
 from wavepy2.tools.common.wavepy_script import WavePyScript
 
-class MainSingleGratingTalbot(WavePyScript):
-    SCRIPT_ID = "img-sgt"
-    def get_script_id(self): return MainSingleGratingTalbot.SCRIPT_ID
-    def get_ini_file_name(self): return ".single_grating_talbot.ini"
+from wavepy2.tools.metrology.lenses.bl.fit_residual_lenses import create_fit_residual_lenses_manager, CROP_THICKNESS_CONTEXT_KEY
+
+class MainFitResidualLenses(WavePyScript):
+    SCRIPT_ID = "met-frl"
+
+    def get_script_id(self): return MainFitResidualLenses.SCRIPT_ID
+    def get_ini_file_name(self): return ".fit_residual_lenses.ini"
 
     def _run_script(self, SCRIPT_LOGGER_MODE=LoggerMode.FULL, **args):
         plotter = get_registered_plotter_instance()
 
-        single_grating_talbot_manager = create_single_grating_talbot_manager()
+        fit_residual_lenses_manager = create_fit_residual_lenses_manager()
 
         # ==========================================================================
         # %% Initialization parameters
         # ==========================================================================
 
-        initialization_parameters = single_grating_talbot_manager.get_initialization_parameters(SCRIPT_LOGGER_MODE)
+        initialization_parameters = fit_residual_lenses_manager.get_initialization_parameters(SCRIPT_LOGGER_MODE)
 
-        # ==========================================================================
-        # %% DPC Analysis
-        # ==========================================================================
-
-        dpc_result = single_grating_talbot_manager.calculate_dpc(initialization_parameters)
-        plotter.show_context_window(CALCULATE_DPC_CONTEXT_KEY)
-
-        # ==========================================================================
-
-        recrop_dpc_result = single_grating_talbot_manager.recrop_dpc(dpc_result, initialization_parameters)
-        plotter.show_context_window(RECROP_DPC_CONTEXT_KEY)
-
-        # ==========================================================================
-
-        correct_zero_dpc_result = single_grating_talbot_manager.correct_zero_dpc(recrop_dpc_result, initialization_parameters)
-        plotter.show_context_window(CORRECT_ZERO_DPC_CONTEXT_KEY)
-
-        # ==========================================================================
-
-        remove_linear_fit_result = single_grating_talbot_manager.remove_linear_fit(correct_zero_dpc_result, initialization_parameters)
-        plotter.show_context_window(REMOVE_LINEAR_FIT_CONTEXT_KEY)
-
-        # ==========================================================================
-
-        dpc_profile_analysis_result = single_grating_talbot_manager.dpc_profile_analysis(remove_linear_fit_result, initialization_parameters)
-        plotter.show_context_window(DPC_PROFILE_ANALYSYS_CONTEXT_KEY)
-
-        # ==========================================================================
-
-        fit_radius_dpc_result = single_grating_talbot_manager.fit_radius_dpc(dpc_profile_analysis_result, initialization_parameters)
-        plotter.show_context_window(FIT_RADIUS_DPC_CONTEXT_KEY)
-
-        # ==========================================================================
-        # %% Integration
-        # ==========================================================================
-
-        integration_result = single_grating_talbot_manager.do_integration(fit_radius_dpc_result, initialization_parameters)
-        plotter.show_context_window(INTEGRATION_CONTEXT_KEY)
-
-        # ==========================================================================
-
-        integration_result = single_grating_talbot_manager.calc_thickness(integration_result, initialization_parameters)
-        plotter.show_context_window(CALCULATE_THICKNESS_CONTEXT_KEY)
-
-        # ==========================================================================
-
-        integration_result = single_grating_talbot_manager.calc_2nd_order_component_of_the_phase(integration_result, initialization_parameters)
-        plotter.show_context_window(CALCULATE_2ND_ORDER_COMPONENT_OF_THE_PHASE)
-
-        # ==========================================================================
-
-        integration_result = single_grating_talbot_manager.remove_2nd_order(integration_result, initialization_parameters)
-        plotter.show_context_window(REMOVE_2ND_ORDER)
+        crop_result = fit_residual_lenses_manager.crop_thickness(initialization_parameters)
+        plotter.show_context_window(CROP_THICKNESS_CONTEXT_KEY)
 
         # ==========================================================================
         # %% Final Operations
@@ -140,5 +87,5 @@ class MainSingleGratingTalbot(WavePyScript):
 
 import os, sys
 if __name__=="__main__":
-    if os.getenv('WAVEPY_DEBUG', "0") == "1": MainSingleGratingTalbot(sys_argv=sys.argv).run_script()
-    else: MainSingleGratingTalbot().show_help()
+    if os.getenv('WAVEPY_DEBUG', "0") == "1": MainFitResidualLenses(sys_argv=sys.argv).run_script()
+    else: MainFitResidualLenses().show_help()

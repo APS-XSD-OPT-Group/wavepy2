@@ -208,7 +208,7 @@ class __AbstractPlotter(PlotterFacade):
     def get_save_file_prefix(self): return self.__save_file_prefix
 
     def _get_file_name(self, file_prefix=None, file_suffix="", extension=""):
-        return common_tools.get_unique_filename(self.get_save_file_prefix() if file_prefix is None else file_prefix + file_suffix, extension)
+        return common_tools.get_unique_filename((self.get_save_file_prefix() if file_prefix is None else file_prefix) + file_suffix, extension)
 
     def save_sdf_file(self, array, pixelsize=[1, 1], file_prefix=None, file_suffix="", extraHeader={}):
         file_name = self._get_file_name(file_prefix, file_suffix, "sdf")

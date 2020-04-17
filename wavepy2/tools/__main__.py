@@ -46,6 +46,7 @@ import sys
 
 from wavepy2.tools.imaging.single_grating.scripts.main_single_grating_talbot import MainSingleGratingTalbot
 from wavepy2.tools.diagnostic.coherence.scripts.main_single_grating_coherence_z_scan import MainSingleGratingCoherenceZScan
+from wavepy2.tools.metrology.lenses.scripts.main_fit_residual_lenses import MainFitResidualLenses
 
 if __name__ == "__main__":
     def show_help(error=False):
@@ -58,18 +59,18 @@ if __name__ == "__main__":
             print("=============================================================")
             print("           WELCOME TO WavePy 2 - command line mode")
             print("=============================================================\n")
-        print("To launch a script:       python -m wavepy2.tools <script id>\n")
+        print("To launch a script:       python -m wavepy2.tools <script id> <options>\n")
         print("To show help of a script: python -m wavepy2.tools <script id> --h\n")
         print("To show this help:        python -m wavepy2.tools --h\n")
         print("* Available scripts:\n" +
-              "    1) Imaging   - Single Grating Talbot, id: " + MainSingleGratingTalbot().get_script_id() + "\n" +
-              "    2) Coherence - Single Grating Z Scan, id: " + MainSingleGratingCoherenceZScan().get_script_id() + "\n" +
-              "    3) Metrology - Fit Residual Lenses,   id: met-frl\n")
+              "    1) Imaging   - Single Grating Talbot, id: " + MainSingleGratingTalbot.SCRIPT_ID + "\n" +
+              "    2) Coherence - Single Grating Z Scan, id: " + MainSingleGratingCoherenceZScan.SCRIPT_ID + "\n" +
+              "    3) Metrology - Fit Residual Lenses,   id: " + MainFitResidualLenses.SCRIPT_ID + "\n")
 
     if len(sys.argv) == 1 or sys.argv[1] == "--h":
         show_help()
     else:
-        if sys.argv[1]   == "img-sgt": MainSingleGratingTalbot(sys_argv=sys.argv).run_script()
-        elif sys.argv[1] == "coh-sgz": MainSingleGratingCoherenceZScan(sys_argv=sys.argv).run_script()
-        elif sys.argv[1] == "met-frl": print("Currently not implemented")
+        if sys.argv[1]   == MainSingleGratingTalbot.SCRIPT_ID:         MainSingleGratingTalbot(sys_argv=sys.argv).run_script()
+        elif sys.argv[1] == MainSingleGratingCoherenceZScan.SCRIPT_ID: MainSingleGratingCoherenceZScan(sys_argv=sys.argv).run_script()
+        elif sys.argv[1] == MainFitResidualLenses.SCRIPT_ID:           MainFitResidualLenses(sys_argv=sys.argv).run_script()
         else: show_help(error=True)

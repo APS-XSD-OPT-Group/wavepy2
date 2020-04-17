@@ -101,7 +101,7 @@ class __SingleGratingCoherenceZScan(SingleGratingCoherenceZScanFacade):
                                                                                image_per_point    = self.__ini.get_int_from_ini("Parameters", "number of images per step", default=1),
                                                                                strideFile         = self.__ini.get_int_from_ini("Parameters", "stride", default=1),
                                                                                zvec_file          = self.__ini.get_string_from_ini("Parameters", "z distances file"),
-                                                                               pixelSize          = self.__ini.get_float_from_ini("Parameters", "pixel size", default=6.5e-07),
+                                                                               pixelsize          = self.__ini.get_float_from_ini("Parameters", "pixel size", default=6.5e-07),
                                                                                gratingPeriod      = self.__ini.get_float_from_ini("Parameters", "checkerboard grating period", default=4.8e-06),
                                                                                pattern            = self.__ini.get_string_from_ini("Parameters", "pattern", default="Diagonal"),
                                                                                sourceDistanceV    = self.__ini.get_float_from_ini("Parameters", "source distance v", default=-0.73),
@@ -128,17 +128,16 @@ class __SingleGratingCoherenceZScan(SingleGratingCoherenceZScanFacade):
         imgOriginal    = initialization_parameters.get_parameter("img")
         pattern        = initialization_parameters.get_parameter("pattern")
         gratingPeriod  = initialization_parameters.get_parameter("gratingPeriod")
-        pixelSize      = initialization_parameters.get_parameter("pixelSize")
+        pixelsize      = initialization_parameters.get_parameter("pixelsize")
 
         self.__plotter.register_context_window(CALCULATE_HARMONIC_PERIODS_CONTEXT_KEY)
 
         if self.__plotter.is_active():
-            img, idx4crop, cmap, colorlimit = self.__plotter.show_interactive_plot(ColorbarCropDialogPlot, container_widget=None, img=imgOriginal, pixelsize=[pixelSize, pixelSize], message="Crop for all Images")
+            img, idx4crop, cmap, colorlimit = self.__plotter.show_interactive_plot(ColorbarCropDialogPlot, container_widget=None, img=imgOriginal, pixelsize=[pixelsize, pixelsize], message="Crop for all Images")
 
             _, idx4cropDark = self.__plotter.show_interactive_plot(CropDialogPlot,
                                                                    container_widget=None,
                                                                    img=imgOriginal,
-                                                                   pixelsize=[pixelSize, pixelSize],
                                                                    message="Crop for Dark ",
                                                                    default_idx4crop=[0, 20, 0, 20],
                                                                    kwargs4graph={'cmap': cmap, 'vmin': colorlimit[0], 'vmax': colorlimit[1]})
@@ -149,7 +148,7 @@ class __SingleGratingCoherenceZScan(SingleGratingCoherenceZScanFacade):
             idx4cropDark = [0, 20, 0, 20]
 
         # Plot Image AFTER crop
-        self.__plotter.push_plot_on_context(CALCULATE_HARMONIC_PERIODS_CONTEXT_KEY, ShowCroppedFigure, img=img, pixelsize=[pixelSize, pixelSize], allows_saving=False)
+        self.__plotter.push_plot_on_context(CALCULATE_HARMONIC_PERIODS_CONTEXT_KEY, ShowCroppedFigure, img=img, pixelsize=[pixelsize, pixelsize], allows_saving=False)
 
         self.__main_logger.print_message("Idx for cropping: " + str(idx4crop))
 
@@ -158,11 +157,11 @@ class __SingleGratingCoherenceZScan(SingleGratingCoherenceZScanFacade):
         # ==============================================================================
 
         if pattern == PATTERNS[0]:
-            period_harm_Vert = np.int(np.sqrt(2)*pixelSize/gratingPeriod*img.shape[0])
-            period_harm_Horz = np.int(np.sqrt(2)*pixelSize/gratingPeriod*img.shape[1])
+            period_harm_Vert = np.int(np.sqrt(2)*pixelsize/gratingPeriod*img.shape[0])
+            period_harm_Horz = np.int(np.sqrt(2)*pixelsize/gratingPeriod*img.shape[1])
         elif pattern == PATTERNS[1]:
-            period_harm_Vert = np.int(2*pixelSize/gratingPeriod*img.shape[0])
-            period_harm_Horz = np.int(2*pixelSize/gratingPeriod*img.shape[1])
+            period_harm_Vert = np.int(2*pixelsize/gratingPeriod*img.shape[0])
+            period_harm_Horz = np.int(2*pixelsize/gratingPeriod*img.shape[1])
 
         # Obtain harmonic periods from images
 
@@ -200,7 +199,7 @@ class __SingleGratingCoherenceZScan(SingleGratingCoherenceZScanFacade):
         if zvec_from == ZVEC_FROM[0]:
             self.__script_logger.print('Step zscan [mm] : {:.4g}'.format(step_z_scan*1e3))
             self.__script_logger.print('Start point zscan [mm] : {:.4g}'.format(startDist*1e3))
-        self.__script_logger.print('Pixel Size [um] : {:.4g}'.format(pixelSize*1e6))
+        self.__script_logger.print('Pixel Size [um] : {:.4g}'.format(pixelsize*1e6))
         self.__script_logger.print('Grating Period [um] : {:.4g}'.format(gratingPeriod*1e6))
         self.__script_logger.print('Grating Pattern : ' + pattern)
         self.__script_logger.print('Crop idxs : ' + str(idx4crop))
@@ -260,7 +259,7 @@ class __SingleGratingCoherenceZScan(SingleGratingCoherenceZScanFacade):
     def sort_calculation_result(self, run_calculation_result, initialization_parameters):
         self.__plotter.register_context_window(SORT_CALCULATION_RESULT_CONTEXT_KEY)
 
-        pixelSize = initialization_parameters.get_parameter("pixelSize")
+        pixelsize = initialization_parameters.get_parameter("pixelsize")
         zvec      = initialization_parameters.get_parameter("zvec")
 
         img       = run_calculation_result.get_parameter("img")
@@ -273,8 +272,8 @@ class __SingleGratingCoherenceZScan(SingleGratingCoherenceZScanFacade):
         pv = np.asarray([x[3] for x in res])
         ph = np.asarray([x[4] for x in res])
 
-        pattern_period_Vert_z = pixelSize/(pv[:, 0] - p0[:, 0])*img.shape[0]
-        pattern_period_Horz_z = pixelSize/(ph[:, 1] - p0[:, 1])*img.shape[1]
+        pattern_period_Vert_z = pixelsize/(pv[:, 0] - p0[:, 0])*img.shape[0]
+        pattern_period_Horz_z = pixelsize/(ph[:, 1] - p0[:, 1])*img.shape[1]
 
         self.__plotter.save_csv_file(np.c_[zvec.T, contrastV.T, contrastH.T, pattern_period_Vert_z.T, pattern_period_Horz_z.T],
                                      headerList=['z [m]', 'Vert Contrast', 'Horz Contrast', 'Vert Period [m]', 'Horz Period [m]'])

@@ -15,7 +15,7 @@ from PyQt5.QtCore import Qt
 from wavepy2.util.common import common_tools
 from wavepy2.util.plot import plot_tools
 from wavepy2.util.plot.plotter import WavePyWidget
-from wavepy2.tools.common.widgets.plot_profile import PlotProfile
+from wavepy2.core.widgets.plot_profile_widget import PlotProfileWidget
 
 from warnings import filterwarnings
 filterwarnings("ignore")
@@ -79,16 +79,16 @@ class PlotIntegration(WavePyWidget):
         self.append_mpl_figure_to_save(figure2)
         self.append_mpl_figure_to_save(figure3)
 
-        plot_profile_widget = PlotProfile(self,
-                                          xmatrix=xxGrid * factor_x,
-                                          ymatrix=yyGrid * factor_y,
-                                          zmatrix=data[::-1, :],
-                                          xlabel=r'$x [' + unit_x + ' m]$',
-                                          ylabel=r'$y [' + unit_y + ' m]$',
-                                          title=titleStr,
-                                          xunit='\mu m',
-                                          yunit='\mu m',
-                                          arg4main={'cmap': 'viridis', 'lw': 3})
+        plot_profile_widget = PlotProfileWidget(self,
+                                                xmatrix=xxGrid * factor_x,
+                                                ymatrix=yyGrid * factor_y,
+                                                zmatrix=data[::-1, :],
+                                                xlabel=r'$x [' + unit_x + ' m]$',
+                                                ylabel=r'$y [' + unit_y + ' m]$',
+                                                title=titleStr,
+                                                xunit='\mu m',
+                                                yunit='\mu m',
+                                                arg4main={'cmap': 'viridis', 'lw': 3})
 
         figure4 = Figure(figsize=(10, 8))
         im = figure4.gca().imshow(data[::-1, :], cmap='viridis', extent=common_tools.extent_func(data, pixelsize) * factor_x, **kwarg4surf)

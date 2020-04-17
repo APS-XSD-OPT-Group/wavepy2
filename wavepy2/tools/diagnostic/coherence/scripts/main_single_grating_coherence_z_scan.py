@@ -57,8 +57,9 @@ from wavepy2.tools.common.wavepy_script import WavePyScript
 from multiprocessing import cpu_count
 
 class MainSingleGratingCoherenceZScan(WavePyScript):
+    SCRIPT_ID = "coh-sgz"
 
-    def get_script_id(self): return "coh-sgz"
+    def get_script_id(self): return MainSingleGratingCoherenceZScan.SCRIPT_ID
     def get_ini_file_name(self): return ".single_grating_coherence_z_scan.ini"
 
     def _parse_additional_sys_argument(self, sys_argument, args):

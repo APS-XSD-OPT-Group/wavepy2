@@ -64,7 +64,7 @@ from wavepy2.tools.common.widgets.colorbar_crop_dialog_widget import ColorbarCro
 from wavepy2.tools.common.widgets.show_cropped_figure_widget import ShowCroppedFigure
 
 from wavepy2.tools.imaging.single_grating.widgets.plot_DPC_widget import PlotDPC
-from wavepy2.tools.imaging.single_grating.widgets.sgt_input_parameters_widget import SGTInputParametersWidget, generate_initialization_parameters_sgt
+from wavepy2.tools.imaging.single_grating.widgets.sgt_input_parameters_widget import SGTInputParametersWidget, generate_initialization_parameters_sgt, MODES, PATTERNS
 from wavepy2.tools.imaging.single_grating.widgets.correct_DPC_widgets import CorrectDPC, CorrectDPCHistos, CorrectDPCCenter
 from wavepy2.tools.imaging.single_grating.widgets.fit_radius_dpc_widget import FitRadiusDPC
 
@@ -113,10 +113,10 @@ class __SingleGratingTalbot(SingleGratingTalbotFacade):
             initialization_parameters = generate_initialization_parameters_sgt(img_file_name      = self.__ini.get_string_from_ini("Files", "sample"),
                                                                                imgRef_file_name   = self.__ini.get_string_from_ini("Files", "reference"),
                                                                                imgBlank_file_name = self.__ini.get_string_from_ini("Files", "blank"),
-                                                                               mode               = self.__ini.get_string_from_ini("Parameters", "mode", default="Relative"),
+                                                                               mode               = self.__ini.get_string_from_ini("Parameters", "mode", default=MODES[0]),
                                                                                pixel              = self.__ini.get_float_from_ini("Parameters", "pixel size", default=6.5e-07),
                                                                                gratingPeriod      = self.__ini.get_float_from_ini("Parameters", "checkerboard grating period", default=4.8e-06),
-                                                                               pattern            = self.__ini.get_string_from_ini("Parameters", "pattern", default="Diagonal half pi"),
+                                                                               pattern            = self.__ini.get_string_from_ini("Parameters", "pattern", default=PATTERNS[0]),
                                                                                distDet2sample     = self.__ini.get_float_from_ini("Parameters", "distance detector to gr", default=0.33),
                                                                                phenergy           = self.__ini.get_float_from_ini("Parameters", "photon energy", default=14000.0),
                                                                                sourceDistance     = self.__ini.get_float_from_ini("Parameters", "source distance", default=32.0),
@@ -262,7 +262,7 @@ class __SingleGratingTalbot(SingleGratingTalbotFacade):
 
         img_to_crop = np.sqrt((diffPhase01 - diffPhase01.mean())**2 + (diffPhase10 - diffPhase10.mean())**2)
 
-        if self.__plotter.is_active(): _, idx2ndCrop = self.__plotter.show_interactive_plot(CropDialogPlot, container_widget=None, img=img_to_crop, pixelsize=pixelsize)
+        if self.__plotter.is_active(): _, idx2ndCrop = self.__plotter.show_interactive_plot(CropDialogPlot, container_widget=None, img=img_to_crop)
         else: idx2ndCrop = [0, -1, 0, -1]
 
         if idx2ndCrop != [0, -1, 0, -1]:

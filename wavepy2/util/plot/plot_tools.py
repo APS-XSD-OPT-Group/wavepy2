@@ -89,41 +89,6 @@ from wavepy2.util.log.logger import get_registered_logger_instance
 from wavepy2.util.common import common_tools
 
 def save_sdf_file(array, pixelsize=[1, 1], fname='output.sdf', extraHeader={}):
-    '''
-    Save an 2D array in the `Surface Data File Format (SDF)
-    <https://physics.nist.gov/VSC/jsp/DataFormat.jsp#a>`_ , which can be
-    viewed
-    with the program `Gwyddion
-    <http://gwyddion.net/documentation/user-guide-en/>`_ .
-    It is also useful because it is a plain
-    ASCII file
-
-
-    Parameters
-    ----------
-    array: 2D ndarray
-        data to be saved as *sdf*
-
-    pixelsize: list
-        list in the format [pixel_size_i, pixel_size_j]
-
-    fname: str
-        output file name
-
-    extraHeader: dict
-        dictionary with extra fields to be added to the header. Note that this
-        extra header have not effect when using Gwyddion. It is used only for
-        the asc file and when loaded by :py:func:`wavepy.utils.load_sdf`
-        as *headerdic*.
-
-
-    See Also
-    --------
-    :py:func:`wavepy.utils.load_sdf`
-
-
-    '''
-
     logger = get_registered_logger_instance()
 
     if len(array.shape) != 2:
@@ -161,29 +126,6 @@ def save_sdf_file(array, pixelsize=[1, 1], fname='output.sdf', extraHeader={}):
 
 
 def save_csv_file(arrayList, fname='output.csv', headerList=[], comments=''):
-    '''
-    Save an 2D array as a *comma separeted values* file. This is appropriated
-    to save several 1D curves. For 2D data use :py:func:`wavepy.utils.save_sdf`
-
-
-    Parameters
-    ----------
-    array: 2D ndarray
-        data to be saved as *sdf*
-
-    fname: str
-        output file name
-
-    headerList: dict
-        dictionary with fields to be added to the header.
-
-
-    See Also
-    --------
-    :py:func:`wavepy.utils.load_csv_file`
-
-    '''
-
     logger = get_registered_logger_instance()
 
     header = ''
@@ -208,27 +150,57 @@ def save_csv_file(arrayList, fname='output.csv', headerList=[], comments=''):
     np.savetxt(fname, data2save, fmt=fmt, header=header, delimiter=', ')
     logger.print_message(fname + ' saved!')
 
+
+def load_sdf_file(fname, printHeader=False):
+    with open(fname) as input_file:
+        nline = 0
+        header = ''
+        if printHeader: print('########## HEADER from ' + fname)
+
+        for line in input_file:
+            nline += 1
+            if printHeader: print(line, end='')
+            if 'NumPoints' in line: xpoints = int(line.split('=')[-1])
+            if 'NumProfiles' in line: ypoints = int(line.split('=')[-1])
+            if 'Xscale' in line: xscale = float(line.split('=')[-1])
+            if 'Yscale' in line: yscale = float(line.split('=')[-1])
+            if 'Zscale' in line: zscale = float(line.split('=')[-1])
+            if '*' in line: break
+            else: header += line
+
+    if printHeader: print('########## END HEADER from ' + fname)
+
+    data = np.loadtxt(fname, skiprows=nline)
+    data = data.reshape(ypoints, xpoints)*zscale
+    headerdic = {}
+    header = header.replace('\t', '')
+    for item in header.split('\n'):
+        items = item.split('=')
+        if len(items) > 1: headerdic[items[0]] = items[1]
+
+    return data, [yscale, xscale], headerdic
+
+def load_csv_file(fname):
+    with open(fname) as input_file:
+        comments = []
+        for line in input_file:
+            if '#' in line:
+                comments.append(line[2:-1])
+                header = line[2:-1]  # remove # and \n
+            else: break
+
+    data = np.loadtxt(fname, delimiter=',')
+
+    headerlist = []
+    for item in header.split(', '): headerlist.append(item)
+
+    return data, headerlist, comments
+
+
 from matplotlib.pyplot import get_cmap
 import itertools
 
 def line_style_cycle(ls=['-', '--'], ms=['s', 'o', '^', 'd'], ncurves=2, cmap_str='default'):
-    '''
-    Generate a list with cycle of linestyles for plots. See
-    `here <http://matplotlib.org/api/pyplot_api.html?highlight=plot#matplotlib.pyplot.plot>`_
-    for imformation about the syntax of the styles.
-
-    Example
-    -------
-
-    >>> ls_cycle, lc_cycle = line_style_cycle(ncurves=10)
-    >>> x = np.linspace(0, 100, 10)
-    >>> for i in range (10):
-    >>>     plt.plot(x, i*x, next(ls_cycle), color=next(lc_cycle), label=str(i))
-    >>> plt.legend()
-    >>> plt.show()
-
-    '''
-
     list_ls = list(a[0] + a[1] for a in itertools.product(ls, ms))
     ls_cycle = itertools.cycle(list_ls[0:ncurves])
 
@@ -248,23 +220,6 @@ def line_style_cycle(ls=['-', '--'], ms=['s', 'o', '^', 'd'], ncurves=2, cmap_st
 from scipy.interpolate import UnivariateSpline
 
 def fwhm_xy(xvalues, yvalues):
-    """
-    Calculate FWHM of a vector  y(x)
-
-    Parameters
-    ----------
-    xvalues : ndarray
-        vector with the values of x
-    yvalues : ndarray
-        vector with the values of x
-
-    Returns
-    -------
-    list
-        list of values x and y(x) at half maximum in the format
-        [[fwhm_x1, fwhm_x2], [fwhm_y1, fwhm_y2]]
-    """
-
     spline = UnivariateSpline(xvalues, yvalues-np.min(yvalues)/2-np.max(yvalues)/2, s=0)
 
     xvalues = spline.roots().tolist()

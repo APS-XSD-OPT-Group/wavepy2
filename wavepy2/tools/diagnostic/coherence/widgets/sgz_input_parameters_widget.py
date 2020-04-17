@@ -68,7 +68,7 @@ def generate_initialization_parameters_sgz(dataFolder,
                                            image_per_point,
                                            strideFile,
                                            zvec_file,
-                                           pixelSize,
+                                           pixelsize,
                                            gratingPeriod,
                                            pattern,
                                            sourceDistanceV,
@@ -121,7 +121,7 @@ def generate_initialization_parameters_sgz(dataFolder,
                       nfiles=nfiles,
                       zvec_from=zvec_from,
                       zvec=zvec,
-                      pixelSize=pixelSize,
+                      pixelsize=pixelsize,
                       gratingPeriod=gratingPeriod,
                       pattern=pattern,
                       sourceDistanceV=sourceDistanceV,
@@ -147,7 +147,7 @@ class SGZInputParametersWidget(WavePyInteractiveWidget):
         self.image_per_point    = self.__ini.get_int_from_ini("Parameters", "number of images per step", default=1)
         self.strideFile         = self.__ini.get_int_from_ini("Parameters", "stride", default=1)
         self.zvec_file          = self.__ini.get_string_from_ini("Parameters", "z distances file")
-        self.pixelSize          = self.__ini.get_float_from_ini("Parameters", "pixel size", default=6.5e-07)
+        self.pixelsize          = self.__ini.get_float_from_ini("Parameters", "pixel size", default=6.5e-07)
         self.gratingPeriod      = self.__ini.get_float_from_ini("Parameters", "checkerboard grating period", default=4.8e-06)
         self.pattern            = PATTERNS.index(self.__ini.get_string_from_ini("Parameters", "pattern", default="Diagonal"))
         self.sourceDistanceV    = self.__ini.get_float_from_ini("Parameters", "source distance v", default=-0.73)
@@ -197,7 +197,7 @@ class SGZInputParametersWidget(WavePyInteractiveWidget):
 
         self.set_zvec_from()
 
-        plot_tools.lineEdit(main_box, self, "pixelSize", label="Pixel Size", labelWidth=400, valueType=float, orientation="horizontal")
+        plot_tools.lineEdit(main_box, self, "pixelsize", label="Pixel Size", labelWidth=400, valueType=float, orientation="horizontal")
         plot_tools.lineEdit(main_box, self, "gratingPeriod", label="CB Grating Period", labelWidth=400, valueType=float, orientation="horizontal")
         plot_tools.comboBox(main_box, self, "pattern", label="CB Grating Pattern", items=PATTERNS, orientation="horizontal")
         plot_tools.lineEdit(main_box, self, "sourceDistanceV", label="Source Distance Vertical Direction [m]", labelWidth=400, valueType=float, orientation="horizontal")
@@ -230,7 +230,7 @@ class SGZInputParametersWidget(WavePyInteractiveWidget):
         self.__ini.set_value_at_ini("Parameters", "number of images per step", self.image_per_point)
         self.__ini.set_value_at_ini("Parameters", "stride", self.strideFile)
         self.__ini.set_value_at_ini("Parameters", "z distances file", self.zvec_file)
-        self.__ini.set_value_at_ini("Parameters", "pixel size", self.pixelSize)
+        self.__ini.set_value_at_ini("Parameters", "pixel size", self.pixelsize)
         self.__ini.set_value_at_ini("Parameters", "checkerboard grating period", self.gratingPeriod)
         self.__ini.set_value_at_ini("Parameters", "Pattern", PATTERNS[self.pattern])
         self.__ini.set_value_at_ini("Parameters", "source distance v", self.sourceDistanceV)
@@ -248,7 +248,7 @@ class SGZInputParametersWidget(WavePyInteractiveWidget):
                                                       self.image_per_point,
                                                       self.strideFile,
                                                       self.zvec_file,
-                                                      self.pixelSize,
+                                                      self.pixelsize,
                                                       self.gratingPeriod,
                                                       PATTERNS[self.pattern],
                                                       self.sourceDistanceV,
