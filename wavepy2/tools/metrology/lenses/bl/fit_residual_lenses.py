@@ -72,6 +72,7 @@ def create_fit_residual_lenses_manager():
     return __FitResidualLenses()
 
 CROP_THICKNESS_CONTEXT_KEY = "Crop and Show Thickness"
+CENTER_IMAGE_CONTEXT_KEY = "Center Image"
 FIT_RADIUS_DPC_CONTEXT_KEY = "Fit Radius DPC"
 DO_FIT_CONTEXT_KEY = "Do fit"
 
@@ -143,6 +144,8 @@ class __FitResidualLenses(FitResidualLensesFacade):
         return WavePyData(thickness=thickness, xx=xx, yy=yy)
 
     def center_image(self, crop_thickness_result, initialization_parameters):
+        self.__plotter.register_context_window(CENTER_IMAGE_CONTEXT_KEY)
+
         pixelsize = initialization_parameters.get_parameter("pixelsize")
 
         thickness = crop_thickness_result.get_parameter("thickness")
@@ -158,6 +161,8 @@ class __FitResidualLenses(FitResidualLensesFacade):
 
         text2datfile = '# file name, Type of Fit, Curved Radius from fit [um],'
         text2datfile += ' diameter4fit [um], sigma [um], pv [um]\n'
+
+        self.__draw_context(CENTER_IMAGE_CONTEXT_KEY)
 
         return WavePyData(thickness=thickness, xx=xx, yy=yy, text2datfile=text2datfile)
 
