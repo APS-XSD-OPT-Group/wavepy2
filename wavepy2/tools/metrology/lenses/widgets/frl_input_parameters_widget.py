@@ -62,7 +62,9 @@ def generate_initialization_parameters_frl(thickness_file_name,
                                            str4title,
                                            nominalRadius,
                                            diameter4fit_str,
-                                           lensGeometry):
+                                           lensGeometry,
+                                           crop_image,
+                                           fit_radius_dpc):
 
 
     fname2save   = thickness_file_name.split('.')[0].split('/')[-1] + '_fit'
@@ -104,7 +106,9 @@ def generate_initialization_parameters_frl(thickness_file_name,
                       nominalRadius=nominalRadius,
                       diameter4fit_list=diameter4fit_list,
                       lensGeometry=lensGeometry,
-                      saveFileSuf=saveFileSuf)
+                      saveFileSuf=saveFileSuf,
+                      crop_image=crop_image,
+                      fit_radius_dpc=fit_radius_dpc)
 
 class FRLInputParametersWidget(WavePyInteractiveWidget):
     WIDTH  = 800
@@ -115,13 +119,16 @@ class FRLInputParametersWidget(WavePyInteractiveWidget):
         self.__ini     = get_registered_ini_instance()
         self.__logger  = get_registered_logger_instance()
 
-        self.thickness_file_name                = self.__ini.get_string_from_ini("Files", "file with thickness")
+        self.thickness_file_name  = self.__ini.get_string_from_ini("Files", "file with thickness")
 
         self.str4title            = self.__ini.get_string_from_ini("Parameters", "String for Titles", default="Be Lens")
         self.nominalRadius        = self.__ini.get_float_from_ini("Parameters", "nominal radius for fitting", default=1e-4)
         self.diameter4fit_str     = self.__ini.get_string_from_ini("Parameters", "diameter of active area for fitting", default="800")
         self.lensGeometry         = LENS_GEOMETRIES.index(self.__ini.get_string_from_ini("Parameters", "lens geometry", default=LENS_GEOMETRIES[2]))
 
+
+        self.crop_image         = self.__ini.get_boolean_from_ini("Runtime", "crop image", default=False)
+        self.fit_radius_dpc     = self.__ini.get_boolean_from_ini("Runtime", "fit radius dpc", default=False)
 
     def build_widget(self, **kwargs):
         self.setFixedWidth(self.WIDTH)
@@ -137,17 +144,23 @@ class FRLInputParametersWidget(WavePyInteractiveWidget):
         runtime_widget.setFixedWidth(self.WIDTH-10)
 
         plot_tools.createTabPage(tabs, "Initialization Parameter", widgetToAdd=ini_widget)
+        plot_tools.createTabPage(tabs, "Runtime Parameter", widgetToAdd=runtime_widget)
 
         main_box = plot_tools.widgetBox(ini_widget, "", width=self.WIDTH-70, height=self.HEIGHT-50)
 
         select_file_thickness_box = plot_tools.widgetBox(main_box, orientation="horizontal")
-        self.le_thickness = plot_tools.lineEdit(select_file_thickness_box, self, "thickness_file_name", label="Thickness File to Plot (Pickle or sdf)", labelWidth=150, valueType=str, orientation="horizontal")
+        self.le_thickness = plot_tools.lineEdit(select_file_thickness_box, self, "thickness_file_name", label="Thickness File to Plot\n(Pickle or sdf)", labelWidth=150, valueType=str, orientation="horizontal")
         plot_tools.button(select_file_thickness_box, self, "...", callback=self.selectThicknessFile)
 
         plot_tools.lineEdit(main_box, self, "str4title", label="String for Titles", labelWidth=250, valueType=str, orientation="horizontal")
         plot_tools.lineEdit(main_box, self, "nominalRadius", label="Nominal Radius For Fitting", labelWidth=350, valueType=float, orientation="horizontal")
         plot_tools.lineEdit(main_box, self, "diameter4fit_str", label="Diameter of active area for fitting\n(comma separated list)", labelWidth=250, valueType=str, orientation="horizontal")
         plot_tools.comboBox(main_box, self, "lensGeometry", label="Lens Geometry", items=LENS_GEOMETRIES, orientation="horizontal")
+
+        main_box = plot_tools.widgetBox(runtime_widget, "", width=self.WIDTH-70, height=self.HEIGHT-50)
+
+        plot_tools.checkBox(main_box, self, "crop_image", "Crop Thickness Image")
+        plot_tools.checkBox(main_box, self, "fit_radius_dpc", "Fit Radius DPC")
 
         self.update()
 
@@ -160,6 +173,8 @@ class FRLInputParametersWidget(WavePyInteractiveWidget):
         self.__ini.set_value_at_ini("Parameters", "nominal radius for fitting", self.nominalRadius)
         self.__ini.set_value_at_ini("Parameters", "diameter of active area for fitting", self.diameter4fit_str)
         self.__ini.set_value_at_ini("Parameters", "lens geometry", LENS_GEOMETRIES[self.lensGeometry])
+        self.__ini.set_value_at_ini("Runtime", "crop image", self.crop_image)
+        self.__ini.set_value_at_ini("Runtime", "fit radius dpc", self.fit_radius_dpc)
 
         self.__ini.push()
 
@@ -167,7 +182,9 @@ class FRLInputParametersWidget(WavePyInteractiveWidget):
                                                       self.str4title,
                                                       self.nominalRadius,
                                                       self.diameter4fit_str,
-                                                      LENS_GEOMETRIES[self.lensGeometry])
+                                                      LENS_GEOMETRIES[self.lensGeometry],
+                                                      self.crop_image,
+                                                      self.fit_radius_dpc)
 
     def get_rejected_output(self):
         self.__logger.print_error("Initialization Canceled, Program exit")
