@@ -143,7 +143,7 @@ class __FitResidualLenses(FitResidualLensesFacade):
         return WavePyData(thickness=thickness, xx=xx, yy=yy)
 
     def center_image(self, crop_thickness_result, initialization_parameters):
-        pixelSize = initialization_parameters.get_parameter("pixelSize")
+        pixelsize = initialization_parameters.get_parameter("pixelsize")
 
         thickness = crop_thickness_result.get_parameter("thickness")
         xx        = crop_thickness_result.get_parameter("xx")
@@ -151,8 +151,8 @@ class __FitResidualLenses(FitResidualLensesFacade):
 
         # %% Center image
 
-        radius4centering = np.min(thickness.shape) * np.min(pixelSize) * .75
-        thickness = self.__center_lens_array_max_fit(thickness, pixelSize, radius4centering)
+        radius4centering = np.min(thickness.shape) * np.min(pixelsize) * .75
+        thickness = self.__center_lens_array_max_fit(thickness, pixelsize, radius4centering)
 
         self.__script_logger.print('Array cropped to have the max at the center of the array')
 
@@ -200,7 +200,7 @@ class __FitResidualLenses(FitResidualLensesFacade):
 
         nominalRadius     = initialization_parameters.get_parameter("nominalRadius")
         diameter4fit_list = initialization_parameters.get_parameter("diameter4fit_list")
-        pixelSize         = initialization_parameters.get_parameter("pixelSize")
+        pixelsize         = initialization_parameters.get_parameter("pixelsize")
         str4title         = initialization_parameters.get_parameter("str4title")
         lensGeometry      = initialization_parameters.get_parameter("lensGeometry")
 
@@ -215,13 +215,13 @@ class __FitResidualLenses(FitResidualLensesFacade):
         else: opt = [1]
 
         for diameter4fit, i in itertools.product(diameter4fit_list, opt):
-            radius4fit = self.__biggest_radius(thickness, pixelSize, diameter4fit / 2)
+            radius4fit = self.__biggest_radius(thickness, pixelsize, diameter4fit / 2)
 
             self.__script_logger.print('Radius of the area for fit = {:.2f} um'.format(radius4fit * 1e6))
 
             if i == 1:
                 str4graphs = str4title
-                (thickness_cropped, fitted, fitParameters) = self.__fit_parabolic_lens_2d(thickness, pixelSize, radius4fit=radius4fit, mode=lensGeometry)
+                (thickness_cropped, fitted, fitParameters) = self.__fit_parabolic_lens_2d(thickness, pixelsize, radius4fit=radius4fit, mode=lensGeometry)
             elif i == 2:
                 # this overwrite the previous fit, but I need that fit because it
                 # is fast (least square fit) and it provides initial values for the
@@ -231,13 +231,13 @@ class __FitResidualLenses(FitResidualLensesFacade):
                 bounds = ([p0[0] * .999999, -200.05e-6, -200.05e-6, -120.05e-6], [p0[0] * 1.00001, 200.05e-6, 200.05e-6, 120.05e-6])
 
                 (thickness_cropped, fitted, fitParameters) = self.__fit_nominal_lens_2d(thickness,
-                                                                                        pixelSize,
+                                                                                        pixelsize,
                                                                                         radius4fit=radius4fit,
                                                                                         p0=p0,
                                                                                         bounds=bounds,
                                                                                         kwargs4fit={'verbose': 2, 'ftol': 1e-12, 'gtol': 1e-12})
 
-            xmatrix, ymatrix = common_tools.grid_coord(thickness_cropped, pixelSize)
+            xmatrix, ymatrix = common_tools.grid_coord(thickness_cropped, pixelsize)
 
             isNotNAN = np.isfinite(thickness_cropped[thickness_cropped.shape[0] // 2, :])
             # PLOT HERE
@@ -252,7 +252,7 @@ class __FitResidualLenses(FitResidualLensesFacade):
         '''
         # %% Fit
         
-            xmatrix, ymatrix = wpu.grid_coord(thickness_cropped, pixelSize)
+            xmatrix, ymatrix = wpu.grid_coord(thickness_cropped, pixelsize)
     
             isNotNAN = np.isfinite(thickness_cropped[thickness_cropped.shape[0]//2,:])
             plot_residual_1d(xmatrix[0, isNotNAN],
@@ -275,7 +275,7 @@ class __FitResidualLenses(FitResidualLensesFacade):
                              saveAsciiFlag=True)
     
             sigma, pv = plot_residual_parabolic_lens_2d(thickness_cropped,
-                                                        pixelSize,
+                                                        pixelsize,
                                                         fitted, fitParameters,
                                                         saveFigFlag=True,
                                                         savePickle=False,
@@ -289,7 +289,7 @@ class __FitResidualLenses(FitResidualLensesFacade):
             material = 'C'
             delta_lens = wpu.get_delta(14000, material=material, gui_mode=False)[0]
             sigma_seh, sigma_sev = slope_error_hist(thickness_cropped, fitted,
-                                                    pixelSize,
+                                                    pixelsize,
                                                     saveFigFlag=True,
                                                     delta=delta_lens,
                                                     str4title=str4graphs + ' 14KeV, ' + material)
@@ -320,20 +320,20 @@ class __FitResidualLenses(FitResidualLensesFacade):
     # %% 2D Fit
     # =============================================================================
 
-    def __center_lens_array_max_fit(self, thickness, pixelSize, radius4fit=100e-6):
+    def __center_lens_array_max_fit(self, thickness, pixelsize, radius4fit=100e-6):
         '''
         crop the array in order to have the max at the center of the array. It uses
         a fitting procedure of a 2D parabolic function to determine the center
 
         '''
 
-        radius4fit = self.__biggest_radius(thickness, pixelSize, radius4fit * 0.8)
+        radius4fit = self.__biggest_radius(thickness, pixelsize, radius4fit * 0.8)
 
         thickness = np.copy(thickness)
 
-        xx, yy = common_tools.grid_coord(thickness, pixelSize)
+        xx, yy = common_tools.grid_coord(thickness, pixelsize)
 
-        (_, _, fitParameters) = self.__fit_parabolic_lens_2d(thickness, pixelSize, radius4fit=radius4fit)
+        (_, _, fitParameters) = self.__fit_parabolic_lens_2d(thickness, pixelsize, radius4fit=radius4fit)
 
         center_i = np.argmin(np.abs(yy[:, 0]-fitParameters[2]))
         center_j = np.argmin(np.abs(xx[0, :]-fitParameters[1]))
@@ -348,12 +348,12 @@ class __FitResidualLenses(FitResidualLensesFacade):
 
     # =============================================================================
 
-    def __biggest_radius(self, thickness, pixelSize, radius4fit):
-        bool_x = (thickness.shape[0] // 2 < radius4fit // pixelSize[0])
-        bool_y = (thickness.shape[1] // 2 < radius4fit // pixelSize[1])
+    def __biggest_radius(self, thickness, pixelsize, radius4fit):
+        bool_x = (thickness.shape[0] // 2 < radius4fit // pixelsize[0])
+        bool_y = (thickness.shape[1] // 2 < radius4fit // pixelsize[1])
 
         if bool_x or bool_y:
-            radius4fit = 0.9*np.min((thickness.shape[0] * pixelSize[0] / 2, thickness.shape[1] * pixelSize[1] / 2))
+            radius4fit = 0.9*np.min((thickness.shape[0] * pixelsize[0] / 2, thickness.shape[1] * pixelsize[1] / 2))
 
             self.__main_logger.print_warning('WARNING: Image size smaller than the region for fit')
             self.__main_logger.print_warning('New Radius: {:.3f}um'.format(radius4fit*1e6))
@@ -363,10 +363,10 @@ class __FitResidualLenses(FitResidualLensesFacade):
 
     # =============================================================================
 
-    def __fit_parabolic_lens_2d(self, thickness, pixelSize, radius4fit, mode='2D'):
+    def __fit_parabolic_lens_2d(self, thickness, pixelsize, radius4fit, mode='2D'):
 
         # FIT
-        xx, yy = common_tools.grid_coord(thickness, pixelSize)
+        xx, yy = common_tools.grid_coord(thickness, pixelsize)
         mask = xx*np.nan
 
         lim_x = np.argwhere(xx[0, :] <= -radius4fit*1.01)[-1, 0]
@@ -385,7 +385,7 @@ class __FitResidualLenses(FitResidualLensesFacade):
             mask[np.where(yy**2 < radius4fit)] = 1.0
             lim_x = 2
 
-        fitted, popt = self.__lsq_fit_parabola(thickness*mask, pixelSize, mode=mode)
+        fitted, popt = self.__lsq_fit_parabola(thickness*mask, pixelsize, mode=mode)
 
         self.__main_logger.print_message("Parabolic 2D Fit")
         self.__main_logger.print_message("Curv Radius, xo, yo, offset")
@@ -464,13 +464,13 @@ class __FitResidualLenses(FitResidualLensesFacade):
 
     # =============================================================================
 
-    def __fit_nominal_lens_2d(self, thickness, pixelSize, radius4fit,
+    def __fit_nominal_lens_2d(self, thickness, pixelsize, radius4fit,
                               p0=[20e-6, 1.005e-6, -.005e-6, -.005e-6],
                               bounds=([10e-6, -2.05e-6, -2.05e-6, -2.05e-6],
                                       [50e-6, 2.05e-6, 2.05e-6, 2.05e-6]),
                               kwargs4fit={}):
 
-        xmatrix, ymatrix = common_tools.grid_coord(thickness, pixelSize)
+        xmatrix, ymatrix = common_tools.grid_coord(thickness, pixelsize)
         r2 = np.sqrt(xmatrix**2 + ymatrix**2)
         args4fit = np.where(r2.flatten() < radius4fit)
 

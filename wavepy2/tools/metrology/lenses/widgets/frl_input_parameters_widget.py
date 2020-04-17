@@ -98,7 +98,8 @@ def generate_initialization_parameters_frl(thickness_file_name,
 
     diameter4fit_list = [float(a)*1e-6 for a in diameter4fit_str.split(',')]
     
-    return WavePyData(thickness=thickness,
+    return WavePyData(thickness_file_name=thickness_file_name,
+                      thickness=thickness,
                       xx=xx,
                       yy=yy,
                       pixelsize=pixelsize,
@@ -125,7 +126,6 @@ class FRLInputParametersWidget(WavePyInteractiveWidget):
         self.nominalRadius        = self.__ini.get_float_from_ini("Parameters", "nominal radius for fitting", default=1e-4)
         self.diameter4fit_str     = self.__ini.get_string_from_ini("Parameters", "diameter of active area for fitting", default="800")
         self.lensGeometry         = LENS_GEOMETRIES.index(self.__ini.get_string_from_ini("Parameters", "lens geometry", default=LENS_GEOMETRIES[2]))
-
 
         self.crop_image         = self.__ini.get_boolean_from_ini("Runtime", "crop image", default=False)
         self.fit_radius_dpc     = self.__ini.get_boolean_from_ini("Runtime", "fit radius dpc", default=False)

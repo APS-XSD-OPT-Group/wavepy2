@@ -73,8 +73,8 @@ class FitRadiusDPC(WavePyWidget):
         fig = Figure(figsize=(14, 5))
         fig.suptitle(str4title + 'Phase [rad]', fontsize=14)
 
-        ax1 = fig.subplot(121)
-        ax2 = fig.subplot(122, sharex=ax1, sharey=ax1)
+        ax1 = fig.add_subplot(121)
+        ax2 = fig.add_subplot(122, sharex=ax1, sharey=ax1)
 
         ax1.plot(xVec[lim_x:-lim_x + 1] * 1e6, dpx[dpx.shape[1] // 4, lim_x:-lim_x + 1], '-ob', label='1/4')
         ax1.plot(xVec[lim_x:-lim_x + 1] * 1e6, dpx[dpx.shape[1] // 2, lim_x:-lim_x + 1], '-or', label='1/2')
@@ -94,7 +94,7 @@ class FitRadiusDPC(WavePyWidget):
         ax1.set_ylabel('dpx [radians]')
         ax1.legend(loc=0, fontsize='small')
         ax1.set_title('Curvature Radius of WF {:.3g} m'.format(curvrad_x), fontsize=16)
-        ax1.set_adjustable('box-forced')
+        ax1.set_adjustable('box')
 
         ax2.plot(yVec[lim_y:-lim_y + 1] * 1e6, dpy[lim_y:-lim_y + 1, dpy.shape[0] // 4], '-ob', label='1/4')
         ax2.plot(yVec[lim_y:-lim_y + 1] * 1e6, dpy[lim_y:-lim_y + 1, dpy.shape[0] // 2], '-or', label='1/2')
@@ -111,6 +111,6 @@ class FitRadiusDPC(WavePyWidget):
         ax2.set_ylabel('dpy [radians]')
         ax2.legend(loc=0, fontsize='small')
         ax2.set_title('Curvature Radius of WF {:.3g} m'.format(curvrad_y), fontsize=16)
-        ax2.set_adjustable('box-forced')
+        ax2.set_adjustable('box')
 
         return fig
