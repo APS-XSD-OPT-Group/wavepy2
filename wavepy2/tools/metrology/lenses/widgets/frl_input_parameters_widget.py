@@ -64,9 +64,12 @@ def generate_initialization_parameters_frl(thickness_file_name,
                                            diameter4fit_str,
                                            lensGeometry):
 
-    saveFileSuf = thickness_file_name.split('.')[0].split('/')[-1] + '_fit'
 
+    fname2save   = thickness_file_name.split('.')[0].split('/')[-1] + '_fit'
     residual_dir = thickness_file_name.rsplit('/', 1)[0] + PATH_SEPARATOR + 'residuals'
+
+    saveFileSuf = residual_dir + PATH_SEPARATOR + fname2save
+
     os.makedirs(residual_dir, exist_ok=True)
 
     _, file_extension = os.path.splitext(thickness_file_name)
