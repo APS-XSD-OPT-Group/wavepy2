@@ -65,8 +65,10 @@ class PlotProfile(WavePyWidget):
         return self.__title
 
     def build_widget(self, **kwargs):
+        try: str4title = kwargs["str4title"]
+        except: str4title = "Profile Plot"
         try: self.__title = kwargs["title"]
-        except: self.__title = "Profile Plot"
+        except: self.__title = str4title
 
         xmatrix = kwargs["xmatrix"]
         ymatrix = kwargs["ymatrix"]
@@ -105,7 +107,8 @@ class PlotProfile(WavePyWidget):
                                                 zmatrix=zmatrix,
                                                 xlabel=xlabel,
                                                 ylabel=ylabel,
-                                                title=self.__title,
+                                                zlabel=zlabel,
+                                                title=str4title,
                                                 xo=xo,
                                                 yo=yo,
                                                 xunit=xunit,
@@ -168,6 +171,7 @@ class PlotProfileInteractive(WavePyInteractiveWidget):
                                                        zmatrix=zmatrix,
                                                        xlabel=xlabel,
                                                        ylabel=ylabel,
+                                                       zlabel=zlabel,
                                                        title=self.__title,
                                                        xo=xo,
                                                        yo=yo,

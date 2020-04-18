@@ -42,40 +42,65 @@
 # ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE         #
 # POSSIBILITY OF SUCH DAMAGE.                                             #
 # #########################################################################
-
-from PyQt5.QtCore import Qt
-from PyQt5.QtWidgets import QHBoxLayout
-
+import numpy as np
+from matplotlib.figure import Figure
 from wavepy2.util.common import common_tools
 from wavepy2.util.plot.plotter import WavePyWidget
-from wavepy2.tools.common.widgets.simple_plot_widget import SimplePlotWidget
+from wavepy2.util.log.logger import get_registered_logger_instance, get_registered_secondary_logger
+from wavepy2.util.plot.plotter import get_registered_plotter_instance
 
-class ShowCroppedFigure(WavePyWidget):
-    def get_plot_tab_name(self): return self.__title
+from warnings import filterwarnings
+filterwarnings("ignore")
 
-    def build_widget(self, **kwargs):
-        img                = kwargs["img"]
-        pixelsize          = kwargs["pixelsize"]
-        try: self.__title = kwargs["title"]
-        except:self.__title = "Raw Image with New Crop"
-        try: xlabel = kwargs["xlabel"]
-        except: xlabel = r'x [$\mu m$ ]'
-        try: ylabel = kwargs["ylabel"]
-        except: ylabel = r'y [$\mu m$ ]'
+class SlopeErrorHist(WavePyWidget):
+    def get_plot_tab_name(self): return "Slope Error"
 
-        layout = QHBoxLayout()
-        layout.setAlignment(Qt.AlignCenter)
+    def build_mpl_figure(self, **kwargs):
+        thickness     = kwargs["thickness"]
+        pixelsize     = kwargs["pixelsize"]
+        fitted        = kwargs["fitted"]
+        try: delta    = kwargs["delta"]
+        except: delta = 1
+        try: str4title    = kwargs["str4title"]
+        except: str4title = ""
+        output_data = kwargs["output_data"]
+        
+        script_logger = get_registered_secondary_logger()
 
-        widget = SimplePlotWidget(self,
-                                  image=img,
-                                  title="Cropped Raw Image",
-                                  xlabel=xlabel,
-                                  ylabel=ylabel,
-                                  extent=common_tools.extent_func(img, pixelsize)*1e6)
-        layout.addWidget(widget)
+        errorThickness = thickness - fitted
 
-        self.setLayout(layout)
+        fig = Figure(figsize=(15, 8))
+        fig.add_subplot(121)
 
-        self.append_mpl_figure_to_save(widget.get_image_to_change().get_mpl_figure())
+        slope_error_h = np.diff(errorThickness, axis=0) / pixelsize[0] * delta
+        argNotNAN = np.isfinite(slope_error_h)
+        factor_seh, unit_seh = common_tools.choose_unit(slope_error_h[argNotNAN])
+        sigma_seh = np.std(slope_error_h[argNotNAN].flatten())
 
+        fig.gca().hist(slope_error_h[argNotNAN].flatten() * factor_seh, 100, histtype="stepfilled")
+        fig.gca().set_xlabel(r"Slope Error [$  " + unit_seh + " rad$ ]")
+        fig.gca().set_title("Horizontal, SDV = {:.2f}".format(sigma_seh * factor_seh) +  " $" + unit_seh + " rad$")
 
+        fig.add_subplot(122)
+
+        slope_error_v = np.diff(errorThickness, axis=1) / pixelsize[1] * delta
+        argNotNAN = np.isfinite(slope_error_v)
+        factor_sev, unit_sev = common_tools.choose_unit(slope_error_v[argNotNAN])
+        sigma_sev = np.std(slope_error_v[argNotNAN].flatten())
+
+        fig.gca().hist(slope_error_v[argNotNAN].flatten() * factor_sev, 100, histtype="stepfilled")
+        fig.gca().set_xlabel(r"Slope Error [$  " + unit_sev + " rad$ ]")
+        fig.gca().set_title("Vertical, SDV = {:.2f}".format(sigma_sev * factor_sev) + " $" + unit_sev + " rad$")
+
+        if delta != 1:  str4title += " WF slope error"
+        else: str4title += " Thickness slope error"
+        
+        fig.suptitle(str4title, fontsize=18, weight="bold")
+
+        script_logger.print("Slope Error Hor SDV = " + "{:.3f}".format(sigma_seh * factor_seh) + unit_seh + " rad")
+        script_logger.print("Slope Error Ver SDV = " + "{:.3f}".format(sigma_sev * factor_sev) + unit_sev + " rad")
+
+        output_data["sigma_seh"] = sigma_seh
+        output_data["sigma_sev"] = sigma_sev
+
+        return fig

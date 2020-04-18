@@ -63,6 +63,7 @@ def generate_initialization_parameters_frl(thickness_file_name,
                                            nominalRadius,
                                            diameter4fit_str,
                                            lensGeometry,
+                                           phenergy,
                                            crop_image,
                                            fit_radius_dpc):
 
@@ -107,6 +108,7 @@ def generate_initialization_parameters_frl(thickness_file_name,
                       nominalRadius=nominalRadius,
                       diameter4fit_list=diameter4fit_list,
                       lensGeometry=lensGeometry,
+                      phenergy=phenergy,
                       saveFileSuf=saveFileSuf,
                       crop_image=crop_image,
                       fit_radius_dpc=fit_radius_dpc)
@@ -126,6 +128,7 @@ class FRLInputParametersWidget(WavePyInteractiveWidget):
         self.nominalRadius        = self.__ini.get_float_from_ini("Parameters", "nominal radius for fitting", default=1e-4)
         self.diameter4fit_str     = self.__ini.get_string_from_ini("Parameters", "diameter of active area for fitting", default="800")
         self.lensGeometry         = LENS_GEOMETRIES.index(self.__ini.get_string_from_ini("Parameters", "lens geometry", default=LENS_GEOMETRIES[2]))
+        self.phenergy             = self.__ini.get_float_from_ini("Parameters", "photon energy", default=14000.0)
 
         self.crop_image         = self.__ini.get_boolean_from_ini("Runtime", "crop image", default=False)
         self.fit_radius_dpc     = self.__ini.get_boolean_from_ini("Runtime", "fit radius dpc", default=False)
@@ -156,6 +159,7 @@ class FRLInputParametersWidget(WavePyInteractiveWidget):
         plot_tools.lineEdit(main_box, self, "nominalRadius", label="Nominal Radius For Fitting", labelWidth=350, valueType=float, orientation="horizontal")
         plot_tools.lineEdit(main_box, self, "diameter4fit_str", label="Diameter of active area for fitting\n(comma separated list)", labelWidth=250, valueType=str, orientation="horizontal")
         plot_tools.comboBox(main_box, self, "lensGeometry", label="Lens Geometry", items=LENS_GEOMETRIES, orientation="horizontal")
+        plot_tools.lineEdit(main_box, self, "phenergy", label="Photon Energy", labelWidth=250, valueType=float, orientation="horizontal")
 
         main_box = plot_tools.widgetBox(runtime_widget, "", width=self.WIDTH-70, height=self.HEIGHT-50)
 
@@ -173,6 +177,7 @@ class FRLInputParametersWidget(WavePyInteractiveWidget):
         self.__ini.set_value_at_ini("Parameters", "nominal radius for fitting", self.nominalRadius)
         self.__ini.set_value_at_ini("Parameters", "diameter of active area for fitting", self.diameter4fit_str)
         self.__ini.set_value_at_ini("Parameters", "lens geometry", LENS_GEOMETRIES[self.lensGeometry])
+        self.__ini.set_value_at_ini('Parameters', 'Photon Energy', self.phenergy)
         self.__ini.set_value_at_ini("Runtime", "crop image", self.crop_image)
         self.__ini.set_value_at_ini("Runtime", "fit radius dpc", self.fit_radius_dpc)
 
@@ -183,6 +188,7 @@ class FRLInputParametersWidget(WavePyInteractiveWidget):
                                                       self.nominalRadius,
                                                       self.diameter4fit_str,
                                                       LENS_GEOMETRIES[self.lensGeometry],
+                                                      self.phenergy,
                                                       self.crop_image,
                                                       self.fit_radius_dpc)
 

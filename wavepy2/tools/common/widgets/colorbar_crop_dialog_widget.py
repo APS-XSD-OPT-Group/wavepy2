@@ -44,7 +44,7 @@
 # #########################################################################
 from wavepy2.tools.common.widgets.figure_slide_colorbar import FigureSlideColorbar
 from wavepy2.tools.common.widgets.graphical_roi_idx import GraphicalRoiIdx
-from wavepy2.tools.common.widgets.simple_plot import SimplePlot
+from wavepy2.tools.common.widgets.simple_plot_widget import SimplePlotWidget
 from wavepy2.util.common import common_tools
 from wavepy2.util.ini.initializer import get_registered_ini_instance
 from wavepy2.util.log.logger import get_registered_logger_instance, LoggerColor
@@ -72,12 +72,12 @@ class ColorbarCropDialogPlot(WavePyInteractiveWidget):
         self.__initialize(img, idx4crop)
         self.__logger.print_other(idx4crop, "Stored Crop Indexes: ", color=LoggerColor.RED)
 
-        original_cropped_image = SimplePlot(self,
-                                            image=self.__cropped_img,
-                                            title="Raw Image with initial Crop",
-                                            xlabel=r'$[\mu m]$',
-                                            ylabel=r'$[\mu m]$',
-                                            extent=common_tools.extent_func(self.__cropped_img, pixelsize) * 1e6)
+        original_cropped_image = SimplePlotWidget(self,
+                                                  image=self.__cropped_img,
+                                                  title="Raw Image with initial Crop",
+                                                  xlabel=r'$[\mu m]$',
+                                                  ylabel=r'$[\mu m]$',
+                                                  extent=common_tools.extent_func(self.__cropped_img, pixelsize) * 1e6)
 
         self.crop_image = GraphicalRoiIdx(self,
                                           image=img,

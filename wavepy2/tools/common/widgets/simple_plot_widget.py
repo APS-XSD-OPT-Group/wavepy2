@@ -44,17 +44,47 @@
 # #########################################################################
 
 from PyQt5.QtCore import Qt
-from PyQt5.QtWidgets import QWidget, QVBoxLayout
+from PyQt5.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.figure import Figure
 
 from wavepy2.util.plot.plot_tools import WIDGET_FIXED_WIDTH
 from wavepy2.tools.common.widgets.image_to_change import ImageToChange
 
+from wavepy2.util.common import common_tools
+from wavepy2.util.plot.plotter import WavePyWidget
 
-class SimplePlot(QWidget):
+class SimplePlot(WavePyWidget):
+    def get_plot_tab_name(self): return self.__title
+
+    def build_widget(self, **kwargs):
+        img                = kwargs["img"]
+        pixelsize          = kwargs["pixelsize"]
+        try: self.__title = kwargs["title"]
+        except: self.__title = "Plot Image"
+        try: xlabel = kwargs["xlabel"]
+        except: xlabel = r'x [$\mu m$ ]'
+        try: ylabel = kwargs["ylabel"]
+        except: ylabel = r'y [$\mu m$ ]'
+
+        layout = QHBoxLayout()
+        layout.setAlignment(Qt.AlignCenter)
+
+        widget = SimplePlotWidget(self,
+                                  image=img,
+                                  title=self.__title,
+                                  xlabel=xlabel,
+                                  ylabel=ylabel,
+                                  extent=common_tools.extent_func(img, pixelsize)*1e6)
+        layout.addWidget(widget)
+
+        self.setLayout(layout)
+
+        self.append_mpl_figure_to_save(widget.get_image_to_change().get_mpl_figure())
+
+class SimplePlotWidget(QWidget):
     def __init__(self, parent, image, title='', xlabel='', ylabel='', **kwargs4imshow):
-        super(SimplePlot, self).__init__(parent)
+        super(SimplePlotWidget, self).__init__(parent)
 
         figure_canvas = FigureCanvas(Figure())
         mpl_figure = figure_canvas.figure

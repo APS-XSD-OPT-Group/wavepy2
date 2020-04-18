@@ -42,40 +42,80 @@
 # ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE         #
 # POSSIBILITY OF SUCH DAMAGE.                                             #
 # #########################################################################
-
-from PyQt5.QtCore import Qt
-from PyQt5.QtWidgets import QHBoxLayout
-
+import numpy as np
+from matplotlib.figure import Figure
 from wavepy2.util.common import common_tools
 from wavepy2.util.plot.plotter import WavePyWidget
-from wavepy2.tools.common.widgets.simple_plot_widget import SimplePlotWidget
+from wavepy2.util.log.logger import get_registered_logger_instance
+from wavepy2.util.plot.plotter import get_registered_plotter_instance
 
-class ShowCroppedFigure(WavePyWidget):
-    def get_plot_tab_name(self): return self.__title
+from warnings import filterwarnings
+filterwarnings("ignore")
 
-    def build_widget(self, **kwargs):
-        img                = kwargs["img"]
-        pixelsize          = kwargs["pixelsize"]
-        try: self.__title = kwargs["title"]
-        except:self.__title = "Raw Image with New Crop"
-        try: xlabel = kwargs["xlabel"]
-        except: xlabel = r'x [$\mu m$ ]'
-        try: ylabel = kwargs["ylabel"]
-        except: ylabel = r'y [$\mu m$ ]'
+class PlotResidual1D(WavePyWidget):
+    def get_plot_tab_name(self): return "Fit center profile " + self.__direction
 
-        layout = QHBoxLayout()
-        layout.setAlignment(Qt.AlignCenter)
+    def build_mpl_figure(self, **kwargs):
+        xvec              = kwargs["xvec"]
+        data              = kwargs["data"]
+        fitted            = kwargs["fitted"]
+        self.__direction  = kwargs["direction"]
+        str4title         = kwargs["str4title"]
+        try:    saveAscii = kwargs["saveAscii"]
+        except: saveAscii = False
 
-        widget = SimplePlotWidget(self,
-                                  image=img,
-                                  title="Cropped Raw Image",
-                                  xlabel=xlabel,
-                                  ylabel=ylabel,
-                                  extent=common_tools.extent_func(img, pixelsize)*1e6)
-        layout.addWidget(widget)
+        logger   = get_registered_logger_instance()
 
-        self.setLayout(layout)
+        errorThickness = -data + fitted
+        argNotNAN = np.isfinite(errorThickness)
 
-        self.append_mpl_figure_to_save(widget.get_image_to_change().get_mpl_figure())
+        factorx, unitx = common_tools.choose_unit(xvec)
+        factory1, unity1 = common_tools.choose_unit(data)
+        factory2, unity2 = common_tools.choose_unit(errorThickness)
 
+        ptp        = np.ptp(errorThickness[argNotNAN].flatten() * factory2)
+        sigmaError = np.std(errorThickness[argNotNAN].flatten() * factory2)
 
+        logger.print_message("PV: {0:4.3g} ".format(ptp) + unity2[-1] + "m")
+        logger.print_message("SDV: {0:4.3g} ".format(sigmaError) + unity2[-1] + "m")
+
+        str4title += "\n" + r"PV $= {0:.2f}$ ".format(ptp) + "$" + unity2 + "  m$, SDV $= {0:.2f}$ ".format(sigmaError) + "$" + unity2 + "  m$"
+
+        fig = Figure(figsize=(10, 7))
+        ax1 = fig.gca()
+        ax1.plot(xvec[argNotNAN] * factorx, data[argNotNAN] * factory1,   "-ko", markersize=5, label="1D data")
+        ax1.plot(xvec[argNotNAN] * factorx, fitted[argNotNAN] * factory1, "-+r", label="Fit parabolic")
+
+        ax2 = ax1.twinx()
+
+        # trick to add both axes to legend
+        ax2.plot(np.nan, "-ko", label="1D data")
+        ax2.plot(np.nan, "-+r", label="Fit parabolic")
+
+        ax2.plot(xvec[argNotNAN] * factorx, errorThickness[argNotNAN] * factory2, "-+", markersize=5, label="fit residual")
+
+        fig.gca().set_title(str4title)
+
+        for tl in ax2.get_yticklabels(): tl.set_color("b")
+
+        ax2.legend(loc=1, fontsize="small")
+
+        ax1.grid(color="gray")
+        ax1.set_xlabel(r"[$" + unitx + " m$]")
+        ax1.set_ylabel(r"Thickness " + r"[$" + unity1 + " m$]")
+
+        ax2.set_ylim(-1.1 * np.max(np.abs(errorThickness[argNotNAN]) * factory2), 1.1 * np.max(np.abs(errorThickness[argNotNAN]) * factory2))
+        ax2.set_ylabel(r"Residual" + r"[$" + unity2 + " m$]")
+        ax2.grid(b="off")
+        fig.gca().set_xlim(-1.1 * np.max(xvec * factorx), 1.1 * np.max(xvec * factorx))
+
+        fig.tight_layout(rect=(0, 0, 1, .98))
+
+        if saveAscii:
+            np.savetxt(common_tools.get_unique_filename(get_registered_plotter_instance().get_save_file_prefix(), "csv"),
+                       np.transpose([xvec, data, fitted, fitted - data]),
+                       delimiter=",\t",
+                       header="xvec, data, fitted, residual, " + str4title,
+                       fmt="%.6g")
+
+        return fig
