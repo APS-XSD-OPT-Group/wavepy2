@@ -112,7 +112,7 @@ class __FitResidualLenses(FitResidualLensesFacade):
     def crop_thickness(self, initialization_parameters):
         self.__plotter.register_context_window(CROP_THICKNESS_CONTEXT_KEY)
 
-        crop_thickness = initialization_parameters.get_parameter("crop_thickness")
+        crop_thickness = initialization_parameters.get_parameter("crop_image")
         thickness      = initialization_parameters.get_parameter("thickness")
         xx             = initialization_parameters.get_parameter("xx")
         yy             = initialization_parameters.get_parameter("yy")
