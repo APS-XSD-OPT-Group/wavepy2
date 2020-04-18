@@ -169,7 +169,7 @@ class FRLInputParametersWidget(WavePyInteractiveWidget):
         self.update()
 
     def selectThicknessFile(self):
-        self.le_thickness.setText(plot_tools.selectFileFromDialog(self, self.thickness_file_name, "Open Thickness File", file_extension_filter=".sdf; .pickle"))
+        self.le_thickness.setText(plot_tools.selectFileFromDialog(self, self.thickness_file_name, "Open Thickness File", file_extension_filter="Thickness Files (*.sdf *.pickle)"))
 
     def get_accepted_output(self):
         self.__ini.set_value_at_ini("Files", "file with thickness", self.thickness_file_name)

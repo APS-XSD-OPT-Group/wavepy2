@@ -265,8 +265,8 @@ class __AbstractActivePlotter(__AbstractPlotter):
                 widths.append(plot_widget_instance.width())
                 heights.append(plot_widget_instance.height())
         else:
-            label = plot_tools.widgetLabel(tab_widget, "\n\n\n\n\n                     Nothing to Display")
-            label.setStyleSheet("font: 30pt")
+            label = plot_tools.widgetLabel(tab_widget, "\n\n\n\n\n        Nothing to Display")
+            label.setStyleSheet("font: 24pt")
             widths.append(500)
             heights.append(370)
 
