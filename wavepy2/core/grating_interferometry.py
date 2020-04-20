@@ -366,7 +366,7 @@ def visib_1st_harmonics(img, harmonicPeriod, searchRegion=20, unFilterSize=1):
 from wavepy2.core.surface_from_grad import frankotchellappa, error_integration
 from wavepy2.core.widgets.crop_dialog_widget import CropDialogPlot
 
-def dpc_integration(dpc01, dpc10, pixelsize, shifthalfpixel=False, context_key="dpc_integration", message="New Crop for Integration?"):
+def crop_for_integration(dpc01, dpc10, pixelsize, message="New Crop for Integration?"):
     img = dpc01**2+dpc10**2
 
     vmin = mean_plus_n_sigma(img, -3)
@@ -384,6 +384,9 @@ def dpc_integration(dpc01, dpc10, pixelsize, shifthalfpixel=False, context_key="
     dpc01 = crop_matrix_at_indexes(dpc01, idx)
     dpc10 = crop_matrix_at_indexes(dpc10, idx)
 
+    return dpc01, dpc10
+
+def dpc_integration(dpc01, dpc10, pixelsize, shifthalfpixel=False, context_key="dpc_integration"):
     phase = frankotchellappa(dpc01*pixelsize[1], dpc10*pixelsize[0], reflec_pad=True)
 
     error_integration(dpc01*pixelsize[1],

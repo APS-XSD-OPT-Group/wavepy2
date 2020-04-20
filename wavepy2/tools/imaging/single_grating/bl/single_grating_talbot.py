@@ -317,6 +317,9 @@ class __SingleGratingTalbot(SingleGratingTalbotFacade):
     def correct_zero_dpc(self, dpc_result, initialization_parameters):
         dpc01              = dpc_result.get_parameter("diffPhase01")
         dpc10              = dpc_result.get_parameter("diffPhase10")
+
+        np.savetxt(fname="dpc01_new.txt", X=dpc01)
+
         virtual_pixelsize  = dpc_result.get_parameter("virtual_pixelsize")
 
         phenergy           = initialization_parameters.get_parameter("phenergy")
@@ -512,8 +515,9 @@ class __SingleGratingTalbot(SingleGratingTalbotFacade):
 
             self.__main_logger.print_message('Performing Frankot-Chellappa Integration')
 
-            phase = self.__doIntegration(diffPhase01, diffPhase10, virtual_pixelsize,
-                                         INTEGRATION_CONTEXT_KEY, message="Crop Differential Phase")
+            diffPhase01, diffPhase10 = self.__crop_for_integration(diffPhase01, diffPhase10, virtual_pixelsize, message="Crop Differential Phase")
+
+            phase = self.__doIntegration(diffPhase01, diffPhase10, virtual_pixelsize, INTEGRATION_CONTEXT_KEY)
 
             self.__main_logger.print_message('DONE')
             self.__main_logger.print_message('Plotting Phase in meters')
@@ -612,8 +616,9 @@ class __SingleGratingTalbot(SingleGratingTalbotFacade):
         if do_integration and remove_linear:
             self.__plotter.register_context_window(CALCULATE_2ND_ORDER_COMPONENT_OF_THE_PHASE)
 
-            data = 1 / 2 / np.pi * self.__doIntegration(linfitDPC01, linfitDPC10, virtual_pixelsize,
-                                                        CALCULATE_2ND_ORDER_COMPONENT_OF_THE_PHASE, message="New Crop for 2nd order component of the phase?") # phase_2nd_order
+            dpc01, dpc10 = self.__crop_for_integration(linfitDPC01, linfitDPC10, virtual_pixelsize, message="New Crop for 2nd order component of the phase?")
+
+            data = 1 / 2 / np.pi * self.__doIntegration(dpc01, dpc10, virtual_pixelsize, CALCULATE_2ND_ORDER_COMPONENT_OF_THE_PHASE) # phase_2nd_order
 
             self.__plotter.push_plot_on_context(CALCULATE_2ND_ORDER_COMPONENT_OF_THE_PHASE, PlotIntegration,
                                                 title="2nd order component of the phase",
@@ -624,8 +629,9 @@ class __SingleGratingTalbot(SingleGratingTalbotFacade):
                                                 max3d_grid_points=101,
                                                 kwarg4surf={})
 
-            data = 1 / 2 / np.pi * self.__doIntegration(diffPhase01 - linfitDPC01, diffPhase10 - linfitDPC10, virtual_pixelsize,
-                                                        CALCULATE_2ND_ORDER_COMPONENT_OF_THE_PHASE, message="New Crop for difference to 2nd order of the phase?")
+            dpc01, dpc10 = self.__crop_for_integration(diffPhase01 - linfitDPC01, diffPhase10 - linfitDPC10, virtual_pixelsize, message="New Crop for difference to 2nd order component of the phase?")
+
+            data = 1 / 2 / np.pi * self.__doIntegration(dpc01, dpc10, virtual_pixelsize, CALCULATE_2ND_ORDER_COMPONENT_OF_THE_PHASE)
 
             self.__plotter.push_plot_on_context(CALCULATE_2ND_ORDER_COMPONENT_OF_THE_PHASE, PlotIntegration,
                                                 title="Difference to 2nd order of the phase",
@@ -723,8 +729,12 @@ class __SingleGratingTalbot(SingleGratingTalbotFacade):
         self.__plotter.draw_context_on_widget(context_key, container_widget=self.__plotter.get_context_container_widget(context_key))
 
     @classmethod
-    def __doIntegration(cls, diffPhase01, diffPhase10, virtual_pixelsize, context_key, message="New Crop for Integration?"):
-        phase = grating_interferometry.dpc_integration(diffPhase01, diffPhase10, virtual_pixelsize, context_key=context_key, message=message)
+    def __crop_for_integration(cls, dpc01, dpc10, pixelsize, message="New Crop for Integration?"):
+        return grating_interferometry.crop_for_integration(dpc01, dpc10, pixelsize, message)
+
+    @classmethod
+    def __doIntegration(cls, diffPhase01, diffPhase10, virtual_pixelsize, context_key):
+        phase = grating_interferometry.dpc_integration(diffPhase01, diffPhase10, virtual_pixelsize, context_key=context_key)
         phase -= np.min(phase)
 
         return phase
