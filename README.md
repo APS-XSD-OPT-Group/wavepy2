@@ -1,6 +1,6 @@
 # WavePy 2.0
 
-Wavepy2 is a refactored version of [wavepy](https://github.com/APS-XSD-OPT-Group/wavepy) and [wavepytools](https://github.com/APS-XSD-OPT-Group/wavepytools), containing the functionalities commonly in use at 1BM beamline at the APS.
+Wavepy2 is a refactored version of [wavepy](https://github.com/APS-XSD-OPT-Group/wavepy) and [wavepytools](https://github.com/APS-XSD-OPT-Group/wavepytools).
 
 Prerequisites: `xraylib 3.3.0` - see: https://github.com/tschoonj/xraylib/wiki/Installation-instructions
 
