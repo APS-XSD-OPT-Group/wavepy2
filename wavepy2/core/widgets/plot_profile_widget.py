@@ -50,7 +50,7 @@ from PyQt5.QtCore import Qt
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.figure import Figure
 from matplotlib.widgets import Cursor
-from matplotlib.pyplot import subplot2grid, silent_list
+from matplotlib.pyplot import subplot2grid#, silent_list
 
 from wavepy2.util.plot import plot_tools
 from wavepy2.util.plot.plotter import WavePyWidget, WavePyInteractiveWidget
@@ -299,7 +299,7 @@ class PlotProfileWidget(QWidget):
             for l in labels:
                 l.update(kwargs)
 
-            return locs, silent_list('Text xticklabel', labels)
+            #return locs, silent_list('Text xticklabel', labels)
 
         def set_yticks(ax, ticks=None, labels=None, **kwargs):
             if ticks is None and labels is None:
@@ -314,7 +314,7 @@ class PlotProfileWidget(QWidget):
             for l in labels:
                 l.update(kwargs)
 
-            return locs, silent_list('Text xticklabel', labels)
+            #return locs, silent_list('Text xticklabel', labels)
 
         # Top graph, horizontal profile. Empty, wait data from cursor on the graph.
         top_subplot = subplot2grid((4, 5), (0, 1), fig=fig, rowspan=1, colspan=3)

@@ -75,22 +75,22 @@ class ErrorIntegration(WavePyWidget):
         ax1.ticklabel_format(style='sci', axis='both', scilimits=(0, 1))
         ax1.plot(xx[midleX, :], delx_f[midleX, :], '-kx', markersize=10, label='dx data')
         ax1.plot(xx[midleX, :], grad_x[midleX, :], '-r+', markersize=10, label='dx reconstructed')
-        ax1.legend(loc=0)
+        ax1.legend(loc=7)
 
         ax2 = figure.add_subplot(223, sharex=ax1)
         ax2.plot(xx[midleX, :], error_x[midleX, :], '-g.', label='error x')
         ax2.set_title(r'$\mu$ = {:.2g}'.format(np.mean(error_x[midleX, :])))
-        ax2.legend(loc=0)
+        ax2.legend(loc=7)
 
         ax3 = figure.add_subplot(222, sharex=ax1, sharey=ax1)
         ax3.plot(yy[:, midleY], delx_y[:, midleY], '-kx', markersize=10, label='dy data')
         ax3.plot(yy[:, midleY], grad_y[:, midleY], '-r+', markersize=10, label='dy reconstructed')
-        ax3.legend(loc=0)
+        ax3.legend(loc=7)
 
         ax4 = figure.add_subplot(224, sharex=ax1, sharey=ax2)
         ax4.plot(yy[:, midleY], error_y[:, midleY], '-g.', label='error y')
         ax4.set_title(r'$\mu$ = {:.2g}'.format(np.mean(error_y[:, midleY])))
-        ax4.legend(loc=0)
+        ax4.legend(loc=7)
 
         figure.suptitle('Error integration', fontsize=22)
 

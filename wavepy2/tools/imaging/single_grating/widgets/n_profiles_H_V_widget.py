@@ -197,7 +197,7 @@ class NProfilesHV(WavePyWidget):
 
         if remove1stOrderDPC: titleH = titleH + ', 2nd order removed'
 
-        figure1.legend(title='Pixel Y', loc=0, fontsize=12)
+        figure1.legend(title='Pixel Y', loc='center left', fontsize=12)
         figure1.gca().set_xlabel(r'x [$\mu m$]', fontsize=18)
         figure1.gca().set_ylabel(zlabel, fontsize=18)
         figure1.gca().set_title(titleH + ', Filter Width = {:d} pixels'.format(filter_width), fontsize=20)
@@ -262,7 +262,7 @@ class NProfilesHV(WavePyWidget):
 
         if remove1stOrderDPC: titleV = titleV + ', 2nd order removed'
 
-        figure1.legend(title='Pixel X', loc=0, fontsize=12)
+        figure1.legend(title='Pixel X', loc=7, fontsize=12)
 
         figure1.gca().set_xlabel(r'y [$\mu m$]', fontsize=18)
         figure1.gca().set_ylabel(zlabel, fontsize=18)

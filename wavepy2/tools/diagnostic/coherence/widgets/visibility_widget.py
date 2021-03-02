@@ -28,6 +28,6 @@ class VisibilityPlot(WavePyWidget):
         figure.gca().set_xlabel(r'Distance $z$  [mm]', fontsize=14)
         figure.gca().set_ylabel(r'Visibility $\times$ 100 [%]', fontsize=14)
         figure.gca().set_title('Visibility vs detector distance', fontsize=14, weight='bold')
-        figure.gca().legend(fontsize=14, loc=0)
+        figure.gca().legend(fontsize=14, loc=7)
 
         return figure

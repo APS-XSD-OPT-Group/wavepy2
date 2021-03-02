@@ -92,7 +92,7 @@ class FitRadiusDPC(WavePyWidget):
         ax1.ticklabel_format(style='sci', axis='y', scilimits=(0, 1))
         ax1.set_xlabel(r'[$\mu m$]')
         ax1.set_ylabel('dpx [radians]')
-        ax1.legend(loc=0, fontsize='small')
+        ax1.legend(loc=7, fontsize='small')
         ax1.set_title('Curvature Radius of WF {:.3g} m'.format(curvrad_x), fontsize=16)
         ax1.set_adjustable('box')
 
@@ -109,7 +109,7 @@ class FitRadiusDPC(WavePyWidget):
         ax2.ticklabel_format(style='sci', axis='y', scilimits=(0, 1))
         ax2.set_xlabel(r'[$\mu m$]')
         ax2.set_ylabel('dpy [radians]')
-        ax2.legend(loc=0, fontsize='small')
+        ax2.legend(loc=7, fontsize='small')
         ax2.set_title('Curvature Radius of WF {:.3g} m'.format(curvrad_y), fontsize=16)
         ax2.set_adjustable('box')
 

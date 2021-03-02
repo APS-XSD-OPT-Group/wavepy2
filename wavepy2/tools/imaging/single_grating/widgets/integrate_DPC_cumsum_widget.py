@@ -120,7 +120,7 @@ class IntegrateDPCCumSum(WavePyWidget):
         figure1.gca().set_xlim([np.min(xvec*factor_x)-marginx, np.max(xvec*factor_x)+marginx])
         figure1.gca().set_xlabel(xlabel + r' [$' + unit_x + ' m$]')
         figure1.gca().set_ylabel(ylabel + r' [$' + unit_y + ' m$]')
-        figure1.legend(loc=0, fontsize=12)
+        figure1.legend(loc=7, fontsize=12)
 
         if grazing_angle//.00001 > 0:
             figure1.gca().set_title(titleStr + 'Mirror Height,\n' +
