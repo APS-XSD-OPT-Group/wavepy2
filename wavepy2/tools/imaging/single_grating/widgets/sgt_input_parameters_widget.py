@@ -152,7 +152,7 @@ class SGTInputParametersWidget(WavePyInteractiveWidget):
     WIDTH  = 800
     HEIGHT = 430
 
-    def __init__(self, parent):
+    def __init__(self, parent, show_runtime_options=True):
         super(SGTInputParametersWidget, self).__init__(parent, message="Input Parameters", title="Input Parameters")
         self.__ini     = get_registered_ini_instance()
         self.__logger  = get_registered_logger_instance()
@@ -177,6 +177,7 @@ class SGTInputParametersWidget(WavePyInteractiveWidget):
         self.remove_2nd_order   = self.__ini.get_boolean_from_ini("Runtime", "remove 2nd order", default=False)
         self.material_idx       = self.__ini.get_int_from_ini("Runtime", "material idx", default=0)
 
+        self.show_runtime_options = show_runtime_options
 
     def build_widget(self, **kwargs):
         self.setFixedWidth(self.WIDTH)
@@ -187,12 +188,8 @@ class SGTInputParametersWidget(WavePyInteractiveWidget):
         ini_widget = QWidget()
         ini_widget.setFixedHeight(self.HEIGHT-10)
         ini_widget.setFixedWidth(self.WIDTH-10)
-        runtime_widget = QWidget()
-        runtime_widget.setFixedHeight(self.HEIGHT-10)
-        runtime_widget.setFixedWidth(self.WIDTH-10)
 
         plot_tools.createTabPage(tabs, "Initialization Parameter", widgetToAdd=ini_widget)
-        plot_tools.createTabPage(tabs, "Runtime Parameter", widgetToAdd=runtime_widget)
 
         main_box = plot_tools.widgetBox(ini_widget, "", width=self.WIDTH-70, height=self.HEIGHT-50)
 
@@ -222,16 +219,24 @@ class SGTInputParametersWidget(WavePyInteractiveWidget):
         plot_tools.lineEdit(main_box, self, "sourceDistance", label="Source Distance", labelWidth=250, valueType=float, orientation="horizontal")
 
         #--------------------------------------------------
-        main_box = plot_tools.widgetBox(runtime_widget, "", width=self.WIDTH-70, height=self.HEIGHT-50)
 
-        plot_tools.checkBox(main_box, self, "correct_pi_jump", "Correct pi jump in DPC signal")
-        plot_tools.checkBox(main_box, self, "remove_mean", "Remove mean DPC")
-        plot_tools.checkBox(main_box, self, "correct_dpc_center", "Correct DPC center")
-        plot_tools.checkBox(main_box, self, "remove_linear", "Remove 2D linear fit from DPC")
-        plot_tools.checkBox(main_box, self, "do_integration", "Calculate Frankot-Chellappa integration")
-        plot_tools.checkBox(main_box, self, "calc_thickness", "Convert phase to thickness")
-        plot_tools.checkBox(main_box, self, "remove_2nd_order", "Remove 2nd order polynomial from integrated Phase")
-        plot_tools.comboBox(main_box, self, "material_idx", items=["Diamond", "Beryllium"], label="Material", labelWidth=200, orientation="horizontal")
+        if self.show_runtime_options:
+            runtime_widget = QWidget()
+            runtime_widget.setFixedHeight(self.HEIGHT-10)
+            runtime_widget.setFixedWidth(self.WIDTH-10)
+
+            plot_tools.createTabPage(tabs, "Runtime Parameter", widgetToAdd=runtime_widget)
+
+            main_box = plot_tools.widgetBox(runtime_widget, "", width=self.WIDTH-70, height=self.HEIGHT-50)
+
+            plot_tools.checkBox(main_box, self, "correct_pi_jump", "Correct pi jump in DPC signal")
+            plot_tools.checkBox(main_box, self, "remove_mean", "Remove mean DPC")
+            plot_tools.checkBox(main_box, self, "correct_dpc_center", "Correct DPC center")
+            plot_tools.checkBox(main_box, self, "remove_linear", "Remove 2D linear fit from DPC")
+            plot_tools.checkBox(main_box, self, "do_integration", "Calculate Frankot-Chellappa integration")
+            plot_tools.checkBox(main_box, self, "calc_thickness", "Convert phase to thickness")
+            plot_tools.checkBox(main_box, self, "remove_2nd_order", "Remove 2nd order polynomial from integrated Phase")
+            plot_tools.comboBox(main_box, self, "material_idx", items=["Diamond", "Beryllium"], label="Material", labelWidth=200, orientation="horizontal")
 
         self.update()
 
