@@ -290,10 +290,10 @@ class __AbstractActivePlotter(__AbstractPlotter):
             widths.append(500)
             heights.append(370)
 
-        tab_widget.setFixedWidth(max(widths)+20)
-        tab_widget.setFixedHeight(max(heights)+ (35 if add_context_label else 5) )
-        container_widget.setFixedWidth(tab_widget.width()+25)
-        container_widget.setFixedHeight(tab_widget.height()+ 45)
+        tab_widget.setFixedWidth(max(widths) + 20)
+        tab_widget.setFixedHeight(max(heights) + 35)
+        container_widget.setFixedWidth(tab_widget.width() + 25)
+        container_widget.setFixedHeight(tab_widget.height() + 55)
 
         container_widget.update()
 

@@ -64,6 +64,8 @@ class AbstractColorbarCropWidget():
         img         = kwargs["img"]
         pixelsize   = kwargs["pixelsize"]
 
+        self.setFixedHeight(650)
+
         try: self.setWindowTitle(kwargs["message"])
         except: pass
 
