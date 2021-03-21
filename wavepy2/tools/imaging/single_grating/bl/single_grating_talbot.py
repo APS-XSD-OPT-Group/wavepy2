@@ -199,7 +199,8 @@ class __SingleGratingTalbot(SingleGratingTalbotFacade):
                           img_size_o=img_size_o)
 
     def crop_reference_image(self, initialization_parameters, initial_crop_parameters):
-        imgRef          = initialization_parameters.get_parameter("imgRef")
+        imgRef   = initialization_parameters.get_parameter("imgRef")
+        idx4crop = initial_crop_parameters.get_parameter("idx4crop")
 
         if not imgRef is None: imgRef = common_tools.crop_matrix_at_indexes(imgRef, idx4crop)
 
