@@ -83,8 +83,12 @@ CALCULATE_2ND_ORDER_COMPONENT_OF_THE_PHASE = "Calculate 2nd order component of t
 REMOVE_2ND_ORDER                           = "Remove 2nd order"
 
 class SingleGratingTalbotFacade:
-    def get_initialization_parameters(self, script_logger_mode, plotting_properties=PlottingProperties()): raise NotImplementedError()
+    def draw_initialization_parameters_widget(self, plotting_properties=PlottingProperties()): raise NotImplementedError()
+    def get_initialization_parameters(self, plotting_properties=PlottingProperties()): raise NotImplementedError()
+    def manager_initialization(self, initialization_parameters, script_logger_mode): raise NotImplementedError()
+
     def crop_initial_image(self, initialization_parameters, plotting_properties=PlottingProperties()): raise NotImplementedError()
+
     def calculate_dpc(self, initial_crop_parameters, initialization_parameters, plotting_properties=PlottingProperties()): raise NotImplementedError()
     def recrop_dpc(self, dpc_result, initialization_parameters, plotting_properties=PlottingProperties()): raise NotImplementedError()
     def correct_zero_dpc(self, dpc_result, initialization_parameters, plotting_properties=PlottingProperties()): raise NotImplementedError()
@@ -110,15 +114,25 @@ class __SingleGratingTalbot(SingleGratingTalbotFacade):
 
     def draw_initialization_parameters_widget(self, plotting_properties=PlottingProperties()):
         if self.__plotter.is_active():
-            self.__plotter.register_context_window(INITIALIZATION_PARAMETERS_KEY, context_window=plotting_properties.get_context_widget())
-            self.__plotter.push_plot_on_context(INITIALIZATION_PARAMETERS_KEY, SGTInputParametersWidget, show_runtime_options=False)
-            self.__draw_context(INITIALIZATION_PARAMETERS_KEY)
+            show_runtime_options = plotting_properties.get_parameter("show_runtime_options", True)
+            add_context_label    = plotting_properties.get_parameter("add_context_label", True)
+            use_unique_id        = plotting_properties.get_parameter("use_unique_id", False)
 
-            return self.__plotter.get_plots_of_context(INITIALIZATION_PARAMETERS_KEY)
+            # register: add context unique id as key
+            # make it optional
+
+            unique_id = self.__plotter.register_context_window(INITIALIZATION_PARAMETERS_KEY,
+                                                               context_window=plotting_properties.get_context_widget(),
+                                                               use_unique_id=use_unique_id)
+
+            self.__plotter.push_plot_on_context(INITIALIZATION_PARAMETERS_KEY, SGTInputParametersWidget, unique_id, show_runtime_options=show_runtime_options)
+            self.__plotter.draw_context(INITIALIZATION_PARAMETERS_KEY, add_context_label=add_context_label, unique_id=unique_id)
+
+            return self.__plotter.get_plots_of_context(INITIALIZATION_PARAMETERS_KEY, unique_id=unique_id)
         else:
             return None
 
-    def get_initialization_parameters(self, script_logger_mode, plotting_properties=PlottingProperties()):
+    def get_initialization_parameters(self, plotting_properties=PlottingProperties()):
         if self.__plotter.is_active():
             initialization_parameters = self.__plotter.show_interactive_plot(SGTInputParametersDialog,
                                                                              container_widget=plotting_properties.get_container_widget(),
@@ -143,6 +157,11 @@ class __SingleGratingTalbot(SingleGratingTalbotFacade):
                                                                                remove_2nd_order   = self.__ini.get_boolean_from_ini("Runtime", "remove 2nd order", default=False),
                                                                                material_idx       = self.__ini.get_int_from_ini("Runtime", "material idx", default=0))
 
+        return initialization_parameters
+
+    # %% ==================================================================================================
+
+    def manager_initialization(self, initialization_parameters, script_logger_mode):
         plotter = get_registered_plotter_instance()
         plotter.register_save_file_prefix(initialization_parameters.get_parameter("saveFileSuf"))
 
@@ -156,9 +175,6 @@ class __SingleGratingTalbot(SingleGratingTalbotFacade):
 
         self.__script_logger                = get_registered_secondary_logger()
         self.__dpc_profile_analysis_manager = create_dpc_profile_analsysis_manager()
-
-        return initialization_parameters
-
 
     # %% ==================================================================================================
 
@@ -247,7 +263,7 @@ class __SingleGratingTalbot(SingleGratingTalbotFacade):
         diffPhase10 = -phaseFFT_10*virtual_pixelsize[0]/distDet2sample/hc*phenergy
         # Note: the signals above were defined base in experimental data
 
-        self.__draw_context(CALCULATE_DPC_CONTEXT_KEY)
+        self.__plotter.draw_context(CALCULATE_DPC_CONTEXT_KEY)
 
         self.__main_logger.print_message('VALUES: virtual pixelsize i, j: {:.4f}um, {:.4f}um'.format(virtual_pixelsize[0]*1e6, virtual_pixelsize[1]*1e6))
         self.__script_logger.print('\nvirtual_pixelsize = ' + str(virtual_pixelsize))
@@ -334,7 +350,7 @@ class __SingleGratingTalbot(SingleGratingTalbotFacade):
 
         self.__plotter.push_plot_on_context(RECROP_DPC_CONTEXT_KEY, PlotDPC, dpc01=diffPhase01, dpc10=diffPhase10, pixelsize=virtual_pixelsize, titleStr="")
 
-        self.__draw_context(RECROP_DPC_CONTEXT_KEY)
+        self.__plotter.draw_context(RECROP_DPC_CONTEXT_KEY)
 
         return WavePyData(int00=int00,
                           int01=int01,
@@ -415,7 +431,7 @@ class __SingleGratingTalbot(SingleGratingTalbotFacade):
             self.__plotter.push_plot_on_context(CORRECT_ZERO_DPC_CONTEXT_KEY, CorrectDPCHistos, angle=angle, title="Correct DPC Center")
             self.__plotter.push_plot_on_context(CORRECT_ZERO_DPC_CONTEXT_KEY, PlotDPC, dpc01=dpc01, dpc10=dpc10, pixelsize=virtual_pixelsize, titleStr="Correct DPC Center")
 
-        self.__draw_context(CORRECT_ZERO_DPC_CONTEXT_KEY)
+        self.__plotter.draw_context(CORRECT_ZERO_DPC_CONTEXT_KEY)
 
         return WavePyData(diffPhase01=dpc01, diffPhase10=dpc10, virtual_pixelsize=virtual_pixelsize)
 
@@ -475,7 +491,7 @@ class __SingleGratingTalbot(SingleGratingTalbotFacade):
             self.__plotter.push_plot_on_context(REMOVE_LINEAR_FIT_CONTEXT_KEY, PlotDPC, dpc01=linfitDPC01,       dpc10=linfitDPC10,       pixelsize=virtual_pixelsize, titleStr="Linear DPC Component")
             self.__plotter.push_plot_on_context(REMOVE_LINEAR_FIT_CONTEXT_KEY, PlotDPC, dpc01=diffPhase01_2save, dpc10=diffPhase10_2save, pixelsize=virtual_pixelsize, titleStr="(removed linear DPC component)")
 
-            self.__draw_context(REMOVE_LINEAR_FIT_CONTEXT_KEY)
+            self.__plotter.draw_context(REMOVE_LINEAR_FIT_CONTEXT_KEY)
 
         return WavePyData(diffPhase01=diffPhase01_2save,
                           diffPhase10=diffPhase10_2save,
@@ -526,7 +542,7 @@ class __SingleGratingTalbot(SingleGratingTalbotFacade):
         self.__plotter.register_context_window(FIT_RADIUS_DPC_CONTEXT_KEY)
         self.__plotter.push_plot_on_context(FIT_RADIUS_DPC_CONTEXT_KEY, FitRadiusDPC, dpx=diffPhase01, dpy=diffPhase10, pixelsize=virtual_pixelsize, kwave=self.__kwave, str4title="")
 
-        self.__draw_context(FIT_RADIUS_DPC_CONTEXT_KEY)
+        self.__plotter.draw_context(FIT_RADIUS_DPC_CONTEXT_KEY)
 
         return WavePyData(diffPhase01=diffPhase01,
                           diffPhase10=diffPhase10,
@@ -567,7 +583,7 @@ class __SingleGratingTalbot(SingleGratingTalbotFacade):
 
             self.__plotter.save_sdf_file(integrated_data, virtual_pixelsize, file_suffix='_phase', extraHeader={'Title': 'WF Phase', 'Zunit': 'meters'})
 
-            self.__draw_context(INTEGRATION_CONTEXT_KEY)
+            self.__plotter.draw_context(INTEGRATION_CONTEXT_KEY)
 
         self.__script_logger.print("\n\n" + self.__ini.dump())
 
@@ -622,7 +638,7 @@ class __SingleGratingTalbot(SingleGratingTalbotFacade):
             self.__script_logger.print('Thickness Sensitivy 100 [m] = ' + str('{:.5g}'.format(thickSensitivy100)))
             self.__plotter.save_sdf_file(thickness, virtual_pixelsize, file_suffix='_thickness', extraHeader={'Title': 'Thickness', 'Zunit': 'meters'})
 
-            self.__draw_context(CALCULATE_THICKNESS_CONTEXT_KEY)
+            self.__plotter.draw_context(CALCULATE_THICKNESS_CONTEXT_KEY)
 
         return WavePyData(diffPhase01=integration_result.get_parameter("diffPhase01"),
                           diffPhase10=integration_result.get_parameter("diffPhase10"),
@@ -678,7 +694,7 @@ class __SingleGratingTalbot(SingleGratingTalbotFacade):
 
             self.__plotter.save_sdf_file(data * self.__wavelength, virtual_pixelsize, file_suffix='_phase', extraHeader={'Title': 'WF Phase 2nd order removed', 'Zunit': 'meters'})
 
-            self.__draw_context(CALCULATE_2ND_ORDER_COMPONENT_OF_THE_PHASE)
+            self.__plotter.draw_context(CALCULATE_2ND_ORDER_COMPONENT_OF_THE_PHASE)
 
         return WavePyData(diffPhase01=diffPhase01,
                           diffPhase10=diffPhase10,
@@ -744,7 +760,7 @@ class __SingleGratingTalbot(SingleGratingTalbotFacade):
 
             self.__main_logger.print_message('DONE')
 
-            self.__draw_context(REMOVE_2ND_ORDER)
+            self.__plotter.draw_context(REMOVE_2ND_ORDER)
 
 
         return WavePyData(diffPhase01=integration_result.get_parameter("diffPhase01"),
@@ -757,9 +773,6 @@ class __SingleGratingTalbot(SingleGratingTalbotFacade):
 
     ###################################################################
     # PRIVATE METHODS
-
-    def __draw_context(self, context_key):
-        self.__plotter.draw_context_on_widget(context_key, container_widget=self.__plotter.get_context_container_widget(context_key))
 
     @classmethod
     def __crop_for_integration(cls, dpc01, dpc10, pixelsize, message="New Crop for Integration?"):

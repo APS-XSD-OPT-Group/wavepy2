@@ -70,7 +70,8 @@ class MainSingleGratingTalbot(WavePyScript):
         # %% Initialization parameters
         # ==========================================================================
 
-        initialization_parameters = single_grating_talbot_manager.get_initialization_parameters(SCRIPT_LOGGER_MODE)
+        initialization_parameters = single_grating_talbot_manager.get_initialization_parameters()
+        single_grating_talbot_manager.manager_initialization(initialization_parameters, SCRIPT_LOGGER_MODE)
 
         # ==========================================================================
         # %% CROP Initial Image
