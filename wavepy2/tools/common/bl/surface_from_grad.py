@@ -273,7 +273,7 @@ def frankotchellappa(delx_f, delx_y, reflec_pad=True):
     if reflec_pad: return __one_forth_of_array(res)
     else: return res
 
-from wavepy2.core.widgets.error_integration_widget import ErrorIntegration
+from wavepy2.tools.common.widgets.error_integration_widget import ErrorIntegration
 
 def error_integration(delx_f, delx_y, func, pixelsize, shifthalfpixel=False, context_key="error_integration"):
     if shifthalfpixel: func = common_tools.shift_subpixel_2d(np.real(func), 2)

@@ -15,7 +15,7 @@ from PyQt5.QtCore import Qt
 from wavepy2.util.common import common_tools
 from wavepy2.util.plot import plot_tools
 from wavepy2.util.plot.plotter import WavePyWidget
-from wavepy2.core.widgets.plot_profile_widget import PlotProfileWidget
+from wavepy2.tools.common.widgets.plot_profile_widget import PlotProfileWidget
 
 from warnings import filterwarnings
 filterwarnings("ignore")

@@ -53,12 +53,12 @@ from wavepy2.util.io.read_write_file import read_tiff
 
 from wavepy2.tools.common.wavepy_data import WavePyData
 
-from wavepy2.core import grating_interferometry
+from wavepy2.tools.common.bl import grating_interferometry
 
-from wavepy2.core.widgets.crop_dialog_widget import CropDialogPlot
-from wavepy2.core.widgets.harmonic_grid_plot_widget import HarmonicGridPlot
-from wavepy2.core.widgets.harmonic_peak_plot_widget import HarmonicPeakPlot
-from wavepy2.tools.common.widgets.colorbar_crop_dialog_widget import ColorbarCropDialogPlot
+from wavepy2.tools.common.widgets.crop_dialog_widget import CropDialogPlot
+from wavepy2.tools.common.widgets.harmonic_grid_plot_widget import HarmonicGridPlot
+from wavepy2.tools.common.widgets.harmonic_peak_plot_widget import HarmonicPeakPlot
+from wavepy2.tools.common.widgets.colorbar_crop_widget import ColorbarCropDialogPlot
 from wavepy2.tools.common.widgets.show_cropped_figure_widget import ShowCroppedFigure
 
 from wavepy2.tools.diagnostic.coherence.widgets.sgz_input_parameters_widget import SGZInputParametersWidget, generate_initialization_parameters_sgz, PATTERNS, ZVEC_FROM

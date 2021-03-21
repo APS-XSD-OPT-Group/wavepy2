@@ -54,14 +54,14 @@ from wavepy2.util.ini.initializer import get_registered_ini_instance
 
 from wavepy2.tools.common.wavepy_data import WavePyData
 
-from wavepy2.core import grating_interferometry
-from wavepy2.core.widgets.plot_intensities_harms_widget import PlotIntensitiesHarms
-from wavepy2.core.widgets.plot_dark_field_widget import PlotDarkField
-from wavepy2.core.widgets.plot_integration_widget import PlotIntegration
+from wavepy2.tools.common.bl import grating_interferometry
+from wavepy2.tools.common.widgets.plot_intensities_harms_widget import PlotIntensitiesHarms
+from wavepy2.tools.common.widgets.plot_dark_field_widget import PlotDarkField
+from wavepy2.tools.common.widgets.plot_integration_widget import PlotIntegration
 
 from wavepy2.tools.common.physical_properties import get_delta
-from wavepy2.core.widgets.crop_dialog_widget import CropDialogPlot
-from wavepy2.tools.common.widgets.colorbar_crop_dialog_widget import ColorbarCropDialogPlot
+from wavepy2.tools.common.widgets.crop_dialog_widget import CropDialogPlot
+from wavepy2.tools.common.widgets.colorbar_crop_widget import ColorbarCropDialogPlot
 from wavepy2.tools.common.widgets.show_cropped_figure_widget import ShowCroppedFigure
 
 from wavepy2.tools.imaging.single_grating.widgets.plot_DPC_widget import PlotDPC

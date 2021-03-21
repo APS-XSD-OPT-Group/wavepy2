@@ -43,9 +43,9 @@
 # POSSIBILITY OF SUCH DAMAGE.                                             #
 # #########################################################################
 import numpy as np
-from wavepy2.core.widgets.extract_harmonic_plot_widget import ExtractHarmonicPlot
-from wavepy2.core.widgets.harmonic_grid_plot_widget import HarmonicGridPlot
-from wavepy2.core.widgets.single_grating_harmonic_images_widget import SingleGratingHarmonicImages
+from wavepy2.tools.common.widgets.extract_harmonic_plot_widget import ExtractHarmonicPlot
+from wavepy2.tools.common.widgets.harmonic_grid_plot_widget import HarmonicGridPlot
+from wavepy2.tools.common.widgets.single_grating_harmonic_images_widget import SingleGratingHarmonicImages
 from wavepy2.util.log.logger   import get_registered_logger_instance
 from wavepy2.util.plot.plotter import get_registered_plotter_instance
 from wavepy2.util.common.common_tools import FourierTransform, get_idxPeak_ij, get_idxPeak_ij_exp, crop_matrix_at_indexes, mean_plus_n_sigma
@@ -363,8 +363,8 @@ def visib_1st_harmonics(img, harmonicPeriod, searchRegion=20, unFilterSize=1):
     return 2*peak10/peak00, 2*peak01/peak00, _idxPeak_ij_exp00, _idxPeak_ij_exp10, _idxPeak_ij_exp01
 
 
-from wavepy2.core.surface_from_grad import frankotchellappa, error_integration
-from wavepy2.core.widgets.crop_dialog_widget import CropDialogPlot
+from wavepy2.tools.common.bl.surface_from_grad import frankotchellappa, error_integration
+from wavepy2.tools.common.widgets.crop_dialog_widget import CropDialogPlot
 
 def crop_for_integration(dpc01, dpc10, pixelsize, message="New Crop for Integration?"):
     img = dpc01**2+dpc10**2

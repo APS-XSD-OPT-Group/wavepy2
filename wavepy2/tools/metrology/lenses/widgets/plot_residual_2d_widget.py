@@ -50,7 +50,7 @@ from wavepy2.util.common import common_tools
 from wavepy2.util.plot.plotter import WavePyWidget
 from wavepy2.util.log.logger import get_registered_logger_instance
 from wavepy2.util.plot.plotter import get_registered_plotter_instance
-from wavepy2.core.widgets.plot_profile_widget import PlotProfile
+from wavepy2.tools.common.widgets.plot_profile_widget import PlotProfile
 
 from warnings import filterwarnings
 filterwarnings("ignore")
@@ -198,7 +198,6 @@ class CountourPlot(WavePyWidget):
 
         return fig
 
-from mpl_toolkits.mplot3d import Axes3D
 
 class Plot3D(WavePyWidget):
     def get_plot_tab_name(self): return "Residual 2D - Plot 3D"

@@ -57,8 +57,8 @@ from wavepy2.util.ini.initializer import get_registered_ini_instance
 from wavepy2.tools.common.wavepy_data import WavePyData
 from wavepy2.tools.common import physical_properties 
 
-from wavepy2.core.widgets.crop_dialog_widget import CropDialogPlot
-from wavepy2.core.widgets.plot_profile_widget import PlotProfile
+from wavepy2.tools.common.widgets.crop_dialog_widget import CropDialogPlot
+from wavepy2.tools.common.widgets.plot_profile_widget import PlotProfile
 from wavepy2.tools.common.widgets.simple_plot_widget import SimplePlot
 from wavepy2.tools.metrology.lenses.widgets.frl_input_parameters_widget import FRLInputParametersWidget, generate_initialization_parameters_frl, LENS_GEOMETRIES
 from wavepy2.tools.metrology.lenses.widgets.fit_radius_dpc_widget import FitRadiusDPC
