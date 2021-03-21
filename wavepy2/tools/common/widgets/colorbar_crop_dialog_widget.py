@@ -42,6 +42,8 @@
 # ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE         #
 # POSSIBILITY OF SUCH DAMAGE.                                             #
 # #########################################################################
+import numpy as np
+
 from wavepy2.tools.common.widgets.figure_slide_colorbar import FigureSlideColorbar
 from wavepy2.tools.common.widgets.graphical_roi_idx import GraphicalRoiIdx
 from wavepy2.tools.common.widgets.simple_plot_widget import SimplePlotWidget
@@ -50,7 +52,6 @@ from wavepy2.util.ini.initializer import get_registered_ini_instance
 from wavepy2.util.log.logger import get_registered_logger_instance, LoggerColor
 from wavepy2.util.plot import plot_tools
 from wavepy2.util.plot.plotter import WavePyInteractiveWidget, WavePyWidget
-
 
 class AbstractColorbarCropPlot():
     __initialized = False
@@ -104,14 +105,16 @@ class AbstractColorbarCropPlot():
     def get_accepted_output(self):
         if self.__initialized: self.__ini.set_list_at_ini('Parameters', 'Crop', self.__idx4crop)
 
-        return self.__cropped_img, self.__idx4crop, self.crop_image.get_image_to_change().get_mpl_image().cmap, self.crop_image.get_image_to_change().get_mpl_image().get_clim()
+        return self.__cropped_img, self.__idx4crop, self.__img_size_o, \
+               self.crop_image.get_image_to_change().get_mpl_image().cmap, self.crop_image.get_image_to_change().get_mpl_image().get_clim()
 
     def get_rejected_output(self):
         if self.__initialized: self.__ini.set_list_at_ini('Parameters', 'Crop', self.__initial_idx4crop)
 
         cropped_img = common_tools.crop_matrix_at_indexes(self.__uncropped_img, self.__initial_idx4crop)
 
-        return  cropped_img, self.__initial_idx4crop, self.crop_image.get_image_to_change().get_mpl_image().cmap, self.crop_image.get_image_to_change().get_mpl_image().get_clim()
+        return  cropped_img, self.__initial_idx4crop, self.__img_size_o, \
+                self.crop_image.get_image_to_change().get_mpl_image().cmap, self.crop_image.get_image_to_change().get_mpl_image().get_clim()
 
     def create_cropped_output(self, idx4crop):
         self.__cropped_img = common_tools.crop_matrix_at_indexes(self.__uncropped_img, idx4crop)
@@ -119,6 +122,7 @@ class AbstractColorbarCropPlot():
 
     def __initialize(self, img, idx4crop):
         self.__uncropped_img    = img
+        self.__img_size_o = np.shape(img)
         self.__initial_idx4crop = idx4crop
 
         self.create_cropped_output(idx4crop)

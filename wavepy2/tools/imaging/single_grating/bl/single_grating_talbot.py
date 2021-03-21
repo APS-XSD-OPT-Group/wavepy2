@@ -178,17 +178,19 @@ class __SingleGratingTalbot(SingleGratingTalbotFacade):
 
     # %% ==================================================================================================
 
+
+
     def crop_initial_image(self, initialization_parameters, plotting_properties=PlottingProperties()):
         img             = initialization_parameters.get_parameter("img")
         imgRef          = initialization_parameters.get_parameter("imgRef")
         pixelsize       = initialization_parameters.get_parameter("pixelsize")
 
-        img_size_o = np.shape(img)
-
         if self.__plotter.is_active():
-            img, idx4crop, _, _ = self.__plotter.show_interactive_plot(ColorbarCropDialogPlot, container_widget=plotting_properties.get_container_widget(),
-                                                                       img=img, pixelsize=pixelsize)
+            img, idx4crop, img_size_o, _, _ = self.__plotter.show_interactive_plot(ColorbarCropDialogPlot,
+                                                                                   container_widget=plotting_properties.get_container_widget(),
+                                                                                   img=img, pixelsize=pixelsize)
         else:
+            img_size_o = np.shape(img)
             idx4crop = self.__ini.get_list_from_ini("Parameters", "Crop")
             img = common_tools.crop_matrix_at_indexes(img, idx4crop)
 
