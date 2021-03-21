@@ -318,7 +318,6 @@ class SGTInputParametersWidget(AbstractSGTInputParametersWidget, WavePyWidget):
 
         layout.addWidget(self.__central_widget)
 
-
     def get_central_widget(self):
         return self.__central_widget
 

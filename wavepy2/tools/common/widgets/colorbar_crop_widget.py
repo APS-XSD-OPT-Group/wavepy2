@@ -53,7 +53,7 @@ from wavepy2.util.log.logger import get_registered_logger_instance, LoggerColor
 from wavepy2.util.plot import plot_tools
 from wavepy2.util.plot.plotter import WavePyInteractiveWidget, WavePyWidget
 
-class AbstractColorbarCropPlot():
+class AbstractColorbarCropWidget():
     __initialized = False
 
     def __init__(self):
@@ -129,14 +129,35 @@ class AbstractColorbarCropPlot():
 
         self.__initialized = True
 
-class ColorbarCropWidgetPlot(AbstractColorbarCropPlot, WavePyWidget):
+from PyQt5.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout
+from PyQt5.QtCore import Qt
+
+class ColorbarCropWidgetPlot(AbstractColorbarCropWidget, WavePyWidget):
+
+    def __init__(self):
+        AbstractColorbarCropWidget.__init__(self)
+        WavePyWidget.__init__(self, parent=None)
+
+        layout = QHBoxLayout()
+        layout.setAlignment(Qt.AlignCenter)
+        self.setLayout(layout)
+
+        self.__central_widget = QWidget()
+        self.__central_widget.setLayout(QVBoxLayout())
+
+        layout.addWidget(self.__central_widget)
+
+    def get_central_widget(self):
+        return self.__central_widget
+
+    def get_plot_tab_name(self):
+        return "Crop Image"
+
+    def allows_saving(self):
+        return False
+
+class ColorbarCropDialogPlot(AbstractColorbarCropWidget, WavePyInteractiveWidget):
 
     def __init__(self, parent):
-        AbstractColorbarCropPlot.__init__(self)
-        ColorbarCropWidgetPlot.__init__(self, parent)
-
-class ColorbarCropDialogPlot(AbstractColorbarCropPlot, WavePyInteractiveWidget):
-
-    def __init__(self, parent):
-        AbstractColorbarCropPlot.__init__(self)
+        AbstractColorbarCropWidget.__init__(self)
         WavePyInteractiveWidget.__init__(self, parent, message="New Crop?", title="Crop Image")

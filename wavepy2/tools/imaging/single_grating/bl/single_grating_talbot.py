@@ -60,6 +60,7 @@ from wavepy2.tools.common.widgets.plot_dark_field_widget import PlotDarkField
 from wavepy2.tools.common.widgets.plot_integration_widget import PlotIntegration
 
 from wavepy2.tools.common.physical_properties import get_delta
+from wavepy2.tools.common.bl import crop_image
 from wavepy2.tools.common.widgets.crop_dialog_widget import CropDialogPlot
 from wavepy2.tools.common.widgets.colorbar_crop_widget import ColorbarCropDialogPlot
 from wavepy2.tools.common.widgets.show_cropped_figure_widget import ShowCroppedFigure
@@ -87,7 +88,9 @@ class SingleGratingTalbotFacade:
     def get_initialization_parameters(self, plotting_properties=PlottingProperties()): raise NotImplementedError()
     def manager_initialization(self, initialization_parameters, script_logger_mode): raise NotImplementedError()
 
+    def draw_crop_initial_image(self, initialization_parameters, plotting_properties=PlottingProperties()): raise NotImplementedError()
     def crop_initial_image(self, initialization_parameters, plotting_properties=PlottingProperties()): raise NotImplementedError()
+    def crop_reference_image(self, initialization_parameters, initial_crop_parameters): raise NotImplementedError()
 
     def calculate_dpc(self, initial_crop_parameters, initialization_parameters, plotting_properties=PlottingProperties()): raise NotImplementedError()
     def recrop_dpc(self, dpc_result, initialization_parameters, plotting_properties=PlottingProperties()): raise NotImplementedError()
@@ -117,9 +120,6 @@ class __SingleGratingTalbot(SingleGratingTalbotFacade):
             show_runtime_options = plotting_properties.get_parameter("show_runtime_options", True)
             add_context_label    = plotting_properties.get_parameter("add_context_label", True)
             use_unique_id        = plotting_properties.get_parameter("use_unique_id", False)
-
-            # register: add context unique id as key
-            # make it optional
 
             unique_id = self.__plotter.register_context_window(INITIALIZATION_PARAMETERS_KEY,
                                                                context_window=plotting_properties.get_context_widget(),
@@ -159,8 +159,6 @@ class __SingleGratingTalbot(SingleGratingTalbotFacade):
 
         return initialization_parameters
 
-    # %% ==================================================================================================
-
     def manager_initialization(self, initialization_parameters, script_logger_mode):
         plotter = get_registered_plotter_instance()
         plotter.register_save_file_prefix(initialization_parameters.get_parameter("saveFileSuf"))
@@ -178,29 +176,36 @@ class __SingleGratingTalbot(SingleGratingTalbotFacade):
 
     # %% ==================================================================================================
 
+    def draw_crop_initial_image(self, initialization_parameters, plotting_properties=PlottingProperties()):
+        img             = initialization_parameters.get_parameter("img")
+        pixelsize       = initialization_parameters.get_parameter("pixelsize")
 
+        return crop_image.draw_colorbar_crop_image(img=img,
+                                                   pixelsize=pixelsize,
+                                                   initialization_parameters=initialization_parameters,
+                                                   plotting_properties=plotting_properties)
 
     def crop_initial_image(self, initialization_parameters, plotting_properties=PlottingProperties()):
         img             = initialization_parameters.get_parameter("img")
-        imgRef          = initialization_parameters.get_parameter("imgRef")
         pixelsize       = initialization_parameters.get_parameter("pixelsize")
 
-        if self.__plotter.is_active():
-            img, idx4crop, img_size_o, _, _ = self.__plotter.show_interactive_plot(ColorbarCropDialogPlot,
-                                                                                   container_widget=plotting_properties.get_container_widget(),
-                                                                                   img=img, pixelsize=pixelsize)
-        else:
-            img_size_o = np.shape(img)
-            idx4crop = self.__ini.get_list_from_ini("Parameters", "Crop")
-            img = common_tools.crop_matrix_at_indexes(img, idx4crop)
-
-        if not imgRef is None: imgRef = common_tools.crop_matrix_at_indexes(imgRef, idx4crop)
+        img, idx4crop, img_size_o = crop_image.colorbar_crop_image(img=img,
+                                                                   pixelsize=pixelsize,
+                                                                   initialization_parameters=initialization_parameters,
+                                                                   plotting_properties=plotting_properties)
 
         return WavePyData(img=img,
-                          imgRef=imgRef,
                           idx4crop=idx4crop,
                           img_size_o=img_size_o)
 
+    def crop_reference_image(self, initialization_parameters, initial_crop_parameters):
+        imgRef          = initialization_parameters.get_parameter("imgRef")
+
+        if not imgRef is None: imgRef = common_tools.crop_matrix_at_indexes(imgRef, idx4crop)
+
+        initial_crop_parameters.set_parameter("imgRef", imgRef)
+
+        return initial_crop_parameters
 
     # %% ==================================================================================================
 
