@@ -73,10 +73,16 @@ class MainSingleGratingTalbot(WavePyScript):
         initialization_parameters = single_grating_talbot_manager.get_initialization_parameters(SCRIPT_LOGGER_MODE)
 
         # ==========================================================================
+        # %% CROP Initial Image
+        # ==========================================================================
+
+        crop_result = single_grating_talbot_manager.crop_initial_image(initialization_parameters)
+
+        # ==========================================================================
         # %% DPC Analysis
         # ==========================================================================
 
-        dpc_result = single_grating_talbot_manager.calculate_dpc(initialization_parameters)
+        dpc_result = single_grating_talbot_manager.calculate_dpc(crop_result, initialization_parameters)
         plotter.show_context_window(CALCULATE_DPC_CONTEXT_KEY)
 
         # ==========================================================================

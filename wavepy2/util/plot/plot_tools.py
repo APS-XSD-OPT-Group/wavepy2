@@ -59,12 +59,23 @@ def set_screen_at_center(window):
     window.move(qtRectangle.topLeft())
     window.update()
 
-class DefaultMainWindow(QMainWindow):
+class AbstractContextWidget():
+
+    def __init__(self, container_widget):
+        self.__container_widget = container_widget
+
+    def get_container_widget(self):
+        return self.__container_widget
+
+class DefaultContextWidget(AbstractContextWidget):
+    def __init__(self, container_widget):
+        super(DefaultContextWidget, self).__init__(container_widget)
+
+class DefaultMainWindow(QMainWindow, AbstractContextWidget):
     def __init__(self, title):
-        super().__init__()
+        super(DefaultMainWindow, self).__init__(container_widget=QWidget())
         self.setWindowTitle(title)
-        self.__container_widget = QWidget()
-        self.setCentralWidget(self.__container_widget)
+        self.setCentralWidget(self.get_container_widget())
 
         desktop_widget = QDesktopWidget()
         actual_geometry = self.frameGeometry()
@@ -77,8 +88,30 @@ class DefaultMainWindow(QMainWindow):
 
         self.setGeometry(new_geometry)
 
+class PlottingProperties:
+    def __init__(self, container_widget=None, context_widget=None, **parameters):
+        self.__container_widget = container_widget
+        self.__context_widget = context_widget
+        self.__parameters = parameters
+
     def get_container_widget(self):
         return self.__container_widget
+
+    def get_context_widget(self):
+        return self.__context_widget
+
+    def get_parameters(self):
+        return self.__parameters
+
+    def get_parameter(self, parameter_name, default_value=None):
+        try:
+            return self.__parameters[parameter_name]
+        except:
+            return default_value
+
+    def set_parameter(self, parameter_name, value):
+        self.__parameters[parameter_name] = value
+
 
 WIDGET_FIXED_WIDTH = 800
 

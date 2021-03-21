@@ -190,7 +190,9 @@ class __AbstractLoggerRegistry:
     def register_logger(self, logger_facade_instance = None): raise NotImplementedError()
     def reset(self): NotImplementedError()
     def get_logger_instance(self): NotImplementedError()
-        
+
+from wavepy2.util.common.common_tools import AlreadyInitializedError
+
 @Singleton
 class __LoggerRegistry(__AbstractLoggerRegistry):
 
@@ -203,7 +205,7 @@ class __LoggerRegistry(__AbstractLoggerRegistry):
         if not isinstance(logger_facade_instance, LoggerFacade): raise ValueError("Logger Instance do not implement Logger Facade")
 
         if self.__logger_instance is None: self.__logger_instance = logger_facade_instance
-        else: raise ValueError("Logger Instance already initialized")
+        else: raise AlreadyInitializedError("Logger Instance already initialized")
 
     @synchronized_method
     def reset(self):

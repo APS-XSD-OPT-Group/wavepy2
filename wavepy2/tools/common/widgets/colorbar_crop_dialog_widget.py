@@ -49,14 +49,13 @@ from wavepy2.util.common import common_tools
 from wavepy2.util.ini.initializer import get_registered_ini_instance
 from wavepy2.util.log.logger import get_registered_logger_instance, LoggerColor
 from wavepy2.util.plot import plot_tools
-from wavepy2.util.plot.plotter import WavePyInteractiveWidget
+from wavepy2.util.plot.plotter import WavePyInteractiveWidget, WavePyWidget
 
 
-class ColorbarCropDialogPlot(WavePyInteractiveWidget):
+class AbstractColorbarCropPlot():
     __initialized = False
 
-    def __init__(self, parent):
-        super(ColorbarCropDialogPlot, self).__init__(parent, message="New Crop?", title="Crop Image")
+    def __init__(self):
         self.__ini     = get_registered_ini_instance()
         self.__logger  = get_registered_logger_instance()
 
@@ -125,3 +124,15 @@ class ColorbarCropDialogPlot(WavePyInteractiveWidget):
         self.create_cropped_output(idx4crop)
 
         self.__initialized = True
+
+class ColorbarCropWidgetPlot(AbstractColorbarCropPlot, WavePyWidget):
+
+    def __init__(self, parent):
+        AbstractColorbarCropPlot.__init__(self)
+        ColorbarCropWidgetPlot.__init__(self, parent)
+
+class ColorbarCropDialogPlot(AbstractColorbarCropPlot, WavePyInteractiveWidget):
+
+    def __init__(self, parent):
+        AbstractColorbarCropPlot.__init__(self)
+        WavePyInteractiveWidget.__init__(self, parent, message="New Crop?", title="Crop Image")

@@ -258,7 +258,9 @@ class __AbstractActivePlotter(__AbstractPlotter):
         heights = []
 
         if context_key in self.__plot_registry:
-            for plot_widget_instance in self.__plot_registry[context_key]:
+            plot_widget_instances = self.__plot_registry[context_key]
+
+            for plot_widget_instance in plot_widget_instances:
                 tab = plot_tools.createTabPage(tab_widget, plot_widget_instance.get_plot_tab_name())
                 tab.layout().setAlignment(Qt.AlignCenter)
                 tab.layout().addWidget(plot_widget_instance)
@@ -329,6 +331,8 @@ class __NullPlotter(__AbstractPlotter):
     def save_sdf_file(self, array, pixelsize=[1, 1], file_prefix=None, file_suffix="", extraHeader={}): return self._get_file_name(file_prefix, file_suffix, "sdf")
     def save_csv_file(self, array_list, file_prefix=None, file_suffix="", headerList=[], comments=""): return self._get_file_name(file_prefix, file_suffix, "csv")
 
+from wavepy2.util.common.common_tools import AlreadyInitializedError
+
 @Singleton
 class __PlotterRegistry:
 
@@ -341,7 +345,7 @@ class __PlotterRegistry:
         if not isinstance(plotter_facade_instance, PlotterFacade): raise ValueError("Plotter Instance do not implement Plotter Facade")
 
         if self.__plotter_instance is None: self.__plotter_instance = plotter_facade_instance
-        else: raise ValueError("Plotter Instance already initialized")
+        else: raise AlreadyInitializedError("Plotter Instance already initialized")
 
     @synchronized_method
     def reset(self):

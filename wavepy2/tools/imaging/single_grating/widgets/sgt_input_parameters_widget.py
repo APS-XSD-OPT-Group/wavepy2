@@ -50,7 +50,7 @@ from wavepy2.util.common import common_tools
 from wavepy2.util.ini.initializer import get_registered_ini_instance
 from wavepy2.util.log.logger import get_registered_logger_instance
 from wavepy2.util.plot import plot_tools
-from wavepy2.util.plot.plotter import WavePyInteractiveWidget
+from wavepy2.util.plot.plotter import WavePyInteractiveWidget, WavePyWidget
 from wavepy2.util.io.read_write_file import read_tiff
 
 from wavepy2.tools.common.wavepy_data import WavePyData
@@ -148,12 +148,13 @@ def generate_initialization_parameters_sgt(img_file_name,
                       remove_2nd_order=remove_2nd_order,
                       material_idx=material_idx)
 
-class SGTInputParametersWidget(WavePyInteractiveWidget):
+
+
+class AbstractSGTInputParametersWidget():
     WIDTH  = 800
     HEIGHT = 430
 
-    def __init__(self, parent, show_runtime_options=True):
-        super(SGTInputParametersWidget, self).__init__(parent, message="Input Parameters", title="Input Parameters")
+    def __init__(self):
         self.__ini     = get_registered_ini_instance()
         self.__logger  = get_registered_logger_instance()
 
@@ -177,19 +178,21 @@ class SGTInputParametersWidget(WavePyInteractiveWidget):
         self.remove_2nd_order   = self.__ini.get_boolean_from_ini("Runtime", "remove 2nd order", default=False)
         self.material_idx       = self.__ini.get_int_from_ini("Runtime", "material idx", default=0)
 
-        self.show_runtime_options = show_runtime_options
-
     def build_widget(self, **kwargs):
         self.setFixedWidth(self.WIDTH)
         self.setFixedHeight(self.HEIGHT)
 
-        tabs = plot_tools.tabWidget(self.get_central_widget())
+        try: show_runtime_options = kwargs["show_runtime_options"]
+        except: show_runtime_options = True
+
+        if show_runtime_options: tabs = plot_tools.tabWidget(self.get_central_widget())
 
         ini_widget = QWidget()
         ini_widget.setFixedHeight(self.HEIGHT-10)
         ini_widget.setFixedWidth(self.WIDTH-10)
 
-        plot_tools.createTabPage(tabs, "Initialization Parameter", widgetToAdd=ini_widget)
+        if show_runtime_options: plot_tools.createTabPage(tabs, "Initialization Parameter", widgetToAdd=ini_widget)
+        else: self.get_central_widget().layout().addWidget(ini_widget)
 
         main_box = plot_tools.widgetBox(ini_widget, "", width=self.WIDTH-70, height=self.HEIGHT-50)
 
@@ -220,7 +223,7 @@ class SGTInputParametersWidget(WavePyInteractiveWidget):
 
         #--------------------------------------------------
 
-        if self.show_runtime_options:
+        if show_runtime_options:
             runtime_widget = QWidget()
             runtime_widget.setFixedHeight(self.HEIGHT-10)
             runtime_widget.setFixedWidth(self.WIDTH-10)
@@ -297,3 +300,35 @@ class SGTInputParametersWidget(WavePyInteractiveWidget):
     def get_rejected_output(self):
         self.__logger.print_error("Initialization Canceled, Program exit")
         sys.exit(1)
+
+from PyQt5.QtWidgets import QVBoxLayout, QHBoxLayout
+from PyQt5.QtCore import Qt
+
+class SGTInputParametersWidget(AbstractSGTInputParametersWidget, WavePyWidget):
+    def __init__(self):
+        AbstractSGTInputParametersWidget.__init__(self)
+        WavePyWidget.__init__(self, parent=None)
+
+        layout = QHBoxLayout()
+        layout.setAlignment(Qt.AlignCenter)
+        self.setLayout(layout)
+
+        self.__central_widget = QWidget()
+        self.__central_widget.setLayout(QVBoxLayout())
+
+        layout.addWidget(self.__central_widget)
+
+
+    def get_central_widget(self):
+        return self.__central_widget
+
+    def get_plot_tab_name(self):
+        return "Single Grating Talbot Initialization Parameters"
+
+    def allows_saving(self):
+        return False
+
+class SGTInputParametersDialog(AbstractSGTInputParametersWidget, WavePyInteractiveWidget):
+    def __init__(self, parent):
+        AbstractSGTInputParametersWidget.__init__(self)
+        WavePyInteractiveWidget.__init__(self, parent, message="Input Parameters", title="Input Parameters")

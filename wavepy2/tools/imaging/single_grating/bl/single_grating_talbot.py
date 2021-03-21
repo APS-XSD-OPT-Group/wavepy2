@@ -49,6 +49,7 @@ from wavepy2.util.common.common_tools import hc
 from wavepy2.util.log.logger import get_registered_logger_instance, get_registered_secondary_logger, register_secondary_logger, LoggerMode
 
 from wavepy2.util.plot.plotter import get_registered_plotter_instance
+from wavepy2.util.plot.plot_tools import PlottingProperties
 from wavepy2.util.ini.initializer import get_registered_ini_instance
 
 from wavepy2.tools.common.wavepy_data import WavePyData
@@ -64,13 +65,13 @@ from wavepy2.tools.common.widgets.colorbar_crop_dialog_widget import ColorbarCro
 from wavepy2.tools.common.widgets.show_cropped_figure_widget import ShowCroppedFigure
 
 from wavepy2.tools.imaging.single_grating.widgets.plot_DPC_widget import PlotDPC
-from wavepy2.tools.imaging.single_grating.widgets.sgt_input_parameters_widget import SGTInputParametersWidget, generate_initialization_parameters_sgt, MODES, PATTERNS
+from wavepy2.tools.imaging.single_grating.widgets.sgt_input_parameters_widget import SGTInputParametersWidget, SGTInputParametersDialog, generate_initialization_parameters_sgt, MODES, PATTERNS
 from wavepy2.tools.imaging.single_grating.widgets.correct_DPC_widgets import CorrectDPC, CorrectDPCHistos, CorrectDPCCenter
 from wavepy2.tools.imaging.single_grating.widgets.fit_radius_dpc_widget import FitRadiusDPC
 
 from wavepy2.tools.imaging.single_grating.bl.dpc_profile_analysis import create_dpc_profile_analsysis_manager
 
-
+INITIALIZATION_PARAMETERS_KEY              = "Single Grating Talbot Initialization"
 CALCULATE_DPC_CONTEXT_KEY                  = "Calculate DPC"
 RECROP_DPC_CONTEXT_KEY                     = "Recrop DPC"
 CORRECT_ZERO_DPC_CONTEXT_KEY               = "Correct Zero DPC"
@@ -82,17 +83,18 @@ CALCULATE_2ND_ORDER_COMPONENT_OF_THE_PHASE = "Calculate 2nd order component of t
 REMOVE_2ND_ORDER                           = "Remove 2nd order"
 
 class SingleGratingTalbotFacade:
-    def get_initialization_parameters(self, script_logger_mode): raise NotImplementedError()
-    def calculate_dpc(self, initialization_parameters): raise NotImplementedError()
-    def recrop_dpc(self, dpc_result, initialization_parameters): raise NotImplementedError()
-    def correct_zero_dpc(self, dpc_result, initialization_parameters): raise NotImplementedError()
-    def remove_linear_fit(self, correct_zero_dpc_result, initialization_parameters): raise NotImplementedError()
-    def dpc_profile_analysis(self, remove_linear_fit_result, initialization_parameters): raise NotImplementedError()
-    def fit_radius_dpc(self, correct_zero_dpc_result, initialization_parameters): raise NotImplementedError()
-    def do_integration(self, fit_radius_dpc_result, initialization_parameters): raise NotImplementedError()
-    def calc_thickness(self, integration_result, initialization_parameters): raise NotImplementedError()
-    def calc_2nd_order_component_of_the_phase(self, integration_result, initialization_parameters): raise NotImplementedError()
-    def remove_2nd_order(self, integration_result, initialization_parameters): raise NotImplementedError()
+    def get_initialization_parameters(self, script_logger_mode, plotting_properties=PlottingProperties()): raise NotImplementedError()
+    def crop_initial_image(self, initialization_parameters, plotting_properties=PlottingProperties()): raise NotImplementedError()
+    def calculate_dpc(self, initial_crop_parameters, initialization_parameters, plotting_properties=PlottingProperties()): raise NotImplementedError()
+    def recrop_dpc(self, dpc_result, initialization_parameters, plotting_properties=PlottingProperties()): raise NotImplementedError()
+    def correct_zero_dpc(self, dpc_result, initialization_parameters, plotting_properties=PlottingProperties()): raise NotImplementedError()
+    def remove_linear_fit(self, correct_zero_dpc_result, initialization_parameters, plotting_properties=PlottingProperties()): raise NotImplementedError()
+    def dpc_profile_analysis(self, remove_linear_fit_result, initialization_parameters, plotting_properties=PlottingProperties()): raise NotImplementedError()
+    def fit_radius_dpc(self, correct_zero_dpc_result, initialization_parameters, plotting_properties=PlottingProperties()): raise NotImplementedError()
+    def do_integration(self, fit_radius_dpc_result, initialization_parameters, plotting_properties=PlottingProperties()): raise NotImplementedError()
+    def calc_thickness(self, integration_result, initialization_parameters, plotting_properties=PlottingProperties()): raise NotImplementedError()
+    def calc_2nd_order_component_of_the_phase(self, integration_result, initialization_parameters, plotting_properties=PlottingProperties()): raise NotImplementedError()
+    def remove_2nd_order(self, integration_result, initialization_parameters, plotting_properties=PlottingProperties()): raise NotImplementedError()
 
 def create_single_grating_talbot_manager():
     return __SingleGratingTalbot()
@@ -106,9 +108,21 @@ class __SingleGratingTalbot(SingleGratingTalbotFacade):
 
     # %% ==================================================================================================
 
-    def get_initialization_parameters(self, script_logger_mode):
+    def draw_initialization_parameters_widget(self, plotting_properties=PlottingProperties()):
         if self.__plotter.is_active():
-            initialization_parameters = self.__plotter.show_interactive_plot(SGTInputParametersWidget, container_widget=None)
+            self.__plotter.register_context_window(INITIALIZATION_PARAMETERS_KEY, context_window=plotting_properties.get_context_widget())
+            self.__plotter.push_plot_on_context(INITIALIZATION_PARAMETERS_KEY, SGTInputParametersWidget, show_runtime_options=False)
+            self.__draw_context(INITIALIZATION_PARAMETERS_KEY)
+
+            return self.__plotter.get_plots_of_context(INITIALIZATION_PARAMETERS_KEY)
+        else:
+            return None
+
+    def get_initialization_parameters(self, script_logger_mode, plotting_properties=PlottingProperties()):
+        if self.__plotter.is_active():
+            initialization_parameters = self.__plotter.show_interactive_plot(SGTInputParametersDialog,
+                                                                             container_widget=plotting_properties.get_container_widget(),
+                                                                             show_runtime_options=plotting_properties.get_parameter("show_runtime_options", True))
         else:
             initialization_parameters = generate_initialization_parameters_sgt(img_file_name      = self.__ini.get_string_from_ini("Files", "sample"),
                                                                                imgRef_file_name   = self.__ini.get_string_from_ini("Files", "reference"),
@@ -145,31 +159,50 @@ class __SingleGratingTalbot(SingleGratingTalbotFacade):
 
         return initialization_parameters
 
+
     # %% ==================================================================================================
 
-    def calculate_dpc(self, initialization_parameters):
+    def crop_initial_image(self, initialization_parameters, plotting_properties=PlottingProperties()):
         img             = initialization_parameters.get_parameter("img")
         imgRef          = initialization_parameters.get_parameter("imgRef")
+        pixelsize       = initialization_parameters.get_parameter("pixelsize")
+
+        img_size_o = np.shape(img)
+
+        if self.__plotter.is_active():
+            img, idx4crop, _, _ = self.__plotter.show_interactive_plot(ColorbarCropDialogPlot, container_widget=plotting_properties.get_container_widget(),
+                                                                       img=img, pixelsize=pixelsize)
+        else:
+            idx4crop = self.__ini.get_list_from_ini("Parameters", "Crop")
+            img = common_tools.crop_matrix_at_indexes(img, idx4crop)
+
+        if not imgRef is None: imgRef = common_tools.crop_matrix_at_indexes(imgRef, idx4crop)
+
+        return WavePyData(img=img,
+                          imgRef=imgRef,
+                          idx4crop=idx4crop,
+                          img_size_o=img_size_o)
+
+
+    # %% ==================================================================================================
+
+    def calculate_dpc(self, initial_crop_parameters, initialization_parameters, plotting_properties=PlottingProperties()):
         phenergy        = initialization_parameters.get_parameter("phenergy")
         pixelsize       = initialization_parameters.get_parameter("pixelsize")
         distDet2sample  = initialization_parameters.get_parameter("distDet2sample")
         period_harm     = initialization_parameters.get_parameter("period_harm")
         unwrapFlag      = True
 
-        self.__plotter.register_context_window(CALCULATE_DPC_CONTEXT_KEY)
+        img             = initial_crop_parameters.get_parameter("img")
+        imgRef          = initial_crop_parameters.get_parameter("imgRef")
+        img_size_o      = initial_crop_parameters.get_parameter("img_size_o")
+        idx4crop        = initial_crop_parameters.get_parameter("idx4crop")
 
-        img_size_o = np.shape(img)
-
-        if self.__plotter.is_active():
-            img, idx4crop, _, _ = self.__plotter.show_interactive_plot(ColorbarCropDialogPlot, container_widget=None, img=img, pixelsize=pixelsize)
-        else:
-            idx4crop = self.__ini.get_list_from_ini("Parameters", "Crop")
-            img = common_tools.crop_matrix_at_indexes(img, idx4crop)
+        self.__plotter.register_context_window(CALCULATE_DPC_CONTEXT_KEY, context_window=plotting_properties.get_context_widget())
 
         # Plot Real Image AFTER crop
         self.__plotter.push_plot_on_context(CALCULATE_DPC_CONTEXT_KEY, ShowCroppedFigure, img=img, pixelsize=pixelsize)
 
-        if not imgRef is None: imgRef = common_tools.crop_matrix_at_indexes(imgRef, idx4crop)
 
         period_harm_Vert_o = int(period_harm[0]*img.shape[0]/img_size_o[0]) + 1
         period_harm_Hor_o = int(period_harm[1]*img.shape[1]/img_size_o[1]) + 1

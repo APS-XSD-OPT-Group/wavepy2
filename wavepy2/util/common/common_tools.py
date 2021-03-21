@@ -45,6 +45,10 @@
 import numpy as np
 from scipy.interpolate import UnivariateSpline
 
+class AlreadyInitializedError(ValueError):
+    def __init__(self, message=None):
+        super(AlreadyInitializedError, self).__init__(message)
+
 # ---------------------------------------------------------------------------
 # Fourier Transform
 

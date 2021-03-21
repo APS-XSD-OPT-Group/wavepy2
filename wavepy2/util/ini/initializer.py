@@ -150,6 +150,7 @@ class __LocalIniFile(IniFacade):
     def push(self):
         with open(self.__ini_file_name, "w") as ini_file: self.__config_parser.write(ini_file)
 
+from wavepy2.util.common.common_tools import AlreadyInitializedError
 
 @Singleton
 class __IniRegistry:
@@ -162,7 +163,7 @@ class __IniRegistry:
         if not isinstance(ini_facade_instance, IniFacade): raise ValueError("Ini Instance do not implement Ini Facade")
 
         if self.__ini_instance is None: self.__ini_instance = ini_facade_instance
-        else: raise ValueError("Ini Instance already initialized")
+        else: raise AlreadyInitializedError("Ini Instance already initialized")
 
     @synchronized_method
     def reset(self):
