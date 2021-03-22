@@ -10,19 +10,20 @@ CROP_KEY          = "Crop Key"
 COLORBAR_CROP_KEY = "Colorbar Crop Key"
 
 
-def draw_crop_image(img, initialization_parameters, plotting_properties=PlottingProperties()):
+def draw_crop_image(img, initialization_parameters, plotting_properties=PlottingProperties(), **kwargs):
     plotter = get_registered_plotter_instance()
 
     if plotter.is_active():
         add_context_label = plotting_properties.get_parameter("add_context_label", True)
-        use_unique_id = plotting_properties.get_parameter("use_unique_id", False)
+        use_unique_id     = plotting_properties.get_parameter("use_unique_id", False)
+
 
         unique_id = plotter.register_context_window(CROP_KEY,
                                                     context_window=plotting_properties.get_context_widget(),
                                                     use_unique_id=use_unique_id)
 
         plotter.push_plot_on_context(CROP_KEY, CropWidgetPlot, unique_id, img=img)
-        plotter.draw_context(CROP_KEY, add_context_label=add_context_label, unique_id=unique_id)
+        plotter.draw_context(CROP_KEY, add_context_label=add_context_label, unique_id=unique_id, **kwargs)
 
         return plotter.get_plots_of_context(CROP_KEY, unique_id=unique_id)
     else:
@@ -44,7 +45,7 @@ def crop_image(img, pixelsize, initialization_parameters, plotting_properties=Pl
     return img, idx4crop, img_size_o
 
 
-def draw_colorbar_crop_image(img, pixelsize, initialization_parameters, plotting_properties=PlottingProperties()):
+def draw_colorbar_crop_image(img, pixelsize, initialization_parameters, plotting_properties=PlottingProperties(), **kwargs):
     plotter = get_registered_plotter_instance()
 
     if plotter.is_active():
@@ -56,7 +57,7 @@ def draw_colorbar_crop_image(img, pixelsize, initialization_parameters, plotting
                                                     use_unique_id=use_unique_id)
 
         plotter.push_plot_on_context(COLORBAR_CROP_KEY, ColorbarCropWidgetPlot, unique_id, img=img, pixelsize=pixelsize)
-        plotter.draw_context(COLORBAR_CROP_KEY, add_context_label=add_context_label, unique_id=unique_id)
+        plotter.draw_context(COLORBAR_CROP_KEY, add_context_label=add_context_label, unique_id=unique_id, **kwargs)
 
         return plotter.get_plots_of_context(COLORBAR_CROP_KEY, unique_id=unique_id)
     else:

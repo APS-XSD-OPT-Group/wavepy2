@@ -163,8 +163,8 @@ class PlotterFacade:
     def get_plots_of_context(self, context_key, unique_id=None): raise NotImplementedError()
     def get_context_container_widget(self, context_key, unique_id=None): raise  NotImplementedError()
     def get_save_file_prefix(self): raise NotImplementedError()
-    def draw_context_on_widget(self, context_key, container_widget, add_context_label=True, unique_id=None): raise NotImplementedError()
-    def draw_context(self, context_key, add_context_label=True, unique_id=None): raise NotImplementedError
+    def draw_context_on_widget(self, context_key, container_widget, add_context_label=True, unique_id=None, **kwargs): raise NotImplementedError()
+    def draw_context(self, context_key, add_context_label=True, unique_id=None, **kwargs): raise NotImplementedError
     def show_interactive_plot(self, widget_class, container_widget, **kwargs): raise NotImplementedError()
     def show_context_window(self, context_key, unique_id=None): raise NotImplementedError()
     def save_sdf_file(self, array, pixelsize, file_prefix, file_suffix, extraHeader): raise NotImplementedError()
@@ -223,8 +223,8 @@ class __AbstractPlotter(PlotterFacade):
 
         return file_name
 
-    def draw_context(self, context_key, add_context_label=True, unique_id=None):
-        self.draw_context_on_widget(context_key, self.get_context_container_widget(context_key, unique_id), add_context_label, unique_id)
+    def draw_context(self, context_key, add_context_label=True, unique_id=None, **kwargs):
+        self.draw_context_on_widget(context_key, self.get_context_container_widget(context_key, unique_id), add_context_label, unique_id, **kwargs)
 
 from wavepy2.util.plot.plot_tools import DefaultMainWindow
 
@@ -264,7 +264,7 @@ class __AbstractActivePlotter(__AbstractPlotter):
         if context_key in self.__context_window_registry: return self.__context_window_registry[context_key].get_container_widget()
         else: return None
 
-    def draw_context_on_widget(self, context_key, container_widget, add_context_label=True, unique_id=None):
+    def draw_context_on_widget(self, context_key, container_widget, add_context_label=True, unique_id=None, **kwargs):
         if not unique_id is None: context_key += "_" + unique_id
 
         main_box = plot_tools.widgetBox(container_widget, context_key if add_context_label else "", orientation="horizontal")
@@ -273,7 +273,6 @@ class __AbstractActivePlotter(__AbstractPlotter):
 
         widths  = []
         heights = []
-
 
         if context_key in self.__plot_registry:
             plot_widget_instances = self.__plot_registry[context_key]
@@ -290,10 +289,20 @@ class __AbstractActivePlotter(__AbstractPlotter):
             widths.append(500)
             heights.append(370)
 
-        tab_widget.setFixedWidth(max(widths) + 20)
-        tab_widget.setFixedHeight(max(heights) + 35)
-        container_widget.setFixedWidth(tab_widget.width() + 25)
-        container_widget.setFixedHeight(tab_widget.height() + 55)
+        try:    tab_widget_width = kwargs["tab_widget_width"]
+        except: tab_widget_width = max(widths) + 20
+        try:    tab_widget_height = kwargs["tab_widget_height"]
+        except: tab_widget_height = max(heights) + 35
+
+        try:    container_widget_width  = kwargs["container_widget_width"]
+        except: container_widget_width  = tab_widget_width + 25
+        try:    container_widget_height = kwargs["container_widget_height"]
+        except: container_widget_height = tab_widget_height + 55
+
+        tab_widget.setFixedWidth(tab_widget_width)
+        tab_widget.setFixedHeight(tab_widget_height)
+        container_widget.setFixedWidth(container_widget_width)
+        container_widget.setFixedHeight(container_widget_height)
 
         container_widget.update()
 
@@ -333,7 +342,7 @@ class __SaveOnlyPlotter(__AbstractActivePlotter):
     def push_plot_on_context(self, context_key, widget_class, unique_id=None, **kwargs): self._save_images(self._build_plot(widget_class, **kwargs))
     def get_context_container_widget(self, context_key, unique_id=None): return None
     def get_plots_of_context(self, context_key, unique_id=None): pass
-    def draw_context_on_widget(self, context_key, container_widget, add_context_label=True, unique_id=None): pass
+    def draw_context_on_widget(self, context_key, container_widget, add_context_label=True, unique_id=None, **kwargs): pass
     def show_interactive_plot(self, widget_class, container_widget, **kwargs): pass
     def show_context_window(self, context_key, unique_id=None): pass
 
@@ -344,7 +353,7 @@ class __NullPlotter(__AbstractPlotter):
     def push_plot_on_context(self, context_key, widget_class, unique_id=None, **kwargs): self._build_plot(widget_class, **kwargs) # necessary for some operations
     def get_context_container_widget(self, context_key, unique_id=None): return None
     def get_plots_of_context(self, context_key, unique_id=None): pass
-    def draw_context_on_widget(self, context_key, container_widget, add_context_label=True, unique_id=None): pass
+    def draw_context_on_widget(self, context_key, container_widget, add_context_label=True, unique_id=None, **kwargs): pass
     def show_interactive_plot(self, widget_class, container_widget, **kwargs): pass
     def show_context_window(self, context_key, unique_id=None): pass
     def save_sdf_file(self, array, pixelsize=[1, 1], file_prefix=None, file_suffix="", extraHeader={}): return self._get_file_name(file_prefix, file_suffix, "sdf")
