@@ -83,12 +83,22 @@ class WavePyWidget(QWidget, WavePyGenericWidget):
 
         self.append_mpl_figure_to_save(canvas.figure)
 
-        self.setFixedWidth(canvas.get_width_height()[0]*1.1)
-        self.setFixedHeight(canvas.get_width_height()[1]*1.1)
+        try:    widget_width = kwargs["widget_width"]
+        except: widget_width = canvas.get_width_height()[0]*1.1
+        try:    widget_height = kwargs["widget_height"]
+        except: widget_height = canvas.get_width_height()[1]*1.1
+
+        self.setFixedWidth(widget_width)
+        self.setFixedHeight(widget_height)
+
         layout.setStretchFactor(canvas, 1)
         layout.addWidget(canvas)
 
         self.setLayout(layout)
+
+    def get_default_width(): return None
+    def get_default_heigth(): return None
+
 
     def append_mpl_figure_to_save(self, figure, figure_file_name=None):
         if not hasattr(self, "__figures_to_save") or self.__figures_to_save is None: self.__figures_to_save = []
@@ -266,6 +276,7 @@ class __AbstractActivePlotter(__AbstractPlotter):
 
     def draw_context_on_widget(self, context_key, container_widget, add_context_label=True, unique_id=None, **kwargs):
         if not unique_id is None: context_key += "_" + unique_id
+        container_widget.setStyleSheet(plot_tools.stylesheet_string)
 
         main_box = plot_tools.widgetBox(container_widget, context_key if add_context_label else "", orientation="horizontal")
         main_box.layout().setAlignment(Qt.AlignCenter)

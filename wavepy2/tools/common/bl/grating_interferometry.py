@@ -125,7 +125,7 @@ def exp_harm_period(img, harmonicPeriod, harmonic_ij='00', searchRegion=10, isFF
 
     return periodVert + del_i, periodHor + del_j
 
-def extract_harmonic(imgFFT, harmonicPeriod, harmonic_ij='00', searchRegion=10, context_key="extract_harmonic", image_name="Image"):
+def extract_harmonic(imgFFT, harmonicPeriod, harmonic_ij='00', searchRegion=10, context_key="extract_harmonic", image_name="Image", unique_id=None, **kwargs):
     logger  = get_registered_logger_instance()
     plotter = get_registered_plotter_instance()
 
@@ -166,7 +166,7 @@ def extract_harmonic(imgFFT, harmonicPeriod, harmonic_ij='00', searchRegion=10, 
         logger.print_warning("Harmonic Peak " + harmonic_ij[0] + harmonic_ij[1] + " is too far from theoretical value.")
         logger.print_warning("{:d} pixels in vertical, {:d} pixels in hor".format(del_i, del_j))
 
-    plotter.push_plot_on_context(context_key, ExtractHarmonicPlot,
+    plotter.push_plot_on_context(context_key, ExtractHarmonicPlot, unique_id,
                                  intensity=intensity,
                                  idxPeak_ij=idxPeak_ij,
                                  harmonic_ij=harmonic_ij,
@@ -174,14 +174,14 @@ def extract_harmonic(imgFFT, harmonicPeriod, harmonic_ij='00', searchRegion=10, 
                                  nRows=nRows,
                                  periodVert=periodVert,
                                  periodHor=periodHor,
-                                 image_name=image_name)
+                                 image_name=image_name, **kwargs)
 
     return imgFFT[idxPeak_ij[0] - periodVert // 2:
                   idxPeak_ij[0] + periodVert//2,
                   idxPeak_ij[1] - periodHor//2:
                   idxPeak_ij[1] + periodHor//2]
 
-def single_grating_harmonic_images(img, harmonicPeriod, searchRegion=10, context_key="single_grating_harmonic", image_name=""):
+def single_grating_harmonic_images(img, harmonicPeriod, searchRegion=10, context_key="single_grating_harmonic", image_name="", unique_id=None, **kwargs):
     """
     Auxiliary function to process the data of single 2D grating Talbot imaging.
     It obtain the (real space) harmonic images  00, 01 and 10.
@@ -214,32 +214,32 @@ def single_grating_harmonic_images(img, harmonicPeriod, searchRegion=10, context
 
     imgFFT = FourierTransform.fft2d(img)
 
-    plotter.push_plot_on_context(context_key, HarmonicGridPlot, imgFFT=imgFFT, harmonicPeriod=harmonicPeriod, image_name=image_name)
+    plotter.push_plot_on_context(context_key, HarmonicGridPlot, unique_id, imgFFT=imgFFT, harmonicPeriod=harmonicPeriod, image_name=image_name, **kwargs)
 
     imgFFT00 = extract_harmonic(imgFFT,
                                 harmonicPeriod=harmonicPeriod,
                                 harmonic_ij='00',
                                 searchRegion=searchRegion,
                                 context_key=context_key,
-                                image_name=image_name)
+                                image_name=image_name, unique_id=unique_id, **kwargs)
 
     imgFFT01 = extract_harmonic(imgFFT,
                                 harmonicPeriod=harmonicPeriod,
                                 harmonic_ij=['0', '1'],
                                 searchRegion=searchRegion,
                                 context_key=context_key,
-                                image_name=image_name)
+                                image_name=image_name, unique_id=unique_id, **kwargs)
 
     imgFFT10 = extract_harmonic(imgFFT,
                                 harmonicPeriod=harmonicPeriod,
                                 harmonic_ij=['1', '0'],
                                 searchRegion=searchRegion,
                                 context_key=context_key,
-                                image_name=image_name)
+                                image_name=image_name, unique_id=unique_id, **kwargs)
 
-    plotter.push_plot_on_context(context_key, SingleGratingHarmonicImages,
+    plotter.push_plot_on_context(context_key, SingleGratingHarmonicImages, unique_id,
                                  imgFFT00=imgFFT00, imgFFT01=imgFFT01, imgFFT10=imgFFT10,
-                                 image_name=image_name)
+                                 image_name=image_name, **kwargs)
 
     img00 = FourierTransform.ifft2d(imgFFT00)
 
@@ -252,7 +252,7 @@ def single_grating_harmonic_images(img, harmonicPeriod, searchRegion=10, context
 
     return (img00, img01, img10)
 
-def single_2Dgrating_analyses(img, img_ref=None, harmonicPeriod=None, unwrapFlag=True, context_key="single_2Dgrating_analyses"):
+def single_2Dgrating_analyses(img, img_ref=None, harmonicPeriod=None, unwrapFlag=True, context_key="single_2Dgrating_analyses", unique_id=None, **kwargs):
     """
     Function to process the data of single 2D grating Talbot imaging. It
     wraps other functions in order to make all the process transparent
@@ -260,10 +260,10 @@ def single_2Dgrating_analyses(img, img_ref=None, harmonicPeriod=None, unwrapFlag
     """
 
     # Obtain Harmonic images
-    h_img = single_grating_harmonic_images(img, harmonicPeriod, context_key=context_key)
+    h_img = single_grating_harmonic_images(img, harmonicPeriod, context_key=context_key, unique_id=unique_id, **kwargs)
 
     if img_ref is not None:  # relative wavefront
-        h_img_ref = single_grating_harmonic_images(img_ref, harmonicPeriod, context_key=context_key, image_name="Ref")
+        h_img_ref = single_grating_harmonic_images(img_ref, harmonicPeriod, context_key=context_key, image_name="Ref", unique_id=unique_id, **kwargs)
 
         int00 = np.abs(h_img[0])/np.abs(h_img_ref[0])
         int01 = np.abs(h_img[1])/np.abs(h_img_ref[1])

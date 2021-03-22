@@ -84,13 +84,13 @@ CALCULATE_2ND_ORDER_COMPONENT_OF_THE_PHASE = "Calculate 2nd order component of t
 REMOVE_2ND_ORDER                           = "Remove 2nd order"
 
 class SingleGratingTalbotFacade:
-    def draw_initialization_parameters_widget(self, plotting_properties=PlottingProperties()): raise NotImplementedError()
+    def draw_initialization_parameters_widget(self, plotting_properties=PlottingProperties(), **kwargs): raise NotImplementedError()
     def get_initialization_parameters(self, plotting_properties=PlottingProperties()): raise NotImplementedError()
     def manager_initialization(self, initialization_parameters, script_logger_mode): raise NotImplementedError()
 
-    def draw_crop_initial_image(self, initialization_parameters, plotting_properties=PlottingProperties()): raise NotImplementedError()
+    def draw_crop_initial_image(self, initialization_parameters, plotting_properties=PlottingProperties(), **kwargs): raise NotImplementedError()
     def crop_initial_image(self, initialization_parameters, plotting_properties=PlottingProperties()): raise NotImplementedError()
-    def crop_reference_image(self, initialization_parameters, initial_crop_parameters): raise NotImplementedError()
+    def crop_reference_image(self, initial_crop_parameters, initialization_parameters): raise NotImplementedError()
 
     def calculate_dpc(self, initial_crop_parameters, initialization_parameters, plotting_properties=PlottingProperties()): raise NotImplementedError()
     def recrop_dpc(self, dpc_result, initialization_parameters, plotting_properties=PlottingProperties()): raise NotImplementedError()
@@ -115,7 +115,7 @@ class __SingleGratingTalbot(SingleGratingTalbotFacade):
 
     # %% ==================================================================================================
 
-    def draw_initialization_parameters_widget(self, plotting_properties=PlottingProperties()):
+    def draw_initialization_parameters_widget(self, plotting_properties=PlottingProperties(), **kwargs):
         if self.__plotter.is_active():
             show_runtime_options = plotting_properties.get_parameter("show_runtime_options", True)
             add_context_label    = plotting_properties.get_parameter("add_context_label", True)
@@ -125,8 +125,8 @@ class __SingleGratingTalbot(SingleGratingTalbotFacade):
                                                                context_window=plotting_properties.get_context_widget(),
                                                                use_unique_id=use_unique_id)
 
-            self.__plotter.push_plot_on_context(INITIALIZATION_PARAMETERS_KEY, SGTInputParametersWidget, unique_id, show_runtime_options=show_runtime_options)
-            self.__plotter.draw_context(INITIALIZATION_PARAMETERS_KEY, add_context_label=add_context_label, unique_id=unique_id)
+            self.__plotter.push_plot_on_context(INITIALIZATION_PARAMETERS_KEY, SGTInputParametersWidget, unique_id, show_runtime_options=show_runtime_options, **kwargs)
+            self.__plotter.draw_context(INITIALIZATION_PARAMETERS_KEY, add_context_label=add_context_label, unique_id=unique_id, **kwargs)
 
             return self.__plotter.get_plots_of_context(INITIALIZATION_PARAMETERS_KEY, unique_id=unique_id)
         else:
@@ -176,14 +176,15 @@ class __SingleGratingTalbot(SingleGratingTalbotFacade):
 
     # %% ==================================================================================================
 
-    def draw_crop_initial_image(self, initialization_parameters, plotting_properties=PlottingProperties()):
+    def draw_crop_initial_image(self, initialization_parameters, plotting_properties=PlottingProperties(), **kwargs):
         img             = initialization_parameters.get_parameter("img")
         pixelsize       = initialization_parameters.get_parameter("pixelsize")
 
         return crop_image.draw_colorbar_crop_image(img=img,
                                                    pixelsize=pixelsize,
                                                    initialization_parameters=initialization_parameters,
-                                                   plotting_properties=plotting_properties)
+                                                   plotting_properties=plotting_properties,
+                                                   **kwargs)
 
     def crop_initial_image(self, initialization_parameters, plotting_properties=PlottingProperties()):
         img             = initialization_parameters.get_parameter("img")
@@ -198,7 +199,7 @@ class __SingleGratingTalbot(SingleGratingTalbotFacade):
                           idx4crop=idx4crop,
                           img_size_o=img_size_o)
 
-    def crop_reference_image(self, initialization_parameters, initial_crop_parameters):
+    def crop_reference_image(self, initial_crop_parameters, initialization_parameters):
         imgRef   = initialization_parameters.get_parameter("imgRef")
         idx4crop = initial_crop_parameters.get_parameter("idx4crop")
 
@@ -210,7 +211,7 @@ class __SingleGratingTalbot(SingleGratingTalbotFacade):
 
     # %% ==================================================================================================
 
-    def calculate_dpc(self, initial_crop_parameters, initialization_parameters, plotting_properties=PlottingProperties()):
+    def calculate_dpc(self, initial_crop_parameters, initialization_parameters, plotting_properties=PlottingProperties(), **kwargs):
         phenergy        = initialization_parameters.get_parameter("phenergy")
         pixelsize       = initialization_parameters.get_parameter("pixelsize")
         distDet2sample  = initialization_parameters.get_parameter("distDet2sample")
@@ -222,10 +223,15 @@ class __SingleGratingTalbot(SingleGratingTalbotFacade):
         img_size_o      = initial_crop_parameters.get_parameter("img_size_o")
         idx4crop        = initial_crop_parameters.get_parameter("idx4crop")
 
-        self.__plotter.register_context_window(CALCULATE_DPC_CONTEXT_KEY, context_window=plotting_properties.get_context_widget())
+        add_context_label = plotting_properties.get_parameter("add_context_label", True)
+        use_unique_id     = plotting_properties.get_parameter("use_unique_id", False)
+
+        unique_id = self.__plotter.register_context_window(CALCULATE_DPC_CONTEXT_KEY,
+                                                           context_window=plotting_properties.get_context_widget(),
+                                                           use_unique_id=use_unique_id)
 
         # Plot Real Image AFTER crop
-        self.__plotter.push_plot_on_context(CALCULATE_DPC_CONTEXT_KEY, ShowCroppedFigure, img=img, pixelsize=pixelsize)
+        self.__plotter.push_plot_on_context(CALCULATE_DPC_CONTEXT_KEY, ShowCroppedFigure, unique_id, img=img, pixelsize=pixelsize, **kwargs)
 
 
         period_harm_Vert_o = int(period_harm[0]*img.shape[0]/img_size_o[0]) + 1
@@ -261,7 +267,8 @@ class __SingleGratingTalbot(SingleGratingTalbotFacade):
                                                                          img_ref=imgRef,
                                                                          harmonicPeriod=harmPeriod,
                                                                          unwrapFlag=unwrapFlag,
-                                                                         context_key=CALCULATE_DPC_CONTEXT_KEY)
+                                                                         context_key=CALCULATE_DPC_CONTEXT_KEY,
+                                                                         unique_id=unique_id, **kwargs)
 
         virtual_pixelsize = [0, 0]
         virtual_pixelsize[0] = pixelsize[0]*img.shape[0]/int00.shape[0]
@@ -271,7 +278,7 @@ class __SingleGratingTalbot(SingleGratingTalbotFacade):
         diffPhase10 = -phaseFFT_10*virtual_pixelsize[0]/distDet2sample/hc*phenergy
         # Note: the signals above were defined base in experimental data
 
-        self.__plotter.draw_context(CALCULATE_DPC_CONTEXT_KEY)
+        self.__plotter.draw_context(CALCULATE_DPC_CONTEXT_KEY, add_context_label=add_context_label, unique_id=unique_id, **kwargs)
 
         self.__main_logger.print_message('VALUES: virtual pixelsize i, j: {:.4f}um, {:.4f}um'.format(virtual_pixelsize[0]*1e6, virtual_pixelsize[1]*1e6))
         self.__script_logger.print('\nvirtual_pixelsize = ' + str(virtual_pixelsize))

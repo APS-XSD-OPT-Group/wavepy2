@@ -65,7 +65,7 @@ class __NullQtApplication(QtApplicationFacade):
 class __QtApplication(QtApplicationFacade):
     def __init__(self):
         self.__qt_application = QApplication(sys.argv)
-        self.__qt_application.setStyle(QStyleFactory.create('Windows'))
+        self.__qt_application.setStyle(QStyleFactory.create('Fusion')) # 'Windows'
         self.__application_closer = CloseApp()
 
     def show_application_closer(self):

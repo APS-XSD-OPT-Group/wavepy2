@@ -88,6 +88,8 @@ class DefaultMainWindow(QMainWindow, AbstractContextWidget):
 
         self.setGeometry(new_geometry)
 
+        self.setStyleSheet(stylesheet_string)
+
 class PlottingProperties:
     def __init__(self, container_widget=None, context_widget=None, **parameters):
         self.__container_widget = container_widget
@@ -945,3 +947,429 @@ def __connectControl(master, value, f, signal, cfront, cback=None, cfunc=None, f
         cfront.opposite = tuple(filter(None, (cback, cfunc)))
 
     return cfront, cback, cfunc
+
+stylesheet_string = "" + \
+"/*" + "\n" + \
+" * Icon search paths relative to this files directory." + "\n" + \
+" * (main.py script will add this to QDir.searchPaths)" + "\n" + \
+" */" + "\n" + \
+"" + "\n" + \
+"/* Main window background color */" + "\n" + \
+"" + "\n" + \
+"QMainWindow {" + "\n" + \
+"    background-color: #E9EFF2;" + "\n" + \
+"}" + "\n" + \
+"" + "\n" + \
+"QMainWindow::separator {" + "\n" + \
+"    width: 1px; /* when vertical */" + "\n" + \
+"    height: 1px; /* when horizontal */" + "\n" + \
+"}" + "\n" + \
+"" + "\n" + \
+"" + "\n" + \
+"/* The widget buttons in the dock tool box */" + "\n" + \
+"" + "\n" + \
+"WidgetToolBox WidgetToolGrid QToolButton {" + "\n" + \
+"    border: none;" + "\n" + \
+"    background-color: #F2F2F2;" + "\n" + \
+"    border-radius: 8px;" + "\n" + \
+"/*" + "\n" + \
+"    font-family: \"Helvetica\";" + "\n" + \
+"    font-size: 10px;" + "\n" + \
+"    font-weight: bold;" + "\n" + \
+"*/" + "\n" + \
+"    color: #333;" + "\n" + \
+"}" + "\n" + \
+"" + "\n" + \
+"" + "\n" + \
+"/* Dock widget tool box tab buttons (categories) */" + "\n" + \
+"" + "\n" + \
+"WidgetToolBox QToolButton#toolbox-tab-button {" + "\n" + \
+"    /* nativeStyling property overrides the QStyle and uses a fixed drawing" + "\n" + \
+"    routine */" + "\n" + \
+"    qproperty-nativeStyling_: \"false\";" + "\n" + \
+"" + "\n" + \
+"    font-family: \"Helvetica\";" + "\n" + \
+"    font-size: 14px;" + "\n" + \
+"    font-weight: bold;" + "\n" + \
+"    color: #333;" + "\n" + \
+"    border: none;" + "\n" + \
+"    border-bottom: 1px solid #B5B8B8;" + "\n" + \
+"    background: qlineargradient(" + "\n" + \
+"        x1: 0, y1: 0, x2: 0, y2: 1," + "\n" + \
+"        stop: 0 #F2F2F2," + "\n" + \
+"        stop: 0.5 #F2F2F2," + "\n" + \
+"        stop: 0.8 #EBEBEB," + "\n" + \
+"        stop: 1.0 #DBDBDB" + "\n" + \
+"    );" + "\n" + \
+"}" + "\n" + \
+"" + "\n" + \
+"" + "\n" + \
+"WidgetToolBox QToolButton#toolbox-tab-button:hover {" + "\n" + \
+"    background-color: palette(light);" + "\n" + \
+"}" + "\n" + \
+"" + "\n" + \
+"" + "\n" + \
+"WidgetToolBox QToolButton#toolbox-tab-button:checked {" + "\n" + \
+"    background-color: palette(dark);" + "\n" + \
+"}" + "\n" + \
+"" + "\n" + \
+"" + "\n" + \
+"WidgetToolBox QToolButton#toolbox-tab-button:focus {" + "\n" + \
+"    background-color: palette(highlight);" + "\n" + \
+"    border: 1px solid #609ED7" + "\n" + \
+"}" + "\n" + \
+"" + "\n" + \
+"" + "\n" + \
+"WidgetToolBox ToolGrid {" + "\n" + \
+"    background-color: #F2F2F2;" + "\n" + \
+"    padding-bottom: 8px;" + "\n" + \
+"}" + "\n" + \
+"" + "\n" + \
+"WidgetToolBox QWidget#toolbox-contents {" + "\n" + \
+"    background-color: #F2F2F2; /* match the ToolGrid's background */" + "\n" + \
+"}" + "\n" + \
+"" + "\n" + \
+"WidgetToolBox ToolGrid QToolButton[last-column] {" + "\n" + \
+"    border-right: none;" + "\n" + \
+"}" + "\n" + \
+"" + "\n" + \
+"WidgetToolBox  ToolGrid QToolButton:focus {" + "\n" + \
+"    background-color: palette(window);" + "\n" + \
+"}" + "\n" + \
+"" + "\n" + \
+"WidgetToolBox  ToolGrid QToolButton:hover {" + "\n" + \
+"    background-color: palette(light);" + "\n" + \
+"}" + "\n" + \
+"" + "\n" + \
+"WidgetToolBox  ToolGrid QToolButton:pressed {" + "\n" + \
+"    background-color: palette(dark);" + "\n" + \
+"}" + "\n" + \
+"" + "\n" + \
+"" + "\n" + \
+"/* QuickCategoryToolbar popup menus */" + "\n" + \
+"" + "\n" + \
+"CategoryPopupMenu {" + "\n" + \
+"	background-color: #E9EFF2;" + "\n" + \
+"}" + "\n" + \
+"" + "\n" + \
+"CategoryPopupMenu ToolTree QTreeView::item {" + "\n" + \
+"	height: 25px;" + "\n" + \
+"	border-bottom: 1px solid #e9eff2;" + "\n" + \
+"}" + "\n" + \
+"" + "\n" + \
+"CategoryPopupMenu QTreeView::item:selected {" + "\n" + \
+"	background: qlineargradient(" + "\n" + \
+"		x1: 0, y1: 0, x2: 0, y2: 1," + "\n" + \
+"		stop: 0 #688EF6," + "\n" + \
+"		stop: 0.5 #4047f4," + "\n" + \
+"		stop: 1.0 #2D68F3" + "\n" + \
+"	);" + "\n" + \
+"	color: white;" + "\n" + \
+"}" + "\n" + \
+"" + "\n" + \
+"" + "\n" + \
+"/* Canvas Dock Header */" + "\n" + \
+"" + "\n" + \
+"CollapsibleDockWidget::title {" + "\n" + \
+"    background: qlineargradient(" + "\n" + \
+"        x1: 0, y1: 0, x2: 0, y2: 1," + "\n" + \
+"        stop: 0 #808080, stop: 1.0 #666" + "\n" + \
+"    );" + "\n" + \
+"}" + "\n" + \
+"" + "\n" + \
+"/* Dock widget title bar button icons (icon size for both must be set)." + "\n" + \
+" * The buttons define the title bar height." + "\n" + \
+" */" + "\n" + \
+"" + "\n" + \
+"CollapsibleDockWidget::close-button, CollapsibleDockWidget::float-button {" + "\n" + \
+"    padding: 1px;" + "\n" + \
+"    icon-size: 11px;" + "\n" + \
+"}" + "\n" + \
+"" + "\n" + \
+"CanvasToolDock WidgetToolBox {" + "\n" + \
+"    border: 1px solid #B5B8B8;" + "\n" + \
+"}" + "\n" + \
+"" + "\n" + \
+"" + "\n" + \
+"/* Toolbar at the bottom of the dock widget when in in expanded state" + "\n" + \
+" */" + "\n" + \
+"" + "\n" + \
+"CanvasToolDock QToolBar {" + "\n" + \
+"    height: 28;" + "\n" + \
+"    spacing: 1;" + "\n" + \
+"    border: none;" + "\n" + \
+"    /*" + "\n" + \
+"    background: qlineargradient(" + "\n" + \
+"        x1: 0, y1: 0, x2: 0, y2: 1," + "\n" + \
+"        stop: 0 #808080, stop: 1.0 #666" + "\n" + \
+"    );" + "\n" + \
+"    */" + "\n" + \
+"    background-color: #898989;" + "\n" + \
+"" + "\n" + \
+"}" + "\n" + \
+"" + "\n" + \
+"CanvasToolDock QToolBar QToolButton {" + "\n" + \
+"    border: none;" + "\n" + \
+"    background: qlineargradient(" + "\n" + \
+"        x1: 0, y1: 0, x2: 0, y2: 1," + "\n" + \
+"        stop: 0 #808080, stop: 1.0 #666" + "\n" + \
+"    );" + "\n" + \
+"}" + "\n" + \
+"" + "\n" + \
+"CanvasToolDock QToolBar QToolButton:menu-indicator {" + "\n" + \
+"     image: url(canvas_icons:/Dropdown.svg);" + "\n" + \
+"     subcontrol-position: top right;" + "\n" + \
+"     height: 8px;" + "\n" + \
+"     width: 8px;" + "\n" + \
+"}" + "\n" + \
+"" + "\n" + \
+"CanvasToolDock QToolBar QToolButton:checked," + "\n" + \
+"CanvasToolDock QToolBar QToolButton:pressed {" + "\n" + \
+"    background-color: #FFA840;" + "\n" + \
+"}" + "\n" + \
+"" + "\n" + \
+"" + "\n" + \
+"/* Toolbar in the dock when in collapsed state." + "\n" + \
+" */" + "\n" + \
+"" + "\n" + \
+"CollapsibleDockWidget QWidget#canvas-quick-dock QToolBar {" + "\n" + \
+"    spacing: 1;" + "\n" + \
+"    border: none;" + "\n" + \
+"    /*" + "\n" + \
+"    background: qlineargradient(" + "\n" + \
+"        x1: 0, y1: 0, x2: 0, y2: 1," + "\n" + \
+"        stop: 0 #808080, stop: 1.0 #666" + "\n" + \
+"    );" + "\n" + \
+"    */" + "\n" + \
+"    background-color: #898989;" + "\n" + \
+"}" + "\n" + \
+"" + "\n" + \
+"" + "\n" + \
+"CollapsibleDockWidget QWidget#canvas-quick-dock QToolBar QToolButton {" + "\n" + \
+"    border: none;" + "\n" + \
+"    background: qlineargradient(" + "\n" + \
+"        x1: 0, y1: 0, x2: 1, y2: 0," + "\n" + \
+"        stop: 0 #808080, stop: 1.0 #666" + "\n" + \
+"    );" + "\n" + \
+"}" + "\n" + \
+"" + "\n" + \
+"CollapsibleDockWidget QWidget#canvas-quick-dock QToolBar QToolButton:menu-indicator {"+ "\n" + \
+"     image: url(canvas_icons:/Dropdown.svg);"+ "\n" + \
+"     subcontrol-position: top right;"+ "\n" + \
+"     height: 8px;"+ "\n" + \
+"     width: 8px;"+ "\n" + \
+"}"+ "\n" + \
+""+ "\n" + \
+"CollapsibleDockWidget QWidget#canvas-quick-dock QToolBar QToolButton:checked,"+ "\n" + \
+"CollapsibleDockWidget QWidget#canvas-quick-dock QToolBar QToolButton:pressed {"+ "\n" + \
+"    background-color: #FFA840;"+ "\n" + \
+"}"+ "\n" + \
+""+ "\n" + \
+""+ "\n" + \
+"/* Splitter between the widget toolbox and quick help."+ "\n" + \
+" */"+ "\n" + \
+""+ "\n" + \
+"CanvasToolDock QSplitter::handle {"+ "\n" + \
+"    border: 1px solid #B5B8B8;"+ "\n" + \
+""+ "\n" + \
+"/*    border-top: 1px solid #B5B8B8;"+ "\n" + \
+" *   border-bottom: 1px solid #B5B8B8;"+ "\n" + \
+" *   border-left: 1px solid #B6B6B6;"+ "\n" + \
+" *   border-right: 1px solid #B6B6B6;"+ "\n" + \
+" */"+ "\n" + \
+""+ "\n" + \
+"    background:  qlineargradient("+ "\n" + \
+"        x1: 0, y1: 0, x2: 0, y2: 1,"+ "\n" + \
+"        stop: 0 #D4D4D4, stop: 0.05 #EDEDED,"+ "\n" + \
+"        stop: 0.5 #F2F2F2,"+ "\n" + \
+"        stop: 0.95 #EDEDED, stop: 1.0 #E0E0E0"+ "\n" + \
+"    );"+ "\n" + \
+"}"+ "\n" + \
+""+ "\n" + \
+""+ "\n" + \
+"/* Scheme Info Dialog"+ "\n" + \
+" */"+ "\n" + \
+""+ "\n" + \
+"SchemeInfoDialog {"+ "\n" + \
+"    font-family: \"Helvetica\";"+ "\n" + \
+"    background-color: #E9EFF2;"+ "\n" + \
+"}"+ "\n" + \
+""+ "\n" + \
+"SchemeInfoDialog SchemeInfoEdit QLabel {"+ "\n" + \
+"    font-family: \"Helvetica\";"+ "\n" + \
+"    font-weight: bold;"+ "\n" + \
+"    font-size: 16px;"+ "\n" + \
+"    color: black;"+ "\n" + \
+"}"+ "\n" + \
+""+ "\n" + \
+"SchemeInfoDialog QLabel#heading {"+ "\n" + \
+"    font-size: 21px;"+ "\n" + \
+"    color: #515151;"+ "\n" + \
+"}"+ "\n" + \
+""+ "\n" + \
+"SchemeInfoDialog StyledWidget#auto-show-container * {"+ "\n" + \
+"    font-family: \"Helvetica\";"+ "\n" + \
+"    font-size: 12px;"+ "\n" + \
+"    color: #1A1A1A;"+ "\n" + \
+"}"+ "\n" + \
+""+ "\n" + \
+"SchemeInfoDialog StyledWidget#auto-show-container {"+ "\n" + \
+"    border-top: 1px solid #C1C2C3;"+ "\n" + \
+"}"+ "\n" + \
+""+ "\n" + \
+"SchemeInfoDialog SchemeInfoEdit QLineEdit {"+ "\n" + \
+"    padding: 4px;"+ "\n" + \
+"    /* background-color: red; */"+ "\n" + \
+"    /* font-weight: normal; */"+ "\n" + \
+"    font-size: 12px;"+ "\n" + \
+"    color: #1A1A1A;"+ "\n" + \
+"}"+ "\n" + \
+""+ "\n" + \
+"SchemeInfoDialog SchemeInfoEdit QTextEdit {"+ "\n" + \
+"    padding: 4px;"+ "\n" + \
+"    background-color: white;"+ "\n" + \
+"    /* font-weight: normal; */"+ "\n" + \
+"    font-size: 12px;"+ "\n" + \
+"    color: #1A1A1A;"+ "\n" + \
+"}"+ "\n" + \
+""+ "\n" + \
+""+ "\n" + \
+"/* Preview Dialog (Recent Schemes and Tutorials)"+ "\n" + \
+" */"+ "\n" + \
+""+ "\n" + \
+"PreviewDialog {"+ "\n" + \
+"    background-color: #E9EFF2;"+ "\n" + \
+"}"+ "\n" + \
+""+ "\n" + \
+"PreviewDialog QLabel#heading {"+ "\n" + \
+"    font-family: \"Helvetica\";"+ "\n" + \
+"    font-weight: bold;"+ "\n" + \
+"    font-size: 21px;"+ "\n" + \
+"    color: #515151;"+ "\n" + \
+"}"+ "\n" + \
+""+ "\n" + \
+"PreviewDialog PreviewBrowser * {"+ "\n" + \
+"    font-family: \"Helvetica\";"+ "\n" + \
+"    color: #1A1A1A;"+ "\n" + \
+"}"+ "\n" + \
+""+ "\n" + \
+"PreviewDialog PreviewBrowser TextLabel#path-text {"+ "\n" + \
+"    font-size: 12px;"+ "\n" + \
+"}"+ "\n" + \
+""+ "\n" + \
+"PreviewDialog PreviewBrowser QLabel#path-label {"+ "\n" + \
+"    font-size: 12px;"+ "\n" + \
+"}"+ "\n" + \
+""+ "\n" + \
+"PreviewDialog DropShadowFrame {"+ "\n" + \
+"    qproperty-radius_: 10;"+ "\n" + \
+"    qproperty-color_: rgb(0, 0, 0, 100);"+ "\n" + \
+"}"+ "\n" + \
+""+ "\n" + \
+"/* Welcome Screen Dialog"+ "\n" + \
+" */"+ "\n" + \
+""+ "\n" + \
+"WelcomeDialog {"+ "\n" + \
+"    background-color: #E9EFF2;"+ "\n" + \
+"}"+ "\n" + \
+""+ "\n" + \
+"WelcomeDialog QToolButton {"+ "\n" + \
+"	font-family: \"Helvetica\";"+ "\n" + \
+"	font-size: 13px;"+ "\n" + \
+"	font-style: normal;"+ "\n" + \
+"	font-weight: bold;"+ "\n" + \
+"	color: #333;"+ "\n" + \
+"}"+ "\n" + \
+""+ "\n" + \
+"WelcomeDialog QWidget#bottom-bar {"+ "\n" + \
+"	border-top: 1px solid #C1C2C3;"+ "\n" + \
+"}"+ "\n" + \
+""+ "\n" + \
+"WelcomeDialog QWidget#bottom-bar QCheckBox {	"+ "\n" + \
+"	font-family: \"Helvetica\";"+ "\n" + \
+"	font-size: 12px;"+ "\n" + \
+"	color: #333;"+ "\n" + \
+"}"+ "\n" + \
+""+ "\n" + \
+"/* SchemeEditWidget"+ "\n" + \
+" */"+ "\n" + \
+""+ "\n" + \
+"SchemeEditWidget {"+ "\n" + \
+"	font-family: \"Helvetica\";"+ "\n" + \
+"	font-size: 12px;"+ "\n" + \
+"}"+ "\n" + \
+""+ "\n" + \
+"/* Quick Menu "+ "\n" + \
+" */"+ "\n" + \
+""+ "\n" + \
+"QuickMenu {"+ "\n" + \
+"	background-color: #E9EFF2;"+ "\n" + \
+"}"+ "\n" + \
+""+ "\n" + \
+"QuickMenu QFrame#menu-frame {"+ "\n" + \
+"	border: 1px solid #9CACB4;"+ "\n" + \
+"    border-radius: 3px;"+ "\n" + \
+"    background-color: #E9EFF2;"+ "\n" + \
+"}"+ "\n" + \
+""+ "\n" + \
+"QuickMenu QTreeView::item {"+ "\n" + \
+"	border-bottom: 1px solid #e9eff2;"+ "\n" + \
+"}"+ "\n" + \
+""+ "\n" + \
+"QuickMenu QTreeView::item:selected {"+ "\n" + \
+"	background: qlineargradient("+ "\n" + \
+"		x1: 0, y1: 0, x2: 0, y2: 1,"+ "\n" + \
+"		stop: 0 #688EF6,"+ "\n" + \
+"		stop: 0.5 #4047f4,"+ "\n" + \
+"		stop: 1.0 #2D68F3"+ "\n" + \
+"	);"+ "\n" + \
+"	color: white;"+ "\n" + \
+"}"+ "\n" + \
+""+ "\n" + \
+"QuickMenu TabBarWidget QToolButton {"+ "\n" + \
+"	height: 25px;"+ "\n" + \
+"	border-bottom: 1px solid palette(dark);"+ "\n" + \
+"	padding-right: 5px;"+ "\n" + \
+"	padding-left: 5px;"+ "\n" + \
+"	qproperty-showMenuIndicator_: true;"+ "\n" + \
+"}"+ "\n" + \
+""+ "\n" + \
+"QuickMenu TabBarWidget QToolButton#search-tab-button {"+ "\n" + \
+"	background-color: #9CACB4;"+ "\n" + \
+"}"+ "\n" + \
+""+ "\n" + \
+"QuickMenu TabBarWidget QToolButton:menu-indicator {"+ "\n" + \
+"	image: url(canvas_icons:/arrow-right.svg);"+ "\n" + \
+"	subcontrol-position: center right;"+ "\n" + \
+"	height: 8px;"+ "\n" + \
+"	width: 8px;"+ "\n" + \
+"}"+ "\n" + \
+""+ "\n" + \
+"/* Quick Menu search line edit"+ "\n" + \
+" */"+ "\n" + \
+""+ "\n" + \
+"QuickMenu QLineEdit {"+ "\n" + \
+"    height: 25px;"+ "\n" + \
+"    margin: 0px;"+ "\n" + \
+"    padding: 0px;"+ "\n" + \
+"    border: 1px solid #9CACB4;"+ "\n" + \
+"    border-radius: 3px;"+ "\n" + \
+"    background-color: white;"+ "\n" + \
+"}"+ "\n" + \
+""+ "\n" + \
+"QuickMenu QLineEdit:focus {"+ "\n" + \
+"    border: 2px solid #9CACB4;"+ "\n" + \
+"    border-radius: 2px;"+ "\n" + \
+"}"+ "\n" + \
+""+ "\n" + \
+"QuickMenu QLineEdit QToolButton {"+ "\n" + \
+"	qproperty-flat_: false;"+ "\n" + \
+"    height: 25px;"+ "\n" + \
+"    border: 1px solid #9CACB4;"+ "\n" + \
+"    border-top-left-radius: 3px;"+ "\n" + \
+"    border-bottom-left-radius: 3px;"+ "\n" + \
+"    background-color: #9CACB4;"+ "\n" + \
+"    padding: 0px;"+ "\n" + \
+"    margin: 0px;"+ "\n" + \
+"    icon-size: 23px;"+ "\n" + \
+"}"
