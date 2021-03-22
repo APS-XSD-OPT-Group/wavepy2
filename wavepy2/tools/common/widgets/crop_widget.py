@@ -128,4 +128,4 @@ class CropDialogPlot(AbstractCropWidget, WavePyInteractiveWidget):
 
     def __init__(self, parent):
         AbstractCropWidget.__init__(self)
-        CropDialogPlot.__init__(self, parent, message="New Crop?", title="Crop Image")
+        WavePyInteractiveWidget.__init__(self, parent, message="New Crop?", title="Crop Image")
