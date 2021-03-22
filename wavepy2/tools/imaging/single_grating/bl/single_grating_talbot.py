@@ -61,7 +61,7 @@ from wavepy2.tools.common.widgets.plot_integration_widget import PlotIntegration
 
 from wavepy2.tools.common.physical_properties import get_delta
 from wavepy2.tools.common.bl import crop_image
-from wavepy2.tools.common.widgets.crop_dialog_widget import CropDialogPlot
+from wavepy2.tools.common.widgets.crop_widget import CropDialogPlot
 from wavepy2.tools.common.widgets.colorbar_crop_widget import ColorbarCropDialogPlot
 from wavepy2.tools.common.widgets.show_cropped_figure_widget import ShowCroppedFigure
 
@@ -319,7 +319,7 @@ class __SingleGratingTalbot(SingleGratingTalbotFacade):
 
         img_to_crop = np.sqrt((diffPhase01 - diffPhase01.mean())**2 + (diffPhase10 - diffPhase10.mean())**2)
 
-        if self.__plotter.is_active(): _, idx2ndCrop = self.__plotter.show_interactive_plot(CropDialogPlot, container_widget=None, img=img_to_crop)
+        if self.__plotter.is_active(): _, idx2ndCrop, _ = self.__plotter.show_interactive_plot(CropDialogPlot, container_widget=None, img=img_to_crop)
         else: idx2ndCrop = [0, -1, 0, -1]
 
         if idx2ndCrop != [0, -1, 0, -1]:

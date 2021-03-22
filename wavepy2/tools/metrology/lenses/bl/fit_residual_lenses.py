@@ -57,7 +57,7 @@ from wavepy2.util.ini.initializer import get_registered_ini_instance
 from wavepy2.tools.common.wavepy_data import WavePyData
 from wavepy2.tools.common import physical_properties 
 
-from wavepy2.tools.common.widgets.crop_dialog_widget import CropDialogPlot
+from wavepy2.tools.common.widgets.crop_widget import CropDialogPlot
 from wavepy2.tools.common.widgets.plot_profile_widget import PlotProfile
 from wavepy2.tools.common.widgets.simple_plot_widget import SimplePlot
 from wavepy2.tools.metrology.lenses.widgets.frl_input_parameters_widget import FRLInputParametersWidget, generate_initialization_parameters_frl, LENS_GEOMETRIES
@@ -130,7 +130,7 @@ class __FitResidualLenses(FitResidualLensesFacade):
             thickness_temp = np.copy(thickness)
             thickness_temp[np.isnan(thickness)] = 0.0
 
-            if self.__plotter.is_active(): _, idx4crop = self.__plotter.show_interactive_plot(CropDialogPlot, container_widget=None, img=thickness_temp*1e6)
+            if self.__plotter.is_active(): _, idx4crop, _ = self.__plotter.show_interactive_plot(CropDialogPlot, container_widget=None, img=thickness_temp*1e6)
             else: idx4crop = [0, -1, 0, -1]
 
             thickness = common_tools.crop_matrix_at_indexes(thickness, idx4crop)

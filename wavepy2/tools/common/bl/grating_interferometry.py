@@ -364,7 +364,7 @@ def visib_1st_harmonics(img, harmonicPeriod, searchRegion=20, unFilterSize=1):
 
 
 from wavepy2.tools.common.bl.surface_from_grad import frankotchellappa, error_integration
-from wavepy2.tools.common.widgets.crop_dialog_widget import CropDialogPlot
+from wavepy2.tools.common.widgets.crop_widget import CropDialogPlot
 
 def crop_for_integration(dpc01, dpc10, pixelsize, message="New Crop for Integration?"):
     img = dpc01**2+dpc10**2
@@ -374,7 +374,7 @@ def crop_for_integration(dpc01, dpc10, pixelsize, message="New Crop for Integrat
 
     plotter = get_registered_plotter_instance()
 
-    if plotter.is_active(): _, idx = get_registered_plotter_instance().show_interactive_plot(CropDialogPlot, container_widget=None,
+    if plotter.is_active(): _, idx, _ = get_registered_plotter_instance().show_interactive_plot(CropDialogPlot, container_widget=None,
                                                                                              img=img,
                                                                                              message=message,
                                                                                              pixelsize=pixelsize,

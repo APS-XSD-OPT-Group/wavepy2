@@ -55,7 +55,7 @@ from wavepy2.tools.common.wavepy_data import WavePyData
 
 from wavepy2.tools.common.bl import grating_interferometry
 
-from wavepy2.tools.common.widgets.crop_dialog_widget import CropDialogPlot
+from wavepy2.tools.common.widgets.crop_widget import CropDialogPlot
 from wavepy2.tools.common.widgets.harmonic_grid_plot_widget import HarmonicGridPlot
 from wavepy2.tools.common.widgets.harmonic_peak_plot_widget import HarmonicPeakPlot
 from wavepy2.tools.common.widgets.colorbar_crop_widget import ColorbarCropDialogPlot
@@ -133,9 +133,9 @@ class __SingleGratingCoherenceZScan(SingleGratingCoherenceZScanFacade):
         self.__plotter.register_context_window(CALCULATE_HARMONIC_PERIODS_CONTEXT_KEY)
 
         if self.__plotter.is_active():
-            img, idx4crop, cmap, colorlimit = self.__plotter.show_interactive_plot(ColorbarCropDialogPlot, container_widget=None, img=imgOriginal, pixelsize=[pixelsize, pixelsize], message="Crop for all Images")
+            img, idx4crop, _, cmap, colorlimit = self.__plotter.show_interactive_plot(ColorbarCropDialogPlot, container_widget=None, img=imgOriginal, pixelsize=[pixelsize, pixelsize], message="Crop for all Images")
 
-            _, idx4cropDark = self.__plotter.show_interactive_plot(CropDialogPlot,
+            _, idx4cropDark, _ = self.__plotter.show_interactive_plot(CropDialogPlot,
                                                                    container_widget=None,
                                                                    img=imgOriginal,
                                                                    message="Crop for Dark ",

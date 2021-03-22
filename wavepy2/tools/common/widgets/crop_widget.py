@@ -42,19 +42,19 @@
 # ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE         #
 # POSSIBILITY OF SUCH DAMAGE.                                             #
 # #########################################################################
+import numpy as np
 from wavepy2.util.common import common_tools
 from wavepy2.util.log.logger import get_registered_logger_instance
 from wavepy2.util.plot import plot_tools
-from wavepy2.util.plot.plotter import WavePyInteractiveWidget
+from wavepy2.util.plot.plotter import WavePyInteractiveWidget, WavePyWidget
 from wavepy2.tools.common.widgets.graphical_roi_idx import GraphicalRoiIdx
 
 FIXED_WIDTH=800
 
-class CropDialogPlot(WavePyInteractiveWidget):
+class AbstractCropWidget():
     __initialized = False
 
-    def __init__(self, parent):
-        super(CropDialogPlot, self).__init__(parent, message="New Crop?", title="Crop Image")
+    def __init__(self):
         self.__logger  = get_registered_logger_instance()
 
     def build_widget(self, **kwargs):
@@ -80,10 +80,10 @@ class CropDialogPlot(WavePyInteractiveWidget):
         self.update()
 
     def get_accepted_output(self):
-        return self.__img, self.__idx4crop
+        return self.__img, self.__idx4crop, self.__img_size_o
 
     def get_rejected_output(self):
-        return self.__initial_img , self.__initial_idx4crop
+        return self.__initial_img , self.__initial_idx4crop, self.__img_size_o
 
     def create_cropped_output(self, idx4crop):
         self.__img      = common_tools.crop_matrix_at_indexes(self.__initial_img, idx4crop)
@@ -91,6 +91,41 @@ class CropDialogPlot(WavePyInteractiveWidget):
 
     def __initialize(self, img, default_idx4crop):
         self.__initial_img      = img
+        self.__img_size_o       = np.shape(img)
         self.__initial_idx4crop = default_idx4crop
-        self.__img      = self.__initial_img
-        self.__idx4crop = self.__initial_idx4crop
+        self.__img              = self.__initial_img
+        self.__idx4crop         = self.__initial_idx4crop
+
+
+from PyQt5.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout
+from PyQt5.QtCore import Qt
+
+class CropWidgetPlot(AbstractCropWidget, WavePyWidget):
+
+    def __init__(self):
+        AbstractCropWidget.__init__(self)
+        WavePyWidget.__init__(self, parent=None)
+
+        layout = QHBoxLayout()
+        layout.setAlignment(Qt.AlignCenter)
+        self.setLayout(layout)
+
+        self.__central_widget = QWidget()
+        self.__central_widget.setLayout(QVBoxLayout())
+
+        layout.addWidget(self.__central_widget)
+
+    def get_central_widget(self):
+        return self.__central_widget
+
+    def get_plot_tab_name(self):
+        return "Crop Image"
+
+    def allows_saving(self):
+        return False
+
+class CropDialogPlot(AbstractCropWidget, WavePyInteractiveWidget):
+
+    def __init__(self, parent):
+        AbstractCropWidget.__init__(self)
+        CropDialogPlot.__init__(self, parent, message="New Crop?", title="Crop Image")
