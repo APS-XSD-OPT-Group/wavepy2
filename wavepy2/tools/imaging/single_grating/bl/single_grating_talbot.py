@@ -93,7 +93,11 @@ class SingleGratingTalbotFacade:
     def crop_reference_image(self, initial_crop_parameters, initialization_parameters): raise NotImplementedError()
 
     def calculate_dpc(self, initial_crop_parameters, initialization_parameters, plotting_properties=PlottingProperties()): raise NotImplementedError()
+
+    def draw_recrop_dpc(self, dpc_result, initialization_parameters, plotting_properties=PlottingProperties(), **kwargs): raise NotImplementedError()
     def recrop_dpc(self, dpc_result, initialization_parameters, plotting_properties=PlottingProperties()): raise NotImplementedError()
+    def manage_recrop_dpc(self, dpc_result, initialization_parameters, plotting_properties=PlottingProperties(), **kwargs): raise NotImplementedError()
+
     def correct_zero_dpc(self, dpc_result, initialization_parameters, plotting_properties=PlottingProperties()): raise NotImplementedError()
     def remove_linear_fit(self, correct_zero_dpc_result, initialization_parameters, plotting_properties=PlottingProperties()): raise NotImplementedError()
     def dpc_profile_analysis(self, remove_linear_fit_result, initialization_parameters, plotting_properties=PlottingProperties()): raise NotImplementedError()
@@ -174,26 +178,41 @@ class __SingleGratingTalbot(SingleGratingTalbotFacade):
         self.__script_logger                = get_registered_secondary_logger()
         self.__dpc_profile_analysis_manager = create_dpc_profile_analsysis_manager()
 
+        return initialization_parameters
+
     # %% ==================================================================================================
 
     def draw_crop_initial_image(self, initialization_parameters, plotting_properties=PlottingProperties(), **kwargs):
         img             = initialization_parameters.get_parameter("img")
         pixelsize       = initialization_parameters.get_parameter("pixelsize")
+        use_colorbar    = plotting_properties.get_parameter("use_colorbar", True)
 
-        return crop_image.draw_colorbar_crop_image(img=img,
-                                                   pixelsize=pixelsize,
-                                                   initialization_parameters=initialization_parameters,
-                                                   plotting_properties=plotting_properties,
-                                                   **kwargs)
+        if use_colorbar:
+            return crop_image.draw_colorbar_crop_image(img=img,
+                                                       pixelsize=pixelsize,
+                                                       initialization_parameters=initialization_parameters,
+                                                       plotting_properties=plotting_properties,
+                                                       **kwargs)
+        else:
+            return crop_image.draw_crop_image(img=img,
+                                              initialization_parameters=initialization_parameters,
+                                              plotting_properties=plotting_properties,
+                                              **kwargs)
 
     def crop_initial_image(self, initialization_parameters, plotting_properties=PlottingProperties()):
         img             = initialization_parameters.get_parameter("img")
         pixelsize       = initialization_parameters.get_parameter("pixelsize")
+        use_colorbar    = plotting_properties.get_parameter("use_colorbar", True)
 
-        img, idx4crop, img_size_o = crop_image.colorbar_crop_image(img=img,
-                                                                   pixelsize=pixelsize,
-                                                                   initialization_parameters=initialization_parameters,
-                                                                   plotting_properties=plotting_properties)
+        if use_colorbar:
+            img, idx4crop, img_size_o, _, _ = crop_image.colorbar_crop_image(img=img,
+                                                                             pixelsize=pixelsize,
+                                                                             initialization_parameters=initialization_parameters,
+                                                                             plotting_properties=plotting_properties)
+        else:
+            img, idx4crop, img_size_o = crop_image.crop_image(img=img,
+                                                              initialization_parameters=initialization_parameters,
+                                                              plotting_properties=plotting_properties)
 
         return WavePyData(img=img,
                           idx4crop=idx4crop,
@@ -308,7 +327,60 @@ class __SingleGratingTalbot(SingleGratingTalbotFacade):
 
     # %% ==================================================================================================
 
-    def recrop_dpc(self, dpc_result, initialization_parameters):
+    def draw_recrop_dpc(self, dpc_result, initialization_parameters, plotting_properties=PlottingProperties(), **kwargs):
+        use_colorbar      = plotting_properties.get_parameter("use_colorbar", False)
+        pixelsize         = initialization_parameters.get_parameter("pixelsize")
+        diffPhase01       = dpc_result.get_parameter("diffPhase01")
+        diffPhase10       = dpc_result.get_parameter("diffPhase10")
+
+        img_to_crop = np.sqrt((diffPhase01 - diffPhase01.mean())**2 + (diffPhase10 - diffPhase10.mean())**2)
+
+        if use_colorbar:
+            return crop_image.draw_colorbar_crop_image(img=img_to_crop,
+                                                       pixelsize=pixelsize,
+                                                       initialization_parameters=initialization_parameters,
+                                                       plotting_properties=plotting_properties,
+                                                       **kwargs)
+        else:
+            return crop_image.draw_crop_image(img=img_to_crop,
+                                              pixelsize=pixelsize,
+                                              initialization_parameters=initialization_parameters,
+                                              plotting_properties=plotting_properties,
+                                              **kwargs)
+
+    def recrop_dpc(self, dpc_result, initialization_parameters, plotting_properties=PlottingProperties()):
+        use_colorbar      = plotting_properties.get_parameter("use_colorbar", False)
+        int00 = dpc_result.get_parameter("int00")
+        int01 = dpc_result.get_parameter("int01")
+        int10 = dpc_result.get_parameter("int10")
+        darkField01 = dpc_result.get_parameter("darkField01")
+        darkField10 = dpc_result.get_parameter("darkField10")
+        diffPhase01 = dpc_result.get_parameter("diffPhase01")
+        diffPhase10 = dpc_result.get_parameter("diffPhase10")
+        virtual_pixelsize = dpc_result.get_parameter("virtual_pixelsize")
+
+        self.__plotter.register_context_window(RECROP_DPC_CONTEXT_KEY)
+
+        img_to_crop = np.sqrt((diffPhase01 - diffPhase01.mean()) ** 2 + (diffPhase10 - diffPhase10.mean()) ** 2)
+
+        if self.__plotter.is_active():
+            if use_colorbar:
+                _, idx2ndCrop, _, _, _ = crop_image.colorbar_crop_image(img=img_to_crop,
+                                                                        pixelsize=virtual_pixelsize,
+                                                                        initialization_parameters=initialization_parameters,
+                                                                        plotting_properties=plotting_properties)
+            else:
+                _, idx2ndCrop, _ = crop_image.crop_image(img=img_to_crop,
+                                                         initialization_parameters=initialization_parameters,
+                                                         plotting_properties=plotting_properties)
+        else:
+            idx2ndCrop = [0, -1, 0, -1]
+
+        dpc_result.set_parameter("idx2ndCrop", idx2ndCrop)
+
+        return dpc_result
+
+    def manage_recrop_dpc(self, dpc_result, initialization_parameters, plotting_properties=PlottingProperties(), **kwargs):
         img             = initialization_parameters.get_parameter("img")
         imgRef          = initialization_parameters.get_parameter("imgRef")
         pixelsize       = initialization_parameters.get_parameter("pixelsize")
@@ -322,12 +394,14 @@ class __SingleGratingTalbot(SingleGratingTalbotFacade):
         diffPhase10       = dpc_result.get_parameter("diffPhase10")
         virtual_pixelsize = dpc_result.get_parameter("virtual_pixelsize")
 
-        self.__plotter.register_context_window(RECROP_DPC_CONTEXT_KEY)
+        add_context_label = plotting_properties.get_parameter("add_context_label", True)
+        use_unique_id     = plotting_properties.get_parameter("use_unique_id", False)
 
-        img_to_crop = np.sqrt((diffPhase01 - diffPhase01.mean())**2 + (diffPhase10 - diffPhase10.mean())**2)
+        unique_id = self.__plotter.register_context_window(RECROP_DPC_CONTEXT_KEY,
+                                                           context_window=plotting_properties.get_context_widget(),
+                                                           use_unique_id=use_unique_id)
 
-        if self.__plotter.is_active(): _, idx2ndCrop, _ = self.__plotter.show_interactive_plot(CropDialogPlot, container_widget=None, img=img_to_crop)
-        else: idx2ndCrop = [0, -1, 0, -1]
+        idx2ndCrop = dpc_result.get_parameter("idx2ndCrop")
 
         if idx2ndCrop != [0, -1, 0, -1]:
             int00       = common_tools.crop_matrix_at_indexes(int00, idx2ndCrop)
@@ -354,18 +428,22 @@ class __SingleGratingTalbot(SingleGratingTalbotFacade):
             self.__ini.set_list_at_ini("Parameters", "Crop", idx4crop)
 
             # Plot Real Image AFTER crop
-            self.__plotter.push_plot_on_context(RECROP_DPC_CONTEXT_KEY, ShowCroppedFigure, img=common_tools.crop_matrix_at_indexes(img, idx4crop), pixelsize=pixelsize, title="Raw Image with 2nd Crop")
+            self.__plotter.push_plot_on_context(RECROP_DPC_CONTEXT_KEY, ShowCroppedFigure, unique_id,
+                                                img=common_tools.crop_matrix_at_indexes(img, idx4crop), pixelsize=pixelsize, title="Raw Image with 2nd Crop", **kwargs)
 
             self.__ini.push()
 
         if not imgRef is None:
-            self.__plotter.push_plot_on_context(RECROP_DPC_CONTEXT_KEY, PlotIntensitiesHarms, int00=int00, int01=int01, int10=int10, pixelsize=virtual_pixelsize, titleStr='Intensity')
-            self.__plotter.push_plot_on_context(RECROP_DPC_CONTEXT_KEY, PlotDarkField, darkField01=darkField01, darkField10=darkField10, pixelsize=virtual_pixelsize)
+            self.__plotter.push_plot_on_context(RECROP_DPC_CONTEXT_KEY, PlotIntensitiesHarms, unique_id,
+                                                int00=int00, int01=int01, int10=int10, pixelsize=virtual_pixelsize, titleStr='Intensity', **kwargs)
+            self.__plotter.push_plot_on_context(RECROP_DPC_CONTEXT_KEY, PlotDarkField, unique_id,
+                                                darkField01=darkField01, darkField10=darkField10, pixelsize=virtual_pixelsize, **kwargs)
             self.__plotter.save_sdf_file(int00, virtual_pixelsize, file_suffix="_intensity", extraHeader={'Title': 'Intensity', 'Zunit': 'au'})
 
-        self.__plotter.push_plot_on_context(RECROP_DPC_CONTEXT_KEY, PlotDPC, dpc01=diffPhase01, dpc10=diffPhase10, pixelsize=virtual_pixelsize, titleStr="")
+        self.__plotter.push_plot_on_context(RECROP_DPC_CONTEXT_KEY, PlotDPC, unique_id,
+                                            dpc01=diffPhase01, dpc10=diffPhase10, pixelsize=virtual_pixelsize, titleStr="", **kwargs)
 
-        self.__plotter.draw_context(RECROP_DPC_CONTEXT_KEY)
+        self.__plotter.draw_context(RECROP_DPC_CONTEXT_KEY, add_context_label=add_context_label, unique_id=unique_id, **kwargs)
 
         return WavePyData(int00=int00,
                           int01=int01,

@@ -70,15 +70,15 @@ class MainSingleGratingTalbot(WavePyScript):
         # %% Initialization parameters
         # ==========================================================================
 
-        initialization_parameters = single_grating_talbot_manager.get_initialization_parameters()
-        single_grating_talbot_manager.manager_initialization(initialization_parameters, SCRIPT_LOGGER_MODE)
+        initialization_parameters = single_grating_talbot_manager.manager_initialization(single_grating_talbot_manager.get_initialization_parameters(),
+                                                                                         SCRIPT_LOGGER_MODE)
 
         # ==========================================================================
         # %% CROP Initial Image
         # ==========================================================================
 
-        crop_result = single_grating_talbot_manager.crop_initial_image(initialization_parameters)
-        crop_result = single_grating_talbot_manager.crop_reference_image(crop_result, initialization_parameters)
+        crop_result = single_grating_talbot_manager.crop_reference_image(single_grating_talbot_manager.crop_initial_image(initialization_parameters),
+                                                                         initialization_parameters)
 
         # ==========================================================================
         # %% DPC Analysis
@@ -89,7 +89,8 @@ class MainSingleGratingTalbot(WavePyScript):
 
         # ==========================================================================
 
-        recrop_dpc_result = single_grating_talbot_manager.recrop_dpc(dpc_result, initialization_parameters)
+        recrop_dpc_result = single_grating_talbot_manager.manage_recrop_dpc(single_grating_talbot_manager.recrop_dpc(dpc_result, initialization_parameters),
+                                                                            initialization_parameters)
         plotter.show_context_window(RECROP_DPC_CONTEXT_KEY)
 
         # ==========================================================================

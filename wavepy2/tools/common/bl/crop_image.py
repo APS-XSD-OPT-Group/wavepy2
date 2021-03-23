@@ -10,7 +10,7 @@ CROP_KEY          = "Crop Key"
 COLORBAR_CROP_KEY = "Colorbar Crop Key"
 
 
-def draw_crop_image(img, initialization_parameters, plotting_properties=PlottingProperties(), **kwargs):
+def draw_crop_image(img, initialization_parameters, context_key=CROP_KEY, plotting_properties=PlottingProperties(), **kwargs):
     plotter = get_registered_plotter_instance()
 
     if plotter.is_active():
@@ -18,26 +18,27 @@ def draw_crop_image(img, initialization_parameters, plotting_properties=Plotting
         use_unique_id     = plotting_properties.get_parameter("use_unique_id", False)
 
 
-        unique_id = plotter.register_context_window(CROP_KEY,
+        unique_id = plotter.register_context_window(context_key,
                                                     context_window=plotting_properties.get_context_widget(),
                                                     use_unique_id=use_unique_id)
 
-        plotter.push_plot_on_context(CROP_KEY, CropWidgetPlot, unique_id, img=img)
-        plotter.draw_context(CROP_KEY, add_context_label=add_context_label, unique_id=unique_id, **kwargs)
+        plotter.push_plot_on_context(context_key, CropWidgetPlot, unique_id, img=img)
+        plotter.draw_context(context_key, add_context_label=add_context_label, unique_id=unique_id, **kwargs)
 
-        return plotter.get_plots_of_context(CROP_KEY, unique_id=unique_id)
+        return plotter.get_plots_of_context(context_key, unique_id=unique_id)
     else:
         return None
 
-def crop_image(img, pixelsize, initialization_parameters, plotting_properties=PlottingProperties()):
+def crop_image(img, initialization_parameters, plotting_properties=PlottingProperties()):
     plotter = get_registered_plotter_instance()
-    ini     = get_registered_ini_instance()
 
     if plotter.is_active():
-        img, idx4crop, img_size_o, _, _ = plotter.show_interactive_plot(ColorbarCropDialogPlot,
-                                                                        container_widget=plotting_properties.get_container_widget(),
-                                                                        img=img, pixelsize=pixelsize)
+        img, idx4crop, img_size_o = plotter.show_interactive_plot(CropDialogPlot,
+                                                                  container_widget=plotting_properties.get_container_widget(),
+                                                                  img=img)
     else:
+        ini = get_registered_ini_instance()
+
         img_size_o = np.shape(img)
         idx4crop = ini.get_list_from_ini("Parameters", "Crop")
         img = common_tools.crop_matrix_at_indexes(img, idx4crop)
@@ -45,35 +46,38 @@ def crop_image(img, pixelsize, initialization_parameters, plotting_properties=Pl
     return img, idx4crop, img_size_o
 
 
-def draw_colorbar_crop_image(img, pixelsize, initialization_parameters, plotting_properties=PlottingProperties(), **kwargs):
+def draw_colorbar_crop_image(img, pixelsize, initialization_parameters, context_key=COLORBAR_CROP_KEY, plotting_properties=PlottingProperties(), **kwargs):
     plotter = get_registered_plotter_instance()
 
     if plotter.is_active():
         add_context_label = plotting_properties.get_parameter("add_context_label", True)
         use_unique_id = plotting_properties.get_parameter("use_unique_id", False)
 
-        unique_id = plotter.register_context_window(COLORBAR_CROP_KEY,
+        unique_id = plotter.register_context_window(context_key,
                                                     context_window=plotting_properties.get_context_widget(),
                                                     use_unique_id=use_unique_id)
 
-        plotter.push_plot_on_context(COLORBAR_CROP_KEY, ColorbarCropWidgetPlot, unique_id, img=img, pixelsize=pixelsize)
-        plotter.draw_context(COLORBAR_CROP_KEY, add_context_label=add_context_label, unique_id=unique_id, **kwargs)
+        plotter.push_plot_on_context(context_key, ColorbarCropWidgetPlot, unique_id, img=img, pixelsize=pixelsize)
+        plotter.draw_context(context_key, add_context_label=add_context_label, unique_id=unique_id, **kwargs)
 
-        return plotter.get_plots_of_context(COLORBAR_CROP_KEY, unique_id=unique_id)
+        return plotter.get_plots_of_context(context_key, unique_id=unique_id)
     else:
         return None
 
 def colorbar_crop_image(img, pixelsize, initialization_parameters, plotting_properties=PlottingProperties()):
     plotter = get_registered_plotter_instance()
-    ini     = get_registered_ini_instance()
 
     if plotter.is_active():
-        img, idx4crop, img_size_o, _, _ = plotter.show_interactive_plot(ColorbarCropDialogPlot,
-                                                                        container_widget=plotting_properties.get_container_widget(),
-                                                                        img=img, pixelsize=pixelsize)
+        img, idx4crop, img_size_o, cmap, clim = plotter.show_interactive_plot(ColorbarCropDialogPlot,
+                                                                              container_widget=plotting_properties.get_container_widget(),
+                                                                              img=img, pixelsize=pixelsize)
     else:
+        ini = get_registered_ini_instance()
+
         img_size_o = np.shape(img)
         idx4crop = ini.get_list_from_ini("Parameters", "Crop")
         img = common_tools.crop_matrix_at_indexes(img, idx4crop)
+        cmap = None
+        clim = None
 
-    return img, idx4crop, img_size_o
+    return img, idx4crop, img_size_o, cmap, clim
