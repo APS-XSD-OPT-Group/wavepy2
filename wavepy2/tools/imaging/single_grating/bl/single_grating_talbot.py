@@ -94,9 +94,9 @@ class SingleGratingTalbotFacade:
 
     def calculate_dpc(self, initial_crop_parameters, initialization_parameters, plotting_properties=PlottingProperties()): raise NotImplementedError()
 
-    def draw_recrop_dpc(self, dpc_result, initialization_parameters, plotting_properties=PlottingProperties(), **kwargs): raise NotImplementedError()
-    def recrop_dpc(self, dpc_result, initialization_parameters, plotting_properties=PlottingProperties()): raise NotImplementedError()
-    def manage_recrop_dpc(self, dpc_result, initialization_parameters, plotting_properties=PlottingProperties(), **kwargs): raise NotImplementedError()
+    def draw_crop_dpc(self, dpc_result, initialization_parameters, plotting_properties=PlottingProperties(), **kwargs): raise NotImplementedError()
+    def crop_dpc(self, dpc_result, initialization_parameters, plotting_properties=PlottingProperties()): raise NotImplementedError()
+    def show_calculated_dpc(self, dpc_result, initialization_parameters, plotting_properties=PlottingProperties(), **kwargs): raise NotImplementedError()
 
     def correct_zero_dpc(self, dpc_result, initialization_parameters, plotting_properties=PlottingProperties()): raise NotImplementedError()
     def remove_linear_fit(self, correct_zero_dpc_result, initialization_parameters, plotting_properties=PlottingProperties()): raise NotImplementedError()
@@ -323,32 +323,23 @@ class __SingleGratingTalbot(SingleGratingTalbotFacade):
                           darkField10=darkField10,
                           diffPhase01=diffPhase01,
                           diffPhase10=diffPhase10,
-                          virtual_pixelsize=virtual_pixelsize)
+                          virtual_pixelsize=virtual_pixelsize,
+                          idx2ndCrop=[0, -1, 0, -1])
 
     # %% ==================================================================================================
 
-    def draw_recrop_dpc(self, dpc_result, initialization_parameters, plotting_properties=PlottingProperties(), **kwargs):
-        use_colorbar      = plotting_properties.get_parameter("use_colorbar", False)
-        pixelsize         = initialization_parameters.get_parameter("pixelsize")
+    def draw_crop_dpc(self, dpc_result, initialization_parameters, plotting_properties=PlottingProperties(), **kwargs):
         diffPhase01       = dpc_result.get_parameter("diffPhase01")
         diffPhase10       = dpc_result.get_parameter("diffPhase10")
 
         img_to_crop = np.sqrt((diffPhase01 - diffPhase01.mean())**2 + (diffPhase10 - diffPhase10.mean())**2)
 
-        if use_colorbar:
-            return crop_image.draw_colorbar_crop_image(img=img_to_crop,
-                                                       pixelsize=pixelsize,
-                                                       initialization_parameters=initialization_parameters,
-                                                       plotting_properties=plotting_properties,
-                                                       **kwargs)
-        else:
-            return crop_image.draw_crop_image(img=img_to_crop,
-                                              pixelsize=pixelsize,
-                                              initialization_parameters=initialization_parameters,
-                                              plotting_properties=plotting_properties,
-                                              **kwargs)
+        return crop_image.draw_crop_image(img=img_to_crop,
+                                          initialization_parameters=initialization_parameters,
+                                          plotting_properties=plotting_properties,
+                                          **kwargs)
 
-    def recrop_dpc(self, dpc_result, initialization_parameters, plotting_properties=PlottingProperties()):
+    def crop_dpc(self, dpc_result, initialization_parameters, plotting_properties=PlottingProperties()):
         use_colorbar      = plotting_properties.get_parameter("use_colorbar", False)
         int00 = dpc_result.get_parameter("int00")
         int01 = dpc_result.get_parameter("int01")
@@ -380,7 +371,7 @@ class __SingleGratingTalbot(SingleGratingTalbotFacade):
 
         return dpc_result
 
-    def manage_recrop_dpc(self, dpc_result, initialization_parameters, plotting_properties=PlottingProperties(), **kwargs):
+    def show_calculated_dpc(self, dpc_result, initialization_parameters, plotting_properties=PlottingProperties(), **kwargs):
         img             = initialization_parameters.get_parameter("img")
         imgRef          = initialization_parameters.get_parameter("imgRef")
         pixelsize       = initialization_parameters.get_parameter("pixelsize")

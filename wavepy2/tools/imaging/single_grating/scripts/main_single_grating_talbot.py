@@ -89,8 +89,8 @@ class MainSingleGratingTalbot(WavePyScript):
 
         # ==========================================================================
 
-        recrop_dpc_result = single_grating_talbot_manager.manage_recrop_dpc(single_grating_talbot_manager.recrop_dpc(dpc_result, initialization_parameters),
-                                                                            initialization_parameters)
+        recrop_dpc_result = single_grating_talbot_manager.show_calculated_dpc(single_grating_talbot_manager.crop_dpc(dpc_result, initialization_parameters),
+                                                                              initialization_parameters)
         plotter.show_context_window(RECROP_DPC_CONTEXT_KEY)
 
         # ==========================================================================

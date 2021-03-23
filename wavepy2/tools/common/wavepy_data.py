@@ -42,6 +42,7 @@
 # ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE         #
 # POSSIBILITY OF SUCH DAMAGE.                                             #
 # #########################################################################
+import copy
 
 class WavePyData():
     def __init__(self, **parameters):
@@ -58,3 +59,10 @@ class WavePyData():
 
     def set_parameter(self, parameter_name, value):
         self.__parameters[parameter_name] = value
+
+    def duplicate(self):
+        duplicated = WavePyData()
+        for parameter_name in self.__parameters.keys():
+            duplicated.set_parameter(parameter_name, copy.deepcopy(self.get_parameter(parameter_name)))
+
+        return duplicated
