@@ -361,39 +361,3 @@ def visib_1st_harmonics(img, harmonicPeriod, searchRegion=20, unFilterSize=1):
     peak01 = arg_imgFFT[_idxPeak_ij_exp01[0], _idxPeak_ij_exp01[1]]
 
     return 2*peak10/peak00, 2*peak01/peak00, _idxPeak_ij_exp00, _idxPeak_ij_exp10, _idxPeak_ij_exp01
-
-
-from wavepy2.tools.common.bl.surface_from_grad import frankotchellappa, error_integration
-from wavepy2.tools.common.widgets.crop_widget import CropDialogPlot
-
-def crop_for_integration(dpc01, dpc10, pixelsize, message="New Crop for Integration?"):
-    img = dpc01**2+dpc10**2
-
-    vmin = mean_plus_n_sigma(img, -3)
-    vmax = mean_plus_n_sigma(img, 3)
-
-    plotter = get_registered_plotter_instance()
-
-    if plotter.is_active(): _, idx, _ = get_registered_plotter_instance().show_interactive_plot(CropDialogPlot, container_widget=None,
-                                                                                             img=img,
-                                                                                             message=message,
-                                                                                             pixelsize=pixelsize,
-                                                                                             kargs4graph={'cmap': 'viridis', 'vmin': vmin, 'vmax': vmax})
-    else: idx = [0, -1, 0, -1]
-
-    dpc01 = crop_matrix_at_indexes(dpc01, idx)
-    dpc10 = crop_matrix_at_indexes(dpc10, idx)
-
-    return dpc01, dpc10
-
-def dpc_integration(dpc01, dpc10, pixelsize, shifthalfpixel=False, context_key="dpc_integration"):
-    phase = frankotchellappa(dpc01*pixelsize[1], dpc10*pixelsize[0], reflec_pad=True)
-
-    error_integration(dpc01*pixelsize[1],
-                      dpc10*pixelsize[0],
-                      phase,
-                      pixelsize,
-                      shifthalfpixel=shifthalfpixel,
-                      context_key=context_key)
-
-    return np.real(phase)
