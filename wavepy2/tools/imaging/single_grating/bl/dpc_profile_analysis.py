@@ -76,8 +76,8 @@ class __DPCProfileAnalysis(DPCProfileAnalysisFacade):
     def dpc_profile_analysis(self, dpc_profile_analysis_data, initialization_parameters, plotting_properties=PlottingProperties(), **kwargs):
         phenergy          = initialization_parameters.get_parameter("phenergy")
 
-        diffPhaseH        = dpc_profile_analysis_data.get_parameter("diffPhaseH", None)
-        diffPhaseV        = dpc_profile_analysis_data.get_parameter("diffPhaseV", None)
+        differential_phase_H        = dpc_profile_analysis_data.get_parameter("differential_phase_H", None)
+        differential_phase_V        = dpc_profile_analysis_data.get_parameter("differential_phase_V", None)
         virtual_pixelsize = dpc_profile_analysis_data.get_parameter("virtual_pixelsize")
 
         fnameH            = dpc_profile_analysis_data.get_parameter("fnameH", None)
@@ -98,10 +98,10 @@ class __DPCProfileAnalysis(DPCProfileAnalysisFacade):
                                                            context_window=plotting_properties.get_context_widget(),
                                                            use_unique_id=use_unique_id)
 
-        if fnameH is None: diffPhaseH = diffPhaseV*np.nan
+        if fnameH is None: differential_phase_H = differential_phase_V*np.nan
 
         if fnameV is None:
-            diffPhaseV = diffPhaseH*np.nan
+            differential_phase_V = differential_phase_H*np.nan
             saveFileSuf = fnameH.rsplit(PATH_SEPARATOR, 1)[0] + PATH_SEPARATOR + 'profiles' + PATH_SEPARATOR + fnameH.rsplit(PATH_SEPARATOR, 1)[1]
             saveFileSuf = saveFileSuf.rsplit('_X')[0] + '_profiles'
         else:
@@ -113,8 +113,8 @@ class __DPCProfileAnalysis(DPCProfileAnalysisFacade):
         n_profiles_H_V_result = WavePyData()
 
         self.__plotter.push_plot_on_context(DPC_PROFILE_ANALYSYS_CONTEXT_KEY, NProfilesHV, unique_id,
-                                            arrayH=diffPhaseH,
-                                            arrayV=diffPhaseV,
+                                            arrayH=differential_phase_H,
+                                            arrayV=differential_phase_V,
                                             virtual_pixelsize=virtual_pixelsize,
                                             zlabel='DPC [rad/m]',
                                             titleH='WF DPC Horz',

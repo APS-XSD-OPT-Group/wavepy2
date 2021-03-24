@@ -54,23 +54,23 @@ class PlotDPC(WavePyWidget):
     def get_plot_tab_name(self): return "Differential Phase [\u03c0 rad]" + self.__title
 
     def build_mpl_figure(self, **kwargs):
-        diffPhase01 = kwargs["diffPhase01"]
-        diffPhase10 = kwargs["diffPhase10"]
+        differential_phase_01 = kwargs["differential_phase_01"]
+        differential_phase_10 = kwargs["differential_phase_10"]
         pixelsize = kwargs["pixelsize"]
         titleStr  = kwargs["titleStr"]
 
         if not common_tools.is_empty_string(titleStr): self.__title = ', ' + titleStr
         else: self.__title = ""
 
-        factor, unit_xy = common_tools.choose_unit(np.sqrt(diffPhase01.size)*pixelsize[0])
+        factor, unit_xy = common_tools.choose_unit(np.sqrt(differential_phase_01.size)*pixelsize[0])
 
-        diffPhase01_plot = diffPhase01*pixelsize[1]/np.pi
-        diffPhase10_plot = diffPhase10*pixelsize[0]/np.pi
+        differential_phase_01_plot = differential_phase_01*pixelsize[1]/np.pi
+        differential_phase_10_plot = differential_phase_10*pixelsize[0]/np.pi
 
-        vlim01 = np.max((np.abs(common_tools.mean_plus_n_sigma(diffPhase01_plot, -5)),
-                         np.abs(common_tools.mean_plus_n_sigma(diffPhase01_plot, 5))))
-        vlim10 = np.max((np.abs(common_tools.mean_plus_n_sigma(diffPhase10_plot, -5)),
-                         np.abs(common_tools.mean_plus_n_sigma(diffPhase10_plot, 5))))
+        vlim01 = np.max((np.abs(common_tools.mean_plus_n_sigma(differential_phase_01_plot, -5)),
+                         np.abs(common_tools.mean_plus_n_sigma(differential_phase_01_plot, 5))))
+        vlim10 = np.max((np.abs(common_tools.mean_plus_n_sigma(differential_phase_10_plot, -5)),
+                         np.abs(common_tools.mean_plus_n_sigma(differential_phase_10_plot, 5))))
 
         figure = Figure(figsize=(12, 6))
 
@@ -83,8 +83,8 @@ class PlotDPC(WavePyWidget):
             figure.colorbar(im, shrink=0.5)
             ax.set_title(title, fontsize=18, weight='bold')
 
-        create_plot(figure.add_subplot(1, 2, 1), diffPhase01_plot, vlim01, 'DPC - Horizontal')
-        create_plot(figure.add_subplot(1, 2, 2), diffPhase10_plot, vlim10, 'DPC - Vertical')
+        create_plot(figure.add_subplot(1, 2, 1), differential_phase_01_plot, vlim01, 'DPC - Horizontal')
+        create_plot(figure.add_subplot(1, 2, 2), differential_phase_10_plot, vlim10, 'DPC - Vertical')
 
         figure.suptitle('Differential Phase ' + r'[$\pi$ rad]' + self.__title, fontsize=18, weight='bold')
         figure.tight_layout(rect=[0, 0, 1, 1])
