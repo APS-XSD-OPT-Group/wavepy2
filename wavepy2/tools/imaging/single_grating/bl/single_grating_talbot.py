@@ -448,7 +448,7 @@ class __SingleGratingTalbot(SingleGratingTalbotFacade):
 
     # %% ==================================================================================================
 
-    def correct_zero_dpc(self, dpc_result, initialization_parameters):
+    def correct_zero_dpc(self, dpc_result, initialization_parameters, plotting_properties=PlottingProperties(), **kwargs):
         dpc01              = dpc_result.get_parameter("diffPhase01")
         dpc10              = dpc_result.get_parameter("diffPhase10")
 
@@ -459,11 +459,16 @@ class __SingleGratingTalbot(SingleGratingTalbotFacade):
         phenergy           = initialization_parameters.get_parameter("phenergy")
         pixelsize          = initialization_parameters.get_parameter("pixelsize")
         distDet2sample     = initialization_parameters.get_parameter("distDet2sample")
-        correct_pi_jump    = initialization_parameters.get_parameter("correct_pi_jump")
-        remove_mean        = initialization_parameters.get_parameter("remove_mean")
-        correct_dpc_center = initialization_parameters.get_parameter("correct_dpc_center")
+        correct_pi_jump    = initialization_parameters.get_parameter("correct_pi_jump", False)
+        remove_mean        = initialization_parameters.get_parameter("remove_mean", False)
+        correct_dpc_center = initialization_parameters.get_parameter("correct_dpc_center", False)
 
-        self.__plotter.register_context_window(CORRECT_ZERO_DPC_CONTEXT_KEY)
+        add_context_label = plotting_properties.get_parameter("add_context_label", True)
+        use_unique_id = plotting_properties.get_parameter("use_unique_id", False)
+
+        unique_id = self.__plotter.register_context_window(CORRECT_ZERO_DPC_CONTEXT_KEY,
+                                                           context_window=plotting_properties.get_context_widget(),
+                                                           use_unique_id=use_unique_id)
 
         def __get_pi_jump(angle_i):
             return int(np.round(np.mean(angle_i / np.pi)))
@@ -475,7 +480,8 @@ class __SingleGratingTalbot(SingleGratingTalbotFacade):
         self.__script_logger.print('Initial Hrz Mean angle/pi : {:} pi'.format(np.mean(angle[0]/np.pi)))
         self.__script_logger.print('Initial Vt Mean angle/pi : {:} pi'.format(np.mean(angle[1]/np.pi)))
 
-        self.__plotter.push_plot_on_context(CORRECT_ZERO_DPC_CONTEXT_KEY, CorrectDPC, angle=angle, pi_jump=pi_jump)
+        self.__plotter.push_plot_on_context(CORRECT_ZERO_DPC_CONTEXT_KEY, CorrectDPC, unique_id,
+                                            angle=angle, pi_jump=pi_jump, **kwargs)
 
         def __get_dpc(angle_i, pixelsize_i):
             return angle_i * pixelsize_i / factor
@@ -487,7 +493,8 @@ class __SingleGratingTalbot(SingleGratingTalbotFacade):
             dpc01 = __get_dpc(angle[0], pixelsize[0])
             dpc10 = __get_dpc(angle[1], pixelsize[1])
 
-            self.__plotter.push_plot_on_context(CORRECT_ZERO_DPC_CONTEXT_KEY, PlotDPC, dpc01=dpc01, dpc10=dpc10, pixelsize=virtual_pixelsize, titleStr="Correct \u03c0 jump")
+            self.__plotter.push_plot_on_context(CORRECT_ZERO_DPC_CONTEXT_KEY, PlotDPC, unique_id,
+                                                dpc01=dpc01, dpc10=dpc10, pixelsize=virtual_pixelsize, titleStr="Correct \u03c0 jump", **kwargs)
 
         h_mean_angle_over_pi = np.mean(angle[0]/np.pi)
         v_mean_angle_over_pi = np.mean(angle[1]/np.pi)
@@ -504,8 +511,10 @@ class __SingleGratingTalbot(SingleGratingTalbotFacade):
             dpc01 = __get_dpc(angle[0], pixelsize[0])
             dpc10 = __get_dpc(angle[1], pixelsize[1])
 
-            self.__plotter.push_plot_on_context(CORRECT_ZERO_DPC_CONTEXT_KEY, CorrectDPCHistos, angle=angle, title="Remove mean")
-            self.__plotter.push_plot_on_context(CORRECT_ZERO_DPC_CONTEXT_KEY, PlotDPC, dpc01=dpc01, dpc10=dpc10, pixelsize=virtual_pixelsize, titleStr="Remove Mean")
+            self.__plotter.push_plot_on_context(CORRECT_ZERO_DPC_CONTEXT_KEY, CorrectDPCHistos, unique_id,
+                                                angle=angle, title="Remove mean", **kwargs)
+            self.__plotter.push_plot_on_context(CORRECT_ZERO_DPC_CONTEXT_KEY, PlotDPC, unique_id,
+                                                dpc01=dpc01, dpc10=dpc10, pixelsize=virtual_pixelsize, titleStr="Remove Mean", **kwargs)
 
         if correct_dpc_center and self.__plotter.is_active():
             angle = self.__plotter.show_interactive_plot(CorrectDPCCenter, container_widget=None, angle=angle)
@@ -513,16 +522,18 @@ class __SingleGratingTalbot(SingleGratingTalbotFacade):
             dpc01 = __get_dpc(angle[0], pixelsize[0])
             dpc10 = __get_dpc(angle[1], pixelsize[1])
 
-            self.__plotter.push_plot_on_context(CORRECT_ZERO_DPC_CONTEXT_KEY, CorrectDPCHistos, angle=angle, title="Correct DPC Center")
-            self.__plotter.push_plot_on_context(CORRECT_ZERO_DPC_CONTEXT_KEY, PlotDPC, dpc01=dpc01, dpc10=dpc10, pixelsize=virtual_pixelsize, titleStr="Correct DPC Center")
+            self.__plotter.push_plot_on_context(CORRECT_ZERO_DPC_CONTEXT_KEY, CorrectDPCHistos, unique_id,
+                                                angle=angle, title="Correct DPC Center", **kwargs)
+            self.__plotter.push_plot_on_context(CORRECT_ZERO_DPC_CONTEXT_KEY, PlotDPC, unique_id,
+                                                dpc01=dpc01, dpc10=dpc10, pixelsize=virtual_pixelsize, titleStr="Correct DPC Center", **kwargs)
 
-        self.__plotter.draw_context(CORRECT_ZERO_DPC_CONTEXT_KEY)
+        self.__plotter.draw_context(CORRECT_ZERO_DPC_CONTEXT_KEY, add_context_label=add_context_label, unique_id=unique_id, **kwargs)
 
         return WavePyData(diffPhase01=dpc01, diffPhase10=dpc10, virtual_pixelsize=virtual_pixelsize)
 
     # %% ==================================================================================================
 
-    def remove_linear_fit(self, correct_zero_dpc_result, initialization_parameters):
+    def remove_linear_fit(self, correct_zero_dpc_result, initialization_parameters, plotting_properties=PlottingProperties(), **kwargs):
         diffPhase01        = correct_zero_dpc_result.get_parameter("diffPhase01")
         diffPhase10        = correct_zero_dpc_result.get_parameter("diffPhase10")
         virtual_pixelsize  = correct_zero_dpc_result.get_parameter("virtual_pixelsize")
@@ -586,7 +597,7 @@ class __SingleGratingTalbot(SingleGratingTalbotFacade):
 
     # %% ==================================================================================================
 
-    def dpc_profile_analysis(self, remove_linear_fit_result, initialization_parameters):
+    def dpc_profile_analysis(self, remove_linear_fit_result, initialization_parameters, plotting_properties=PlottingProperties(), **kwargs):
         diffPhase01        = remove_linear_fit_result.get_parameter("diffPhase01")
         diffPhase10        = remove_linear_fit_result.get_parameter("diffPhase10")
         virtual_pixelsize  = remove_linear_fit_result.get_parameter("virtual_pixelsize")
