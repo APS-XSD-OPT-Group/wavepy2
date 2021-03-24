@@ -98,10 +98,11 @@ class SingleGratingTalbotFacade:
     def crop_dpc(self, dpc_result, initialization_parameters, plotting_properties=PlottingProperties()): raise NotImplementedError()
     def show_calculated_dpc(self, dpc_result, initialization_parameters, plotting_properties=PlottingProperties(), **kwargs): raise NotImplementedError()
 
-    def correct_zero_dpc(self, dpc_result, initialization_parameters, plotting_properties=PlottingProperties()): raise NotImplementedError()
-    def remove_linear_fit(self, correct_zero_dpc_result, initialization_parameters, plotting_properties=PlottingProperties()): raise NotImplementedError()
-    def dpc_profile_analysis(self, remove_linear_fit_result, initialization_parameters, plotting_properties=PlottingProperties()): raise NotImplementedError()
-    def fit_radius_dpc(self, correct_zero_dpc_result, initialization_parameters, plotting_properties=PlottingProperties()): raise NotImplementedError()
+    def correct_zero_dpc(self, dpc_result, initialization_parameters, plotting_properties=PlottingProperties(), **kwargs): raise NotImplementedError()
+    def remove_linear_fit(self, correct_zero_dpc_result, initialization_parameters, plotting_properties=PlottingProperties(), **kwargs): raise NotImplementedError()
+    def dpc_profile_analysis(self, remove_linear_fit_result, initialization_parameters, plotting_properties=PlottingProperties(), **kwargs): raise NotImplementedError()
+    def fit_radius_dpc(self, correct_zero_dpc_result, initialization_parameters, plotting_properties=PlottingProperties(), **kwargs): raise NotImplementedError()
+
     def do_integration(self, fit_radius_dpc_result, initialization_parameters, plotting_properties=PlottingProperties()): raise NotImplementedError()
     def calc_thickness(self, integration_result, initialization_parameters, plotting_properties=PlottingProperties()): raise NotImplementedError()
     def calc_2nd_order_component_of_the_phase(self, integration_result, initialization_parameters, plotting_properties=PlottingProperties()): raise NotImplementedError()
