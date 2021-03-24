@@ -61,8 +61,6 @@ from wavepy2.tools.common.widgets.plot_integration_widget import PlotIntegration
 
 from wavepy2.tools.common.physical_properties import get_delta
 from wavepy2.tools.common.bl import crop_image
-from wavepy2.tools.common.widgets.crop_widget import CropDialogPlot
-from wavepy2.tools.common.widgets.colorbar_crop_widget import ColorbarCropDialogPlot
 from wavepy2.tools.common.widgets.show_cropped_figure_widget import ShowCroppedFigure
 
 from wavepy2.tools.imaging.single_grating.widgets.plot_DPC_widget import PlotDPC
@@ -99,11 +97,11 @@ class SingleGratingTalbotFacade:
     def show_calculated_dpc(self, dpc_result, initialization_parameters, plotting_properties=PlottingProperties(), **kwargs): raise NotImplementedError()
 
     def correct_zero_dpc(self, dpc_result, initialization_parameters, plotting_properties=PlottingProperties(), **kwargs): raise NotImplementedError()
-    def remove_linear_fit(self, correct_zero_dpc_result, initialization_parameters, plotting_properties=PlottingProperties(), **kwargs): raise NotImplementedError()
-    def dpc_profile_analysis(self, remove_linear_fit_result, initialization_parameters, plotting_properties=PlottingProperties(), **kwargs): raise NotImplementedError()
-    def fit_radius_dpc(self, correct_zero_dpc_result, initialization_parameters, plotting_properties=PlottingProperties(), **kwargs): raise NotImplementedError()
+    def remove_linear_fit(self, dpc_result, initialization_parameters, plotting_properties=PlottingProperties(), **kwargs): raise NotImplementedError()
+    def dpc_profile_analysis(self, dpc_result, initialization_parameters, plotting_properties=PlottingProperties(), **kwargs): raise NotImplementedError()
+    def fit_radius_dpc(self, dpc_result, initialization_parameters, plotting_properties=PlottingProperties(), **kwargs): raise NotImplementedError()
 
-    def do_integration(self, fit_radius_dpc_result, initialization_parameters, plotting_properties=PlottingProperties()): raise NotImplementedError()
+    def do_integration(self, dpc_result, initialization_parameters, plotting_properties=PlottingProperties()): raise NotImplementedError()
     def calc_thickness(self, integration_result, initialization_parameters, plotting_properties=PlottingProperties()): raise NotImplementedError()
     def calc_2nd_order_component_of_the_phase(self, integration_result, initialization_parameters, plotting_properties=PlottingProperties()): raise NotImplementedError()
     def remove_2nd_order(self, integration_result, initialization_parameters, plotting_properties=PlottingProperties()): raise NotImplementedError()
@@ -533,10 +531,10 @@ class __SingleGratingTalbot(SingleGratingTalbotFacade):
 
     # %% ==================================================================================================
 
-    def remove_linear_fit(self, correct_zero_dpc_result, initialization_parameters, plotting_properties=PlottingProperties(), **kwargs):
-        diffPhase01        = correct_zero_dpc_result.get_parameter("diffPhase01")
-        diffPhase10        = correct_zero_dpc_result.get_parameter("diffPhase10")
-        virtual_pixelsize  = correct_zero_dpc_result.get_parameter("virtual_pixelsize")
+    def remove_linear_fit(self, dpc_result, initialization_parameters, plotting_properties=PlottingProperties(), **kwargs):
+        diffPhase01        = dpc_result.get_parameter("diffPhase01")
+        diffPhase10        = dpc_result.get_parameter("diffPhase10")
+        virtual_pixelsize  = dpc_result.get_parameter("virtual_pixelsize")
 
         remove_linear      = initialization_parameters.get_parameter("remove_linear")
 
@@ -546,7 +544,12 @@ class __SingleGratingTalbot(SingleGratingTalbotFacade):
             linfitDPC01 = None
             linfitDPC10 = None
         else:
-            self.__plotter.register_context_window(REMOVE_LINEAR_FIT_CONTEXT_KEY)
+            add_context_label = plotting_properties.get_parameter("add_context_label", True)
+            use_unique_id = plotting_properties.get_parameter("use_unique_id", False)
+
+            unique_id = self.__plotter.register_context_window(REMOVE_LINEAR_FIT_CONTEXT_KEY,
+                                                               context_window=plotting_properties.get_context_widget(),
+                                                               use_unique_id=use_unique_id)
 
             def __fit_lin_surfaceH(zz, pixelsize):
                 xx, yy = common_tools.grid_coord(zz, pixelsize)
@@ -584,10 +587,12 @@ class __SingleGratingTalbot(SingleGratingTalbotFacade):
             diffPhase01_2save = diffPhase01 - linfitDPC01
             diffPhase10_2save = diffPhase10 - linfitDPC10
 
-            self.__plotter.push_plot_on_context(REMOVE_LINEAR_FIT_CONTEXT_KEY, PlotDPC, dpc01=linfitDPC01,       dpc10=linfitDPC10,       pixelsize=virtual_pixelsize, titleStr="Linear DPC Component")
-            self.__plotter.push_plot_on_context(REMOVE_LINEAR_FIT_CONTEXT_KEY, PlotDPC, dpc01=diffPhase01_2save, dpc10=diffPhase10_2save, pixelsize=virtual_pixelsize, titleStr="(removed linear DPC component)")
+            self.__plotter.push_plot_on_context(REMOVE_LINEAR_FIT_CONTEXT_KEY, PlotDPC, unique_id,
+                                                dpc01=linfitDPC01,       dpc10=linfitDPC10,       pixelsize=virtual_pixelsize, titleStr="Linear DPC Component", **kwargs)
+            self.__plotter.push_plot_on_context(REMOVE_LINEAR_FIT_CONTEXT_KEY, PlotDPC, unique_id,
+                                                dpc01=diffPhase01_2save, dpc10=diffPhase10_2save, pixelsize=virtual_pixelsize, titleStr="(removed linear DPC component)", **kwargs)
 
-            self.__plotter.draw_context(REMOVE_LINEAR_FIT_CONTEXT_KEY)
+            self.__plotter.draw_context(REMOVE_LINEAR_FIT_CONTEXT_KEY, add_context_label=add_context_label, unique_id=unique_id, **kwargs)
 
         return WavePyData(diffPhase01=diffPhase01_2save,
                           diffPhase10=diffPhase10_2save,
@@ -597,10 +602,10 @@ class __SingleGratingTalbot(SingleGratingTalbotFacade):
 
     # %% ==================================================================================================
 
-    def dpc_profile_analysis(self, remove_linear_fit_result, initialization_parameters, plotting_properties=PlottingProperties(), **kwargs):
-        diffPhase01        = remove_linear_fit_result.get_parameter("diffPhase01")
-        diffPhase10        = remove_linear_fit_result.get_parameter("diffPhase10")
-        virtual_pixelsize  = remove_linear_fit_result.get_parameter("virtual_pixelsize")
+    def dpc_profile_analysis(self, dpc_result, initialization_parameters, plotting_properties=PlottingProperties(), **kwargs):
+        diffPhase01        = dpc_result.get_parameter("diffPhase01")
+        diffPhase10        = dpc_result.get_parameter("diffPhase10")
+        virtual_pixelsize  = dpc_result.get_parameter("virtual_pixelsize")
 
         fnameH = self.__plotter.save_sdf_file(diffPhase01, virtual_pixelsize, file_suffix="_dpc_X", extraHeader={'Title': 'DPC 01', 'Zunit': 'rad'})
         fnameV = self.__plotter.save_sdf_file(diffPhase10, virtual_pixelsize, file_suffix="_dpc_Y", extraHeader={'Title': 'DPC 10', 'Zunit': 'rad'})
@@ -620,38 +625,45 @@ class __SingleGratingTalbot(SingleGratingTalbotFacade):
                                                                             remove2ndOrder=False,
                                                                             nprofiles=5,
                                                                             filter_width=50),
-                                                                 initialization_parameters)
+                                                                 initialization_parameters, plotting_properties, **kwargs)
 
         return WavePyData(diffPhase01=diffPhase01,
                           diffPhase10=diffPhase10,
                           virtual_pixelsize=virtual_pixelsize,
-                          linfitDPC01=remove_linear_fit_result.get_parameter("linfitDPC01"),
-                          linfitDPC10=remove_linear_fit_result.get_parameter("linfitDPC10"))
+                          linfitDPC01=dpc_result.get_parameter("linfitDPC01"),
+                          linfitDPC10=dpc_result.get_parameter("linfitDPC10"))
 
     # %% ==================================================================================================
 
-    def fit_radius_dpc(self, dpc_profile_analysis_result, initialization_parameters):
-        diffPhase01       = dpc_profile_analysis_result.get_parameter("diffPhase01")
-        diffPhase10       = dpc_profile_analysis_result.get_parameter("diffPhase10")
-        virtual_pixelsize = dpc_profile_analysis_result.get_parameter("virtual_pixelsize")
+    def fit_radius_dpc(self, dpc_result, initialization_parameters, plotting_properties=PlottingProperties(), **kwargs):
+        diffPhase01       = dpc_result.get_parameter("diffPhase01")
+        diffPhase10       = dpc_result.get_parameter("diffPhase10")
+        virtual_pixelsize = dpc_result.get_parameter("virtual_pixelsize")
 
-        self.__plotter.register_context_window(FIT_RADIUS_DPC_CONTEXT_KEY)
-        self.__plotter.push_plot_on_context(FIT_RADIUS_DPC_CONTEXT_KEY, FitRadiusDPC, dpx=diffPhase01, dpy=diffPhase10, pixelsize=virtual_pixelsize, kwave=self.__kwave, str4title="")
+        add_context_label = plotting_properties.get_parameter("add_context_label", True)
+        use_unique_id = plotting_properties.get_parameter("use_unique_id", False)
 
-        self.__plotter.draw_context(FIT_RADIUS_DPC_CONTEXT_KEY)
+        unique_id = self.__plotter.register_context_window(FIT_RADIUS_DPC_CONTEXT_KEY,
+                                                           context_window=plotting_properties.get_context_widget(),
+                                                           use_unique_id=use_unique_id)
+
+        self.__plotter.push_plot_on_context(FIT_RADIUS_DPC_CONTEXT_KEY, FitRadiusDPC, unique_id,
+                                            dpx=diffPhase01, dpy=diffPhase10, pixelsize=virtual_pixelsize, kwave=self.__kwave, str4title="", **kwargs)
+
+        self.__plotter.draw_context(FIT_RADIUS_DPC_CONTEXT_KEY, add_context_label=add_context_label, unique_id=unique_id, **kwargs)
 
         return WavePyData(diffPhase01=diffPhase01,
                           diffPhase10=diffPhase10,
                           virtual_pixelsize=virtual_pixelsize,
-                          linfitDPC01=dpc_profile_analysis_result.get_parameter("linfitDPC01"),
-                          linfitDPC10=dpc_profile_analysis_result.get_parameter("linfitDPC10"))
+                          linfitDPC01=dpc_result.get_parameter("linfitDPC01"),
+                          linfitDPC10=dpc_result.get_parameter("linfitDPC10"))
 
     # %% ==================================================================================================
 
-    def do_integration(self, fit_radius_dpc_result, initialization_parameters):
-        diffPhase01       = fit_radius_dpc_result.get_parameter("diffPhase01")
-        diffPhase10       = fit_radius_dpc_result.get_parameter("diffPhase10")
-        virtual_pixelsize = fit_radius_dpc_result.get_parameter("virtual_pixelsize")
+    def do_integration(self, dpc_result, initialization_parameters):
+        diffPhase01       = dpc_result.get_parameter("diffPhase01")
+        diffPhase10       = dpc_result.get_parameter("diffPhase10")
+        virtual_pixelsize = dpc_result.get_parameter("virtual_pixelsize")
 
         do_integration   = initialization_parameters.get_parameter("do_integration")
 
@@ -686,8 +698,8 @@ class __SingleGratingTalbot(SingleGratingTalbotFacade):
         return WavePyData(diffPhase01=diffPhase01,
                           diffPhase10=diffPhase10,
                           virtual_pixelsize=virtual_pixelsize,
-                          linfitDPC01=fit_radius_dpc_result.get_parameter("linfitDPC01"),
-                          linfitDPC10=fit_radius_dpc_result.get_parameter("linfitDPC10"),
+                          linfitDPC01=dpc_result.get_parameter("linfitDPC01"),
+                          linfitDPC10=dpc_result.get_parameter("linfitDPC10"),
                           phase=phase if do_integration else None)
 
     # %% ==================================================================================================

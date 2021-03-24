@@ -48,6 +48,7 @@ from wavepy2.util.common.common_tools import PATH_SEPARATOR
 
 from wavepy2.util.log.logger import get_registered_logger_instance, get_registered_secondary_logger
 from wavepy2.util.plot.plotter import get_registered_plotter_instance
+from wavepy2.util.plot.plot_tools import PlottingProperties
 
 from wavepy2.tools.common.wavepy_data import WavePyData
 
@@ -58,7 +59,7 @@ from wavepy2.tools.imaging.single_grating.widgets.curv_from_height_widget import
 from wavepy2.util.common.common_tools import hc
 
 class DPCProfileAnalysisFacade():
-    def dpc_profile_analysis(self, dpc_data): raise NotImplementedError()
+    def dpc_profile_analysis(self, dpc_profile_analysis_data, initialization_parameters, plotting_properties=PlottingProperties(), **kwargs): raise NotImplementedError()
 
 
 def create_dpc_profile_analsysis_manager():
@@ -72,7 +73,7 @@ class __DPCProfileAnalysis(DPCProfileAnalysisFacade):
         self.__script_logger = get_registered_secondary_logger()
         self.__plotter       = get_registered_plotter_instance()
 
-    def dpc_profile_analysis(self, dpc_profile_analysis_data, initialization_parameters):
+    def dpc_profile_analysis(self, dpc_profile_analysis_data, initialization_parameters, plotting_properties=PlottingProperties(), **kwargs):
         phenergy          = initialization_parameters.get_parameter("phenergy")
 
         diffPhaseH        = dpc_profile_analysis_data.get_parameter("diffPhaseH", None)
@@ -90,7 +91,12 @@ class __DPCProfileAnalysis(DPCProfileAnalysisFacade):
 
         wavelength = hc/phenergy
 
-        self.__plotter.register_context_window(DPC_PROFILE_ANALYSYS_CONTEXT_KEY)
+        add_context_label = plotting_properties.get_parameter("add_context_label", True)
+        use_unique_id = plotting_properties.get_parameter("use_unique_id", False)
+
+        unique_id = self.__plotter.register_context_window(DPC_PROFILE_ANALYSYS_CONTEXT_KEY,
+                                                           context_window=plotting_properties.get_context_widget(),
+                                                           use_unique_id=use_unique_id)
 
         if fnameH is None: diffPhaseH = diffPhaseV*np.nan
 
@@ -106,7 +112,7 @@ class __DPCProfileAnalysis(DPCProfileAnalysisFacade):
 
         n_profiles_H_V_result = WavePyData()
 
-        self.__plotter.push_plot_on_context(DPC_PROFILE_ANALYSYS_CONTEXT_KEY, NProfilesHV,
+        self.__plotter.push_plot_on_context(DPC_PROFILE_ANALYSYS_CONTEXT_KEY, NProfilesHV, unique_id,
                                             arrayH=diffPhaseH,
                                             arrayV=diffPhaseV,
                                             virtual_pixelsize=virtual_pixelsize,
@@ -117,7 +123,8 @@ class __DPCProfileAnalysis(DPCProfileAnalysisFacade):
                                             nprofiles=nprofiles,
                                             remove1stOrderDPC=remove1stOrderDPC,
                                             filter_width=filter_width,
-                                            output_data=n_profiles_H_V_result)
+                                            output_data=n_profiles_H_V_result,
+                                            **kwargs)
 
         dataH     = n_profiles_H_V_result.get_parameter("dataH")
         dataV     = n_profiles_H_V_result.get_parameter("dataV")
@@ -136,7 +143,7 @@ class __DPCProfileAnalysis(DPCProfileAnalysisFacade):
 
             integrate_dpc_cum_sum_result = WavePyData()
 
-            self.__plotter.push_plot_on_context(DPC_PROFILE_ANALYSYS_CONTEXT_KEY, IntegrateDPCCumSum,
+            self.__plotter.push_plot_on_context(DPC_PROFILE_ANALYSYS_CONTEXT_KEY, IntegrateDPCCumSum, unique_id,
                                                 data_DPC=dataH,
                                                 wavelength=wavelength,
                                                 grazing_angle=0.0, #grazing_angle,
@@ -148,13 +155,14 @@ class __DPCProfileAnalysis(DPCProfileAnalysisFacade):
                                                 titleStr='Horizontal, ',
                                                 saveFileSuf=saveFileSuf + '_X',
                                                 direction="Horizontal",
-                                                output_data=integrate_dpc_cum_sum_result)
+                                                output_data=integrate_dpc_cum_sum_result,
+                                                **kwargs)
 
             integratedH = integrate_dpc_cum_sum_result.get_parameter("integrated")
 
             curv_from_height_result = WavePyData()
 
-            self.__plotter.push_plot_on_context(DPC_PROFILE_ANALYSYS_CONTEXT_KEY, CurvFromHeight,
+            self.__plotter.push_plot_on_context(DPC_PROFILE_ANALYSYS_CONTEXT_KEY, CurvFromHeight, unique_id,
                                                 height=integratedH,
                                                 virtual_pixelsize=virtual_pixelsize[0],
                                                 grazing_angle=0.0,  # grazing_angle,
@@ -165,7 +173,8 @@ class __DPCProfileAnalysis(DPCProfileAnalysisFacade):
                                                 titleStr='Horizontal, ',
                                                 saveFileSuf=saveFileSuf + '_X',
                                                 direction="Horizontal",
-                                                output_data=curv_from_height_result)
+                                                output_data=curv_from_height_result,
+                                                **kwargs)
 
         if fnameV is not None:
             radii_fit_V = (2*np.pi/wavelength/fit_coefsV[:][0])
@@ -175,7 +184,7 @@ class __DPCProfileAnalysis(DPCProfileAnalysisFacade):
 
             integrate_dpc_cum_sum_result = WavePyData()
 
-            self.__plotter.push_plot_on_context(DPC_PROFILE_ANALYSYS_CONTEXT_KEY, IntegrateDPCCumSum,
+            self.__plotter.push_plot_on_context(DPC_PROFILE_ANALYSYS_CONTEXT_KEY, IntegrateDPCCumSum, unique_id,
                                                 data_DPC=dataV,
                                                 wavelength=wavelength,
                                                 grazing_angle=0.0, #grazing_angle,
@@ -187,13 +196,14 @@ class __DPCProfileAnalysis(DPCProfileAnalysisFacade):
                                                 titleStr='Vertical, ',
                                                 saveFileSuf=saveFileSuf + '_Y',
                                                 direction="Vertical",
-                                                output_data=integrate_dpc_cum_sum_result)
+                                                output_data=integrate_dpc_cum_sum_result,
+                                                **kwargs)
 
             integratedV = integrate_dpc_cum_sum_result.get_parameter("integrated")
 
             curv_from_height_result = WavePyData()
 
-            self.__plotter.push_plot_on_context(DPC_PROFILE_ANALYSYS_CONTEXT_KEY, CurvFromHeight,
+            self.__plotter.push_plot_on_context(DPC_PROFILE_ANALYSYS_CONTEXT_KEY, CurvFromHeight, unique_id,
                                                 height=integratedV,
                                                 virtual_pixelsize=virtual_pixelsize[1],
                                                 grazing_angle=0.0,  # grazing_angle,
@@ -204,6 +214,7 @@ class __DPCProfileAnalysis(DPCProfileAnalysisFacade):
                                                 titleStr='Vertical, ',
                                                 saveFileSuf=saveFileSuf + '_Y',
                                                 direction="Vertical",
-                                                output_data=curv_from_height_result)
+                                                output_data=curv_from_height_result,
+                                                **kwargs)
 
-        self.__plotter.draw_context_on_widget(DPC_PROFILE_ANALYSYS_CONTEXT_KEY, container_widget=self.__plotter.get_context_container_widget(DPC_PROFILE_ANALYSYS_CONTEXT_KEY))
+        self.__plotter.draw_context(DPC_PROFILE_ANALYSYS_CONTEXT_KEY, add_context_label=add_context_label, unique_id=unique_id, **kwargs)
