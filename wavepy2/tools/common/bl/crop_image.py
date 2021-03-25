@@ -42,8 +42,8 @@ def crop_image(img, plotting_properties=PlottingProperties(), **kwargs):
         ini = get_registered_ini_instance()
 
         img_size_o = np.shape(img)
-        idx4crop = ini.get_list_from_ini("Parameters", "Crop")
-        img = common_tools.crop_matrix_at_indexes(img, idx4crop)
+        idx4crop   = ini.get_list_from_ini("Parameters", "Crop")
+        img        = common_tools.crop_matrix_at_indexes(img, idx4crop)
 
     return img, idx4crop, img_size_o
 

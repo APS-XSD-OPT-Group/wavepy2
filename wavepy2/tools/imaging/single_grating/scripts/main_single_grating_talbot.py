@@ -117,7 +117,8 @@ class MainSingleGratingTalbot(WavePyScript):
         # %% Integration
         # ==========================================================================
 
-        integration_result = single_grating_talbot_manager.do_integration(fit_radius_dpc_result, initialization_parameters)
+        integration_result = single_grating_talbot_manager.do_integration(single_grating_talbot_manager.crop_for_integration(fit_radius_dpc_result, initialization_parameters),
+                                                                          initialization_parameters)
         plotter.show_context_window(INTEGRATION_CONTEXT_KEY)
 
         # ==========================================================================
