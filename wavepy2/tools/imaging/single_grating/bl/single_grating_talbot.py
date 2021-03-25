@@ -62,6 +62,7 @@ from wavepy2.tools.common.widgets.plot_integration_widget import PlotIntegration
 from wavepy2.tools.common.physical_properties import get_delta
 from wavepy2.tools.common.bl import crop_image
 from wavepy2.tools.common.widgets.show_cropped_figure_widget import ShowCroppedFigure
+from wavepy2.tools.common.widgets.error_integration_widget import ErrorIntegration
 
 from wavepy2.tools.imaging.single_grating.widgets.plot_DPC_widget import PlotDPC
 from wavepy2.tools.imaging.single_grating.widgets.sgt_input_parameters_widget import SGTInputParametersWidget, SGTInputParametersDialog, generate_initialization_parameters_sgt, MODES, PATTERNS
@@ -104,10 +105,20 @@ class SingleGratingTalbotFacade:
     def draw_crop_for_integration(self, dpc_result, initialization_parameters, plotting_properties=PlottingProperties(), **kwargs): raise NotImplementedError()
     def manage_crop_for_integration(self, dpc_result, initialization_parameters, idx4crop): raise NotImplementedError()
     def crop_for_integration(self, dpc_result, initialization_parameters, plotting_properties=PlottingProperties(), **kwargs): raise NotImplementedError()
-
     def do_integration(self, dpc_result, initialization_parameters, plotting_properties=PlottingProperties(), **kwargs): raise NotImplementedError()
-    def calc_thickness(self, integration_result, initialization_parameters, plotting_properties=PlottingProperties(), **kwargs): raise NotImplementedError()
-    def calc_2nd_order_component_of_the_phase(self, integration_result, initialization_parameters, plotting_properties=PlottingProperties(), **kwargs): raise NotImplementedError()
+
+    def calculate_thickness(self, integration_result, initialization_parameters, plotting_properties=PlottingProperties(), **kwargs): raise NotImplementedError()
+
+    def draw_crop_for_2nd_order_component_of_the_phase_1(self, integration_result, initialization_parameters, plotting_properties=PlottingProperties(), **kwargs): raise NotImplementedError()
+    def manage_crop_2nd_order_component_of_the_phase_1(self, integration_result, initialization_parameters, idx4crop): raise NotImplementedError()
+    def crop_for_2nd_order_component_of_the_phase_1(self, integration_result, initialization_parameters, plotting_properties=PlottingProperties(), **kwargs): raise NotImplementedError()
+    def calc_2nd_order_component_of_the_phase_1(self, integration_result, initialization_parameters, plotting_properties=PlottingProperties(), **kwargs): raise NotImplementedError()
+
+    def draw_crop_for_2nd_order_component_of_the_phase_2(self, integration_result, initialization_parameters, plotting_properties=PlottingProperties(), **kwargs): raise NotImplementedError()
+    def manage_crop_2nd_order_component_of_the_phase_2(self, integration_result, initialization_parameters, idx4crop): raise NotImplementedError()
+    def crop_for_2nd_order_component_of_the_phase_2(self, integration_result, initialization_parameters, plotting_properties=PlottingProperties(), **kwargs): raise NotImplementedError()
+    def calc_2nd_order_component_of_the_phase_2(self, integration_result, initialization_parameters, plotting_properties=PlottingProperties(), **kwargs): raise NotImplementedError()
+
     def remove_2nd_order(self, integration_result, initialization_parameters, plotting_properties=PlottingProperties(), **kwargs): raise NotImplementedError()
 
 def create_single_grating_talbot_manager():
@@ -239,9 +250,14 @@ class __SingleGratingTalbot(SingleGratingTalbotFacade):
         period_harm     = initialization_parameters.get_parameter("period_harm")
         unwrapFlag      = True
 
-        img             = initial_crop_parameters.get_parameter("img")
-        imgRef          = initial_crop_parameters.get_parameter("imgRef")
-        img_size_o      = initial_crop_parameters.get_parameter("img_size_o")
+        if initial_crop_parameters is None:
+            img             = initialization_parameters.get_parameter("img")
+            imgRef          = initialization_parameters.get_parameter("imgRef")
+            img_size_o      = np.shape(img)
+        else:
+            img             = initial_crop_parameters.get_parameter("img")
+            imgRef          = initial_crop_parameters.get_parameter("imgRef")
+            img_size_o      = initial_crop_parameters.get_parameter("img_size_o")
 
         add_context_label = plotting_properties.get_parameter("add_context_label", True)
         use_unique_id     = plotting_properties.get_parameter("use_unique_id", False)
@@ -653,9 +669,6 @@ class __SingleGratingTalbot(SingleGratingTalbotFacade):
         differential_phase_10 = dpc_result.get_parameter("differential_phase_10")
         virtual_pixelsize     = dpc_result.get_parameter("virtual_pixelsize")
 
-        try:    message = kwargs["message"]
-        except: message="Crop Differential Phase for Integration"
-
         do_integration   = initialization_parameters.get_parameter("do_integration")
 
         if do_integration:
@@ -663,7 +676,7 @@ class __SingleGratingTalbot(SingleGratingTalbotFacade):
                                                     differential_phase_01=differential_phase_01,
                                                     differential_phase_10=differential_phase_10,
                                                     pixelsize=virtual_pixelsize,
-                                                    message=message, **kwargs)
+                                                    message="Crop Differential Phase for Integration", **kwargs)
         else:
             return None
 
@@ -674,7 +687,7 @@ class __SingleGratingTalbot(SingleGratingTalbotFacade):
         do_integration = initialization_parameters.get_parameter("do_integration")
 
         if do_integration:
-            self.__manage_crop_for_integration(differential_phase_01, differential_phase_10, idx4crop)
+            differential_phase_01, differential_phase_10 = self.__manage_crop_for_integration(differential_phase_01, differential_phase_10, idx4crop)
 
             dpc_result.set_parameter("differential_phase_01", differential_phase_01)
             dpc_result.set_parameter("differential_phase_10", differential_phase_10)
@@ -686,9 +699,6 @@ class __SingleGratingTalbot(SingleGratingTalbotFacade):
         differential_phase_10 = dpc_result.get_parameter("differential_phase_10")
         virtual_pixelsize     = dpc_result.get_parameter("virtual_pixelsize")
 
-        try:    message = kwargs["message"]
-        except: message="Crop Differential Phase for Integration"
-
         do_integration   = initialization_parameters.get_parameter("do_integration")
 
         if do_integration:
@@ -696,13 +706,11 @@ class __SingleGratingTalbot(SingleGratingTalbotFacade):
                                                                                        differential_phase_01=differential_phase_01,
                                                                                        differential_phase_10=differential_phase_10,
                                                                                        pixelsize=virtual_pixelsize,
-                                                                                       message=message, **kwargs)
+                                                                                       message="Crop Differential Phase for Integration", **kwargs)
             dpc_result.set_parameter("differential_phase_01", differential_phase_01)
             dpc_result.set_parameter("differential_phase_10", differential_phase_10)
 
         return dpc_result
-
-    # qui separazione del crop
 
     def do_integration(self, dpc_result, initialization_parameters, plotting_properties=PlottingProperties(), **kwargs):
         differential_phase_01       = dpc_result.get_parameter("differential_phase_01")
@@ -721,7 +729,7 @@ class __SingleGratingTalbot(SingleGratingTalbotFacade):
 
             self.__main_logger.print_message('Performing Frankot-Chellappa Integration')
 
-            phase = self.__doIntegration(differential_phase_01, differential_phase_10, virtual_pixelsize)
+            phase = self.__doIntegration(differential_phase_01, differential_phase_10, virtual_pixelsize, INTEGRATION_CONTEXT_KEY, unique_id)
 
             self.__main_logger.print_message('DONE')
             self.__main_logger.print_message('Plotting Phase in meters')
@@ -752,7 +760,7 @@ class __SingleGratingTalbot(SingleGratingTalbotFacade):
 
     # %% ==================================================================================================
 
-    def calc_thickness(self, integration_result, initialization_parameters, plotting_properties=PlottingProperties(), **kwargs):
+    def calculate_thickness(self, integration_result, initialization_parameters, plotting_properties=PlottingProperties(), **kwargs):
         virtual_pixelsize = integration_result.get_parameter("virtual_pixelsize")
         phase             = integration_result.get_parameter("phase")
 
@@ -812,10 +820,47 @@ class __SingleGratingTalbot(SingleGratingTalbotFacade):
 
     # %% ==================================================================================================
 
-    def calc_2nd_order_component_of_the_phase(self, integration_result, initialization_parameters):
-        differential_phase_01       = integration_result.get_parameter("differential_phase_01")
-        differential_phase_10       = integration_result.get_parameter("differential_phase_10")
-        virtual_pixelsize = integration_result.get_parameter("virtual_pixelsize")
+    def draw_crop_for_2nd_order_component_of_the_phase_1(self, integration_result, initialization_parameters, plotting_properties=PlottingProperties(), **kwargs):
+        virtual_pixelsize       = integration_result.get_parameter("virtual_pixelsize")
+        linear_fit_dpc_01       = integration_result.get_parameter("linear_fit_dpc_01")
+        linear_fit_dpc_10       = integration_result.get_parameter("linear_fit_dpc_10")
+
+        do_integration = initialization_parameters.get_parameter("do_integration")
+        remove_linear  = initialization_parameters.get_parameter("remove_linear")
+
+        if do_integration and remove_linear:
+            return self.__draw_crop_for_integration(plotting_properties,
+                                                    differential_phase_01=linear_fit_dpc_01,
+                                                    differential_phase_10=linear_fit_dpc_10,
+                                                    pixelsize=virtual_pixelsize,
+                                                    message="New Crop for 2nd order component of the phase?", **kwargs)
+        else:
+            return None
+
+    def manage_crop_2nd_order_component_of_the_phase_1(self, integration_result, initialization_parameters, idx4crop):
+        linear_fit_dpc_01       = integration_result.get_parameter("linear_fit_dpc_01")
+        linear_fit_dpc_10       = integration_result.get_parameter("linear_fit_dpc_10")
+
+        do_integration = initialization_parameters.get_parameter("do_integration")
+        remove_linear  = initialization_parameters.get_parameter("remove_linear")
+
+        if do_integration and remove_linear:
+            differential_phase_01_crop_1, differential_phase_10_crop_1 = self.__manage_crop_for_integration(linear_fit_dpc_01,
+                                                                                                            linear_fit_dpc_10,
+                                                                                                            idx4crop)
+        else:
+            differential_phase_01_crop_1 = integration_result.get_parameter("differential_phase_01")
+            differential_phase_10_crop_1 = integration_result.get_parameter("differential_phase_10")
+
+        integration_result.set_parameter("differential_phase_01_crop_1", differential_phase_01_crop_1)
+        integration_result.set_parameter("differential_phase_10_crop_1", differential_phase_10_crop_1)
+
+        return integration_result
+
+    def crop_for_2nd_order_component_of_the_phase_1(self, integration_result, initialization_parameters, plotting_properties=PlottingProperties(), **kwargs):
+        differential_phase_01   = integration_result.get_parameter("differential_phase_01")
+        differential_phase_10   = integration_result.get_parameter("differential_phase_10")
+        virtual_pixelsize       = integration_result.get_parameter("virtual_pixelsize")
         linear_fit_dpc_01       = integration_result.get_parameter("linear_fit_dpc_01")
         linear_fit_dpc_10       = integration_result.get_parameter("linear_fit_dpc_10")
 
@@ -825,38 +870,174 @@ class __SingleGratingTalbot(SingleGratingTalbotFacade):
         # % 2nd order component of phase
 
         if do_integration and remove_linear:
-            self.__plotter.register_context_window(CALCULATE_2ND_ORDER_COMPONENT_OF_THE_PHASE)
+            differential_phase_01_crop_1, differential_phase_10_crop_1 = self.__crop_for_integration(plotting_properties,
+                                                                                                     differential_phase_01=linear_fit_dpc_01,
+                                                                                                     differential_phase_10=linear_fit_dpc_10,
+                                                                                                     pixelsize=virtual_pixelsize,
+                                                                                                     message="New Crop for 2nd order component of the phase?", **kwargs)
+        else:
+            differential_phase_01_crop_1 = differential_phase_01
+            differential_phase_10_crop_1 = differential_phase_10
 
-            differential_phase_01, differential_phase_10 = self.__crop_for_integration(linear_fit_dpc_01, linear_fit_dpc_10, virtual_pixelsize, message="New Crop for 2nd order component of the phase?")
+        integration_result.set_parameter("differential_phase_01_crop_1", differential_phase_01_crop_1)
+        integration_result.set_parameter("differential_phase_10_crop_1", differential_phase_10_crop_1)
 
-            data = 1 / 2 / np.pi * self.__doIntegration(differential_phase_01, differential_phase_10, virtual_pixelsize, CALCULATE_2ND_ORDER_COMPONENT_OF_THE_PHASE) # phase_2nd_order
+        return integration_result
 
-            self.__plotter.push_plot_on_context(CALCULATE_2ND_ORDER_COMPONENT_OF_THE_PHASE, PlotIntegration,
+    def calc_2nd_order_component_of_the_phase_1(self, integration_result, initialization_parameters, plotting_properties=PlottingProperties(), **kwargs):
+        differential_phase_01        = integration_result.get_parameter("differential_phase_01")
+        differential_phase_10        = integration_result.get_parameter("differential_phase_10")
+        differential_phase_01_crop_1 = integration_result.get_parameter("differential_phase_01_crop_1", differential_phase_01)
+        differential_phase_10_crop_1 = integration_result.get_parameter("differential_phase_10_crop_1", differential_phase_10)
+        virtual_pixelsize            = integration_result.get_parameter("virtual_pixelsize")
+        linear_fit_dpc_01            = integration_result.get_parameter("linear_fit_dpc_01")
+        linear_fit_dpc_10            = integration_result.get_parameter("linear_fit_dpc_10")
+
+        do_integration = initialization_parameters.get_parameter("do_integration")
+        remove_linear  = initialization_parameters.get_parameter("remove_linear")
+
+        # % 2nd order component of phase
+
+        if do_integration and remove_linear:
+            add_context_label = plotting_properties.get_parameter("add_context_label", True)
+            use_unique_id     = plotting_properties.get_parameter("use_unique_id", False)
+
+            unique_id = self.__plotter.register_context_window(CALCULATE_2ND_ORDER_COMPONENT_OF_THE_PHASE,
+                                                               context_window=plotting_properties.get_context_widget(),
+                                                               use_unique_id=use_unique_id)
+
+            data = 1 / 2 / np.pi * self.__doIntegration(differential_phase_01_crop_1, differential_phase_10_crop_1, virtual_pixelsize,
+                                                        CALCULATE_2ND_ORDER_COMPONENT_OF_THE_PHASE, unique_id, **kwargs) # phase_2nd_order
+
+            self.__plotter.push_plot_on_context(CALCULATE_2ND_ORDER_COMPONENT_OF_THE_PHASE, PlotIntegration, unique_id,
                                                 title="2nd order component of the phase",
                                                 data=data,
                                                 pixelsize=virtual_pixelsize,
                                                 titleStr=r'WF, 2nd order component' + r'$[\lambda$ units $]$',
                                                 ctitle='',
                                                 max3d_grid_points=101,
-                                                kwarg4surf={})
+                                                kwarg4surf={}, **kwargs)
 
-            differential_phase_01, differential_phase_10 = self.__crop_for_integration(differential_phase_01 - linear_fit_dpc_01, differential_phase_10 - linear_fit_dpc_10, virtual_pixelsize, message="New Crop for difference to 2nd order component of the phase?")
+            if use_unique_id: self.__plotter.draw_context(CALCULATE_2ND_ORDER_COMPONENT_OF_THE_PHASE, add_context_label=add_context_label, unique_id=unique_id, **kwargs)
 
-            data = 1 / 2 / np.pi * self.__doIntegration(differential_phase_01, differential_phase_10, virtual_pixelsize, CALCULATE_2ND_ORDER_COMPONENT_OF_THE_PHASE)
+        return WavePyData(differential_phase_01=differential_phase_01,
+                          differential_phase_10=differential_phase_10,
+                          virtual_pixelsize=virtual_pixelsize,
+                          linear_fit_dpc_01=linear_fit_dpc_01,
+                          linear_fit_dpc_10=linear_fit_dpc_10,
+                          phase=integration_result.get_parameter("phase"),
+                          thickness=integration_result.get_parameter("thickness", None))
 
-            self.__plotter.push_plot_on_context(CALCULATE_2ND_ORDER_COMPONENT_OF_THE_PHASE, PlotIntegration,
+    def draw_crop_for_2nd_order_component_of_the_phase_2(self, integration_result, initialization_parameters, plotting_properties=PlottingProperties(), **kwargs):
+        differential_phase_01   = integration_result.get_parameter("differential_phase_01")
+        differential_phase_10   = integration_result.get_parameter("differential_phase_10")
+        virtual_pixelsize       = integration_result.get_parameter("virtual_pixelsize")
+        linear_fit_dpc_01       = integration_result.get_parameter("linear_fit_dpc_01")
+        linear_fit_dpc_10       = integration_result.get_parameter("linear_fit_dpc_10")
+
+        do_integration = initialization_parameters.get_parameter("do_integration")
+        remove_linear  = initialization_parameters.get_parameter("remove_linear")
+
+        # % 2nd order component of phase
+
+        if do_integration and remove_linear:
+            return self.__draw_crop_for_integration(plotting_properties,
+                                                    differential_phase_01=differential_phase_01-linear_fit_dpc_01,
+                                                    differential_phase_10=differential_phase_10-linear_fit_dpc_10,
+                                                    pixelsize=virtual_pixelsize,
+                                                    message="New Crop for difference to 2nd order component of the phase?", **kwargs)
+        else:
+            return None
+
+    def manage_crop_2nd_order_component_of_the_phase_2(self, integration_result, initialization_parameters, idx4crop):
+        differential_phase_01   = integration_result.get_parameter("differential_phase_01")
+        differential_phase_10   = integration_result.get_parameter("differential_phase_10")
+        linear_fit_dpc_01       = integration_result.get_parameter("linear_fit_dpc_01")
+        linear_fit_dpc_10       = integration_result.get_parameter("linear_fit_dpc_10")
+
+        do_integration = initialization_parameters.get_parameter("do_integration")
+        remove_linear  = initialization_parameters.get_parameter("remove_linear")
+
+        if do_integration and remove_linear:
+            differential_phase_01_crop_2, differential_phase_10_crop_2 = self.__manage_crop_for_integration(differential_phase_01-linear_fit_dpc_01,
+                                                                                                            differential_phase_10-linear_fit_dpc_10,
+                                                                                                            idx4crop)
+        else:
+            differential_phase_01_crop_2 = differential_phase_01
+            differential_phase_10_crop_2 = differential_phase_10
+
+        integration_result.set_parameter("differential_phase_01_crop_2", differential_phase_01_crop_2)
+        integration_result.set_parameter("differential_phase_10_crop_2", differential_phase_10_crop_2)
+
+        return integration_result
+
+    def crop_for_2nd_order_component_of_the_phase_2(self, integration_result, initialization_parameters, plotting_properties=PlottingProperties(), **kwargs):
+        differential_phase_01        = integration_result.get_parameter("differential_phase_01")
+        differential_phase_10        = integration_result.get_parameter("differential_phase_10")
+
+        virtual_pixelsize       = integration_result.get_parameter("virtual_pixelsize")
+        linear_fit_dpc_01       = integration_result.get_parameter("linear_fit_dpc_01")
+        linear_fit_dpc_10       = integration_result.get_parameter("linear_fit_dpc_10")
+
+        do_integration = initialization_parameters.get_parameter("do_integration")
+        remove_linear  = initialization_parameters.get_parameter("remove_linear")
+
+        # % 2nd order component of phase
+
+        if do_integration and remove_linear:
+            differential_phase_01_crop_2, differential_phase_10_crop_2 = self.__crop_for_integration(plotting_properties,
+                                                                                                     differential_phase_01=differential_phase_01 - linear_fit_dpc_01,
+                                                                                                     differential_phase_10=differential_phase_10 - linear_fit_dpc_10,
+                                                                                                     pixelsize=virtual_pixelsize,
+                                                                                                     message="New Crop for 2nd order component of the phase?", **kwargs)
+        else:
+            differential_phase_01_crop_2 = differential_phase_01
+            differential_phase_10_crop_2 = differential_phase_10
+
+        integration_result.set_parameter("differential_phase_01_crop_2", differential_phase_01_crop_2)
+        integration_result.set_parameter("differential_phase_10_crop_2", differential_phase_10_crop_2)
+
+        return integration_result
+
+    def calc_2nd_order_component_of_the_phase_2(self, integration_result, initialization_parameters, plotting_properties=PlottingProperties(), **kwargs):
+        differential_phase_01        = integration_result.get_parameter("differential_phase_01")
+        differential_phase_10        = integration_result.get_parameter("differential_phase_10")
+        differential_phase_01_crop_2 = integration_result.get_parameter("differential_phase_01_crop_2", differential_phase_01)
+        differential_phase_10_crop_2 = integration_result.get_parameter("differential_phase_10_crop_2", differential_phase_10)
+        virtual_pixelsize            = integration_result.get_parameter("virtual_pixelsize")
+        linear_fit_dpc_01            = integration_result.get_parameter("linear_fit_dpc_01")
+        linear_fit_dpc_10            = integration_result.get_parameter("linear_fit_dpc_10")
+
+        do_integration = initialization_parameters.get_parameter("do_integration")
+        remove_linear  = initialization_parameters.get_parameter("remove_linear")
+
+        # % 2nd order component of phase
+
+        if do_integration and remove_linear:
+            add_context_label = plotting_properties.get_parameter("add_context_label", True)
+            use_unique_id     = plotting_properties.get_parameter("use_unique_id", False)
+
+            if use_unique_id: unique_id = self.__plotter.register_context_window(CALCULATE_2ND_ORDER_COMPONENT_OF_THE_PHASE,
+                                                                                 context_window=plotting_properties.get_context_widget(),
+                                                                                 use_unique_id=True)
+            else: unique_id = None
+
+            data = 1 / 2 / np.pi * self.__doIntegration(differential_phase_01_crop_2, differential_phase_10_crop_2, virtual_pixelsize,
+                                                        CALCULATE_2ND_ORDER_COMPONENT_OF_THE_PHASE, unique_id, **kwargs)
+
+            self.__plotter.push_plot_on_context(CALCULATE_2ND_ORDER_COMPONENT_OF_THE_PHASE, PlotIntegration, unique_id,
                                                 title="Difference to 2nd order of the phase",
                                                 data=data,
                                                 pixelsize=virtual_pixelsize,
                                                 titleStr=r'WF, difference to 2nd order component' + r'$[\lambda$ units $]$',
                                                 ctitle='',
                                                 max3d_grid_points=101,
-                                                kwarg4surf={})
-
+                                                kwarg4surf={},
+                                                **kwargs)
 
             self.__plotter.save_sdf_file(data * self.__wavelength, virtual_pixelsize, file_suffix='_phase', extraHeader={'Title': 'WF Phase 2nd order removed', 'Zunit': 'meters'})
 
-            self.__plotter.draw_context(CALCULATE_2ND_ORDER_COMPONENT_OF_THE_PHASE)
+            self.__plotter.draw_context(CALCULATE_2ND_ORDER_COMPONENT_OF_THE_PHASE, add_context_label=add_context_label, unique_id=unique_id, **kwargs)
 
         return WavePyData(differential_phase_01=differential_phase_01,
                           differential_phase_10=differential_phase_10,
@@ -868,16 +1049,21 @@ class __SingleGratingTalbot(SingleGratingTalbotFacade):
 
     # %% ==================================================================================================
 
-    def remove_2nd_order(self, integration_result, initialization_parameters):
+    def remove_2nd_order(self, integration_result, initialization_parameters, plotting_properties=PlottingProperties(), **kwargs):
         virtual_pixelsize = integration_result.get_parameter("virtual_pixelsize")
         phase             = integration_result.get_parameter("phase")
 
-        do_integration = initialization_parameters.get_parameter("do_integration")
-        calc_thickness = initialization_parameters.get_parameter("calc_thickness")
+        do_integration   = initialization_parameters.get_parameter("do_integration")
+        calc_thickness   = initialization_parameters.get_parameter("calc_thickness")
         remove_2nd_order = initialization_parameters.get_parameter("remove_2nd_order")
 
         if do_integration and remove_2nd_order:
-            self.__plotter.register_context_window(REMOVE_2ND_ORDER)
+            add_context_label = plotting_properties.get_parameter("add_context_label", True)
+            use_unique_id     = plotting_properties.get_parameter("use_unique_id", False)
+
+            unique_id = self.__plotter.register_context_window(REMOVE_2ND_ORDER,
+                                                               context_window=plotting_properties.get_context_widget(),
+                                                               use_unique_id=use_unique_id)
 
             if calc_thickness:
                 thickness = integration_result.get_parameter("thickness")
@@ -887,7 +1073,7 @@ class __SingleGratingTalbot(SingleGratingTalbotFacade):
                 self.__main_logger.print_message('Thickness Radius of WF x: {:.3g} m'.format(popt[0]))
                 self.__main_logger.print_message('Thickness Radius of WF y: {:.3g} m'.format(popt[1]))
 
-                self.__plotter.push_plot_on_context(REMOVE_2ND_ORDER, PlotIntegration,
+                self.__plotter.push_plot_on_context(REMOVE_2ND_ORDER, PlotIntegration, unique_id,
                                                     title="Thickness Residual",
                                                     data=err * 1e6,
                                                     pixelsize=virtual_pixelsize,
@@ -896,7 +1082,8 @@ class __SingleGratingTalbot(SingleGratingTalbotFacade):
                                                              r'Ry = {:.3f} $\mu m$'.format(popt[1] * 1e6),
                                                     ctitle='',
                                                     max3d_grid_points=101,
-                                                    kwarg4surf={})
+                                                    kwarg4surf={},
+                                                    **kwargs)
 
                 self.__plotter.save_sdf_file(err, virtual_pixelsize, file_suffix='_thickness_residual', extraHeader={'Title': 'Thickness Residual', 'Zunit': 'meters'})
 
@@ -908,7 +1095,7 @@ class __SingleGratingTalbot(SingleGratingTalbotFacade):
 
             data = err / 2 / np.pi * self.__wavelength
 
-            self.__plotter.push_plot_on_context(REMOVE_2ND_ORDER, PlotIntegration,
+            self.__plotter.push_plot_on_context(REMOVE_2ND_ORDER, PlotIntegration, unique_id,
                                                 title="Phase Residual",
                                                 data=data * 1e9,
                                                 pixelsize=virtual_pixelsize,
@@ -916,13 +1103,14 @@ class __SingleGratingTalbot(SingleGratingTalbotFacade):
                                                          '\nRx = {:.3f} m, Ry = {:.3f} m'.format(popt[0], popt[1]),
                                                 ctitle='',
                                                 max3d_grid_points=101,
-                                                kwarg4surf={})
+                                                kwarg4surf={},
+                                                **kwargs)
 
             self.__plotter.save_sdf_file(err, virtual_pixelsize, file_suffix='_phase_residual', extraHeader={'Title': 'WF Phase Residual', 'Zunit': 'meters'})
 
             self.__main_logger.print_message('DONE')
 
-            self.__plotter.draw_context(REMOVE_2ND_ORDER)
+            self.__plotter.draw_context(REMOVE_2ND_ORDER, add_context_label=add_context_label, unique_id=unique_id, **kwargs)
 
 
         return WavePyData(differential_phase_01=integration_result.get_parameter("differential_phase_01"),
@@ -951,11 +1139,15 @@ class __SingleGratingTalbot(SingleGratingTalbotFacade):
                                           **kwargs)
 
     @classmethod
-    def __crop_for_integration(cls, plotting_properties, differential_phase_01, differential_phase_10, pixelsize, message="New Crop for Integration?", **kwargs):
+    def __crop_for_integration(cls, plotting_properties, differential_phase_01, differential_phase_10, pixelsize, calc_minmax=True, message="New Crop for Integration?", **kwargs):
         image_to_crop = differential_phase_01 ** 2 + differential_phase_10 ** 2
 
-        vmin = grating_interferometry.mean_plus_n_sigma(image_to_crop, -3)
-        vmax = grating_interferometry.mean_plus_n_sigma(image_to_crop, 3)
+        if calc_minmax:
+            vmin = grating_interferometry.mean_plus_n_sigma(image_to_crop, -3)
+            vmax = grating_interferometry.mean_plus_n_sigma(image_to_crop, 3)
+            kargs4graph = {'cmap': 'viridis', 'vmin': vmin, 'vmax': vmax}
+        else:
+            kargs4graph = {}
 
         plotter = get_registered_plotter_instance()
 
@@ -963,7 +1155,7 @@ class __SingleGratingTalbot(SingleGratingTalbotFacade):
             _, idx4crop, _ = crop_image.crop_image(img=image_to_crop,
                                                    message=message,
                                                    pixelsize=pixelsize,
-                                                   kargs4graph={'cmap': 'viridis', 'vmin': vmin, 'vmax': vmax},
+                                                   kargs4graph=kargs4graph,
                                                    plotting_properties=plotting_properties,
                                                    **kwargs)
         else:
@@ -973,21 +1165,25 @@ class __SingleGratingTalbot(SingleGratingTalbotFacade):
 
     @classmethod
     def __manage_crop_for_integration(cls, differential_phase_01, differential_phase_10, idx4crop):
-        differential_phase_01 = grating_interferometry.crop_matrix_at_indexes(differential_phase_01, idx4crop)
-        differential_phase_10 = grating_interferometry.crop_matrix_at_indexes(differential_phase_10, idx4crop)
+        differential_phase_01_crop = grating_interferometry.crop_matrix_at_indexes(differential_phase_01, idx4crop)
+        differential_phase_10_crop = grating_interferometry.crop_matrix_at_indexes(differential_phase_10, idx4crop)
 
-        return differential_phase_01, differential_phase_10
+        return differential_phase_01_crop, differential_phase_10_crop
 
-    @classmethod
-    def __doIntegration(cls, differential_phase_01, differential_phase_10, pixelsize, context_key):
+    def __doIntegration(self, differential_phase_01, differential_phase_10, pixelsize, context_key, unique_id, **kwargs):
         phase = surface_from_grad.frankotchellappa(differential_phase_01 * pixelsize[1], differential_phase_10 * pixelsize[0], reflec_pad=True)
 
-        surface_from_grad.error_integration(differential_phase_01 * pixelsize[1],
-                                            differential_phase_10 * pixelsize[0],
-                                            phase,
-                                            pixelsize,
-                                            shifthalfpixel=False,
-                                            context_key=context_key)
+        delx_f = differential_phase_01 * pixelsize[1]
+        dely_f = differential_phase_10 * pixelsize[0]
+
+        grad_x, grad_y, error_x, error_y = surface_from_grad.error_integration(delx_f=delx_f,
+                                                                               dely_f=dely_f,
+                                                                               func=phase,
+                                                                               shifthalfpixel=False,
+                                                                               **kwargs)
+
+        self.__plotter.push_plot_on_context(context_key, ErrorIntegration, unique_id,
+                                            delx_f=delx_f, dely_f=dely_f, func=phase, grad_x=grad_x, grad_y=grad_y, error_x=error_x, error_y=error_y, pixelsize=pixelsize, **kwargs)
 
         phase = np.real(phase)
         phase -= np.min(phase)

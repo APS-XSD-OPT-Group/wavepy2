@@ -273,9 +273,7 @@ def frankotchellappa(delx_f, delx_y, reflec_pad=True):
     if reflec_pad: return __one_forth_of_array(res)
     else: return res
 
-from wavepy2.tools.common.widgets.error_integration_widget import ErrorIntegration
-
-def error_integration(delx_f, delx_y, func, pixelsize, shifthalfpixel=False, context_key="error_integration"):
+def error_integration(delx_f, dely_f, func, shifthalfpixel=False):
     if shifthalfpixel: func = common_tools.shift_subpixel_2d(np.real(func), 2)
 
     grad_x, grad_y = __grad(func)
@@ -283,18 +281,15 @@ def error_integration(delx_f, delx_y, func, pixelsize, shifthalfpixel=False, con
     grad_x -= np.mean(grad_x)
     grad_y -= np.mean(grad_y)
     delx_f -= np.mean(delx_f)
-    delx_y -= np.mean(delx_y)
+    dely_f -= np.mean(dely_f)
 
     amp_x = np.max(delx_f) - np.min(delx_f)
-    amp_y = np.max(delx_y) - np.min(delx_y)
+    amp_y = np.max(dely_f) - np.min(dely_f)
 
     error_x = np.abs(grad_x - delx_f)/amp_x*100
-    error_y = np.abs(grad_y - delx_y)/amp_y*100
+    error_y = np.abs(grad_y - dely_f) / amp_y * 100
 
-    get_registered_plotter_instance().push_plot_on_context(context_key, ErrorIntegration,
-                                                           delx_f=delx_f, delx_y=delx_y, func=func, pixelsize=pixelsize, grad_x=grad_x, grad_y=grad_y, error_x=error_x, error_y=error_y)
-
-    return error_x, error_y
+    return grad_x, grad_y, error_x, error_y
 
 ##########################################################################
 

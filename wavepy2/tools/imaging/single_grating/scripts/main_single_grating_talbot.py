@@ -123,17 +123,20 @@ class MainSingleGratingTalbot(WavePyScript):
 
         # ==========================================================================
 
-        integration_result = single_grating_talbot_manager.calc_thickness(integration_result, initialization_parameters)
+        integration_result = single_grating_talbot_manager.calculate_thickness(integration_result, initialization_parameters)
         plotter.show_context_window(CALCULATE_THICKNESS_CONTEXT_KEY)
 
         # ==========================================================================
 
-        integration_result = single_grating_talbot_manager.calc_2nd_order_component_of_the_phase(integration_result, initialization_parameters)
+        integration_result = single_grating_talbot_manager.calc_2nd_order_component_of_the_phase_1(single_grating_talbot_manager.crop_for_2nd_order_component_of_the_phase_1(integration_result, initialization_parameters),
+                                                                                                   initialization_parameters)
+        integration_result = single_grating_talbot_manager.calc_2nd_order_component_of_the_phase_2(single_grating_talbot_manager.crop_for_2nd_order_component_of_the_phase_2(integration_result, initialization_parameters),
+                                                                                                   initialization_parameters)
         plotter.show_context_window(CALCULATE_2ND_ORDER_COMPONENT_OF_THE_PHASE)
 
         # ==========================================================================
 
-        integration_result = single_grating_talbot_manager.remove_2nd_order(integration_result, initialization_parameters)
+        single_grating_talbot_manager.remove_2nd_order(integration_result, initialization_parameters)
         plotter.show_context_window(REMOVE_2ND_ORDER)
 
         # ==========================================================================

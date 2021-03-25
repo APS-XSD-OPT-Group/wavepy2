@@ -233,7 +233,7 @@ def crop_matrix_at_indexes(input_matrix, list_of_indexes):
         return input_matrix
 
     return np.copy(input_matrix[list_of_indexes[0]:list_of_indexes[1],
-                   list_of_indexes[2]:list_of_indexes[3]])
+                                list_of_indexes[2]:list_of_indexes[3]])
 
 def fwhm_xy(xvalues, yvalues):
     spline = UnivariateSpline(xvalues,

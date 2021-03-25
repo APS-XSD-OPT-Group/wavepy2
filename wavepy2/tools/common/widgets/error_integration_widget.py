@@ -55,7 +55,7 @@ class ErrorIntegration(WavePyWidget):
 
     def build_mpl_figure(self, **kwargs):
         delx_f     = kwargs["delx_f"]
-        delx_y     = kwargs["delx_y"]
+        dely_f     = kwargs["dely_f"]
 
         func     = kwargs["func"]
         pixelsize = kwargs["pixelsize"]
@@ -83,7 +83,7 @@ class ErrorIntegration(WavePyWidget):
         ax2.legend(loc=7)
 
         ax3 = figure.add_subplot(222, sharex=ax1, sharey=ax1)
-        ax3.plot(yy[:, midleY], delx_y[:, midleY], '-kx', markersize=10, label='dy data')
+        ax3.plot(yy[:, midleY], dely_f[:, midleY], '-kx', markersize=10, label='dy data')
         ax3.plot(yy[:, midleY], grad_y[:, midleY], '-r+', markersize=10, label='dy reconstructed')
         ax3.legend(loc=7)
 
