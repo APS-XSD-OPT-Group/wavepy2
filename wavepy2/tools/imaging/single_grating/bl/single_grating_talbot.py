@@ -109,14 +109,14 @@ class SingleGratingTalbotFacade:
 
     def calculate_thickness(self, integration_result, initialization_parameters, plotting_properties=PlottingProperties(), **kwargs): raise NotImplementedError()
 
-    def draw_crop_for_2nd_order_component_of_the_phase_1(self, integration_result, initialization_parameters, plotting_properties=PlottingProperties(), **kwargs): raise NotImplementedError()
+    def draw_crop_2nd_order_component_of_the_phase_1(self, integration_result, initialization_parameters, plotting_properties=PlottingProperties(), **kwargs): raise NotImplementedError()
     def manage_crop_2nd_order_component_of_the_phase_1(self, integration_result, initialization_parameters, idx4crop): raise NotImplementedError()
-    def crop_for_2nd_order_component_of_the_phase_1(self, integration_result, initialization_parameters, plotting_properties=PlottingProperties(), **kwargs): raise NotImplementedError()
+    def crop_2nd_order_component_of_the_phase_1(self, integration_result, initialization_parameters, plotting_properties=PlottingProperties(), **kwargs): raise NotImplementedError()
     def calc_2nd_order_component_of_the_phase_1(self, integration_result, initialization_parameters, plotting_properties=PlottingProperties(), **kwargs): raise NotImplementedError()
 
-    def draw_crop_for_2nd_order_component_of_the_phase_2(self, integration_result, initialization_parameters, plotting_properties=PlottingProperties(), **kwargs): raise NotImplementedError()
+    def draw_crop_2nd_order_component_of_the_phase_2(self, integration_result, initialization_parameters, plotting_properties=PlottingProperties(), **kwargs): raise NotImplementedError()
     def manage_crop_2nd_order_component_of_the_phase_2(self, integration_result, initialization_parameters, idx4crop): raise NotImplementedError()
-    def crop_for_2nd_order_component_of_the_phase_2(self, integration_result, initialization_parameters, plotting_properties=PlottingProperties(), **kwargs): raise NotImplementedError()
+    def crop_2nd_order_component_of_the_phase_2(self, integration_result, initialization_parameters, plotting_properties=PlottingProperties(), **kwargs): raise NotImplementedError()
     def calc_2nd_order_component_of_the_phase_2(self, integration_result, initialization_parameters, plotting_properties=PlottingProperties(), **kwargs): raise NotImplementedError()
 
     def remove_2nd_order(self, integration_result, initialization_parameters, plotting_properties=PlottingProperties(), **kwargs): raise NotImplementedError()
@@ -820,7 +820,7 @@ class __SingleGratingTalbot(SingleGratingTalbotFacade):
 
     # %% ==================================================================================================
 
-    def draw_crop_for_2nd_order_component_of_the_phase_1(self, integration_result, initialization_parameters, plotting_properties=PlottingProperties(), **kwargs):
+    def draw_crop_2nd_order_component_of_the_phase_1(self, integration_result, initialization_parameters, plotting_properties=PlottingProperties(), **kwargs):
         virtual_pixelsize       = integration_result.get_parameter("virtual_pixelsize")
         linear_fit_dpc_01       = integration_result.get_parameter("linear_fit_dpc_01")
         linear_fit_dpc_10       = integration_result.get_parameter("linear_fit_dpc_10")
@@ -857,7 +857,7 @@ class __SingleGratingTalbot(SingleGratingTalbotFacade):
 
         return integration_result
 
-    def crop_for_2nd_order_component_of_the_phase_1(self, integration_result, initialization_parameters, plotting_properties=PlottingProperties(), **kwargs):
+    def crop_2nd_order_component_of_the_phase_1(self, integration_result, initialization_parameters, plotting_properties=PlottingProperties(), **kwargs):
         differential_phase_01   = integration_result.get_parameter("differential_phase_01")
         differential_phase_10   = integration_result.get_parameter("differential_phase_10")
         virtual_pixelsize       = integration_result.get_parameter("virtual_pixelsize")
@@ -928,7 +928,7 @@ class __SingleGratingTalbot(SingleGratingTalbotFacade):
                           phase=integration_result.get_parameter("phase"),
                           thickness=integration_result.get_parameter("thickness", None))
 
-    def draw_crop_for_2nd_order_component_of_the_phase_2(self, integration_result, initialization_parameters, plotting_properties=PlottingProperties(), **kwargs):
+    def draw_crop_2nd_order_component_of_the_phase_2(self, integration_result, initialization_parameters, plotting_properties=PlottingProperties(), **kwargs):
         differential_phase_01   = integration_result.get_parameter("differential_phase_01")
         differential_phase_10   = integration_result.get_parameter("differential_phase_10")
         virtual_pixelsize       = integration_result.get_parameter("virtual_pixelsize")
@@ -971,7 +971,7 @@ class __SingleGratingTalbot(SingleGratingTalbotFacade):
 
         return integration_result
 
-    def crop_for_2nd_order_component_of_the_phase_2(self, integration_result, initialization_parameters, plotting_properties=PlottingProperties(), **kwargs):
+    def crop_2nd_order_component_of_the_phase_2(self, integration_result, initialization_parameters, plotting_properties=PlottingProperties(), **kwargs):
         differential_phase_01        = integration_result.get_parameter("differential_phase_01")
         differential_phase_10        = integration_result.get_parameter("differential_phase_10")
 
