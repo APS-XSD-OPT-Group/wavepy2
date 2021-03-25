@@ -52,13 +52,13 @@ except AttributeError:
 
 NAME = 'wavepy2'
 
-VERSION = '0.0.32'
+VERSION = '0.0.33'
 ISRELEASED = False
 
 DESCRIPTION = 'Wavepy 2 library'
 README_FILE = os.path.join(os.path.dirname(__file__), 'README.md')
 LONG_DESCRIPTION = open(README_FILE).read()
-AUTHOR = 'Luca Rebuffi, Xianbo Shi, Zhi Qiao, Walan Grizolli'
+AUTHOR = 'Luca Rebuffi, Xianbo Shi, Zhi Qiao'
 AUTHOR_EMAIL = 'lrebuffi@anl.gov'
 URL = 'https://github.com/aps-xsd-opt-group/wavepy2'
 DOWNLOAD_URL = 'https://github.com/aps-xsd-opt-group/wavepy2'
@@ -78,7 +78,7 @@ CLASSIFIERS = [
     'Natural Language :: English',
     'Environment :: Console',
     'Environment :: Plugins',
-    'Programming Language :: Python :: 3.6',
+    'Programming Language :: Python :: 3.7',
     'Topic :: Scientific/Engineering :: Visualization',
     'Intended Audience :: Science/Research',
 ]
