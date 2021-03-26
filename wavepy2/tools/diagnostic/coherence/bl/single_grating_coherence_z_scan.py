@@ -175,10 +175,10 @@ class __SingleGratingCoherenceZScan(SingleGratingCoherenceZScanFacade):
 
         if self.__plotter.is_active():
             img, idx4crop, img_size_o, cmap, colorlimit = crop_image.colorbar_crop_image(img=img_original,
-                                                                             pixelsize=pixelsize,
-                                                                             plotting_properties=plotting_properties,
-                                                                             message="Crop for all Images",
-                                                                             **kwargs)
+                                                                                         pixelsize=pixelsize,
+                                                                                         plotting_properties=plotting_properties,
+                                                                                         message="Crop for all Images",
+                                                                                         **kwargs)
 
             return WavePyData(img_original=img_original,
                               img=img,

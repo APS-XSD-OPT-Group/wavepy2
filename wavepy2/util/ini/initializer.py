@@ -89,6 +89,9 @@ class __LocalIniFile(IniFacade):
         self.__config_parser = ConfigParser()
         self.__config_parser.read(self.__ini_file_name)
 
+    def get_ini_file_name(self):
+        return self.__ini_file_name
+
     def __get_from_ini(self, section, key, default=None):
         try:
             value = self.__config_parser[section][key]
