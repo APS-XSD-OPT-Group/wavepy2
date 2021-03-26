@@ -96,10 +96,6 @@ class WavePyWidget(QWidget, WavePyGenericWidget):
 
         self.setLayout(layout)
 
-    def get_default_width(): return None
-    def get_default_heigth(): return None
-
-
     def append_mpl_figure_to_save(self, figure, figure_file_name=None):
         if not hasattr(self, "__figures_to_save") or self.__figures_to_save is None: self.__figures_to_save = []
         self.__figures_to_save.append(FigureToSave(figure=figure,
