@@ -43,7 +43,7 @@
 # POSSIBILITY OF SUCH DAMAGE.                                             #
 # #########################################################################
 
-from wavepy2.tools.imaging.single_grating.bl.single_grating_talbot import create_single_grating_talbot_manager, \
+from wavepy2.tools.imaging.single_grating.bl.single_grating_talbot import create_single_grating_talbot_manager, APPLICATION_NAME, \
     CALCULATE_DPC_CONTEXT_KEY, CORRECT_ZERO_DPC_CONTEXT_KEY, RECROP_DPC_CONTEXT_KEY, REMOVE_LINEAR_FIT_CONTEXT_KEY, FIT_RADIUS_DPC_CONTEXT_KEY, \
     INTEGRATION_CONTEXT_KEY, CALCULATE_THICKNESS_CONTEXT_KEY, CALCULATE_2ND_ORDER_COMPONENT_OF_THE_PHASE, REMOVE_2ND_ORDER
 
@@ -58,8 +58,10 @@ from wavepy2.tools.common.wavepy_script import WavePyScript
 
 class MainSingleGratingTalbot(WavePyScript):
     SCRIPT_ID = "img-sgt"
-    def get_script_id(self): return MainSingleGratingTalbot.SCRIPT_ID
-    def get_ini_file_name(self): return ".single_grating_talbot.ini"
+
+    def _get_script_id(self): return MainSingleGratingTalbot.SCRIPT_ID
+    def _get_ini_file_name(self): return ".single_grating_talbot.ini"
+    def _get_application_name(self): return APPLICATION_NAME
 
     def _run_script(self, SCRIPT_LOGGER_MODE=LoggerMode.FULL, **args):
         plotter = get_registered_plotter_instance()
@@ -143,7 +145,7 @@ class MainSingleGratingTalbot(WavePyScript):
         # %% Final Operations
         # ==========================================================================
 
-        get_registered_ini_instance().push()
+        get_registered_ini_instance(self._get_application_name()).push()
         get_registered_qt_application_instance().show_application_closer()
 
         # ==========================================================================

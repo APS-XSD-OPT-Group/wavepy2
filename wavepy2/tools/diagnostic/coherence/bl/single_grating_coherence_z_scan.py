@@ -89,6 +89,8 @@ class SingleGratingCoherenceZScanFacade:
 def create_single_grating_coherence_z_scan_manager(mode=MULTI_THREAD, n_cpus=None):
     return __SingleGratingCoherenceZScanMultiThread(n_cpus) if mode == MULTI_THREAD else __SingleGratingCoherenceZScanSingleThread()
 
+APPLICATION_NAME = "Single Grating Z Scan"
+
 INITIALIZATION_PARAMETERS_KEY          = "Single Grating Z Scan Initialization"
 CALCULATE_HARMONIC_PERIODS_CONTEXT_KEY = "Calculate Harmonic Periods"
 RUN_CALCULATION_CONTEXT_KEY            = "Run Calculation"
@@ -100,7 +102,7 @@ class __SingleGratingCoherenceZScan(SingleGratingCoherenceZScanFacade):
     def __init__(self):
         self.__plotter     = get_registered_plotter_instance()
         self.__main_logger = get_registered_logger_instance()
-        self.__ini         = get_registered_ini_instance()
+        self.__ini         = get_registered_ini_instance(APPLICATION_NAME)
 
     def draw_initialization_parameters_widget(self, plotting_properties=PlottingProperties(), **kwargs):
         if self.__plotter.is_active():
@@ -111,7 +113,7 @@ class __SingleGratingCoherenceZScan(SingleGratingCoherenceZScanFacade):
                                                                context_window=plotting_properties.get_context_widget(),
                                                                use_unique_id=use_unique_id)
 
-            self.__plotter.push_plot_on_context(INITIALIZATION_PARAMETERS_KEY, SGZInputParametersWidget, unique_id, **kwargs)
+            self.__plotter.push_plot_on_context(INITIALIZATION_PARAMETERS_KEY, SGZInputParametersWidget, unique_id, application_name=APPLICATION_NAME, **kwargs)
             self.__plotter.draw_context(INITIALIZATION_PARAMETERS_KEY, add_context_label=add_context_label, unique_id=unique_id, **kwargs)
 
             return self.__plotter.get_plots_of_context(INITIALIZATION_PARAMETERS_KEY, unique_id=unique_id)
@@ -122,6 +124,7 @@ class __SingleGratingCoherenceZScan(SingleGratingCoherenceZScanFacade):
         if self.__plotter.is_active():
             initialization_parameters = self.__plotter.show_interactive_plot(SGZInputParametersDialog,
                                                                              container_widget=plotting_properties.get_container_widget(),
+                                                                             application_name=APPLICATION_NAME,
                                                                              **kwargs)
         else:
             initialization_parameters = generate_initialization_parameters_sgz(dataFolder         = self.__ini.get_string_from_ini("Files", "data directory"),
@@ -166,6 +169,7 @@ class __SingleGratingCoherenceZScan(SingleGratingCoherenceZScanFacade):
         return crop_image.draw_colorbar_crop_image(img=img,
                                                    pixelsize=pixelsize,
                                                    plotting_properties=plotting_properties,
+                                                   application_name=APPLICATION_NAME,
                                                    message="Crop for all Images",
                                                    **kwargs)
 
@@ -177,6 +181,7 @@ class __SingleGratingCoherenceZScan(SingleGratingCoherenceZScanFacade):
             img, idx4crop, img_size_o, cmap, colorlimit = crop_image.colorbar_crop_image(img=img_original,
                                                                                          pixelsize=pixelsize,
                                                                                          plotting_properties=plotting_properties,
+                                                                                         application_name=APPLICATION_NAME,
                                                                                          message="Crop for all Images",
                                                                                          **kwargs)
 
@@ -201,6 +206,7 @@ class __SingleGratingCoherenceZScan(SingleGratingCoherenceZScanFacade):
 
         return crop_image.draw_crop_image(img=img_original,
                                           plotting_properties=plotting_properties,
+                                          application_name=APPLICATION_NAME,
                                           message="Crop for Dark",
                                           default_idx4crop=[0, 20, 0, 20],
                                           kwargs4graph={'cmap': cmap, 'vmin': colorlimit[0], 'vmax': colorlimit[1]},
@@ -214,6 +220,7 @@ class __SingleGratingCoherenceZScan(SingleGratingCoherenceZScanFacade):
         if self.__plotter.is_active():
             _, idx4cropDark, _ = crop_image.crop_image(img=img_original,
                                                        plotting_properties=plotting_properties,
+                                                       application_name=APPLICATION_NAME,
                                                        message="Crop for Dark",
                                                        default_idx4crop=[0, 20, 0, 20],
                                                        kwargs4graph={'cmap': cmap, 'vmin': colorlimit[0], 'vmax': colorlimit[1]},

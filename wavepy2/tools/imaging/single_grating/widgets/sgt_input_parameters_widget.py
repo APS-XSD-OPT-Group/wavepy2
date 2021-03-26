@@ -154,8 +154,8 @@ class AbstractSGTInputParametersWidget():
     WIDTH  = 800
     HEIGHT = 430
 
-    def __init__(self):
-        self.__ini     = get_registered_ini_instance()
+    def __init__(self, application_name=None):
+        self.__ini     = get_registered_ini_instance(application_name)
         self.__logger  = get_registered_logger_instance()
 
         self.img                = self.__ini.get_string_from_ini("Files", "sample")
@@ -310,8 +310,8 @@ from PyQt5.QtWidgets import QVBoxLayout, QHBoxLayout
 from PyQt5.QtCore import Qt
 
 class SGTInputParametersWidget(AbstractSGTInputParametersWidget, WavePyWidget):
-    def __init__(self):
-        AbstractSGTInputParametersWidget.__init__(self)
+    def __init__(self, application_name=None, **kwargs):
+        AbstractSGTInputParametersWidget.__init__(self, application_name)
         WavePyWidget.__init__(self, parent=None)
 
         layout = QHBoxLayout()
@@ -333,6 +333,6 @@ class SGTInputParametersWidget(AbstractSGTInputParametersWidget, WavePyWidget):
         return False
 
 class SGTInputParametersDialog(AbstractSGTInputParametersWidget, WavePyInteractiveWidget):
-    def __init__(self, parent):
-        AbstractSGTInputParametersWidget.__init__(self)
+    def __init__(self, parent, application_name=None, **kwargs):
+        AbstractSGTInputParametersWidget.__init__(self, application_name)
         WavePyInteractiveWidget.__init__(self, parent, message="Input Parameters", title="Input Parameters")

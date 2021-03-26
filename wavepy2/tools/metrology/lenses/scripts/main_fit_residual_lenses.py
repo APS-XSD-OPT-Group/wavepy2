@@ -51,14 +51,15 @@ from wavepy2.util.plot.plotter import get_registered_plotter_instance
 
 from wavepy2.tools.common.wavepy_script import WavePyScript
 
-from wavepy2.tools.metrology.lenses.bl.fit_residual_lenses import create_fit_residual_lenses_manager, \
+from wavepy2.tools.metrology.lenses.bl.fit_residual_lenses import create_fit_residual_lenses_manager, APPLICATION_NAME, \
     CROP_THICKNESS_CONTEXT_KEY, CENTER_IMAGE_CONTEXT_KEY, FIT_RADIUS_DPC_CONTEXT_KEY, DO_FIT_CONTEXT_KEY
 
 class MainFitResidualLenses(WavePyScript):
     SCRIPT_ID = "met-frl"
 
-    def get_script_id(self): return MainFitResidualLenses.SCRIPT_ID
-    def get_ini_file_name(self): return ".fit_residual_lenses.ini"
+    def _get_script_id(self): return MainFitResidualLenses.SCRIPT_ID
+    def _get_application_name(self): return APPLICATION_NAME
+    def _get_ini_file_name(self): return ".fit_residual_lenses.ini"
 
     def _run_script(self, SCRIPT_LOGGER_MODE=LoggerMode.FULL, **args):
         plotter = get_registered_plotter_instance()
@@ -88,7 +89,7 @@ class MainFitResidualLenses(WavePyScript):
         # %% Final Operations
         # ==========================================================================
 
-        get_registered_ini_instance().push()
+        get_registered_ini_instance(self._get_application_name()).push()
         get_registered_qt_application_instance().show_application_closer()
 
         # ==========================================================================

@@ -54,7 +54,7 @@ from wavepy2.tools.common.widgets.image_to_change import ImageToChange
 
 
 class GraphicalRoiIdx(QWidget):
-    def __init__(self, parent, image, set_crop_output_listener, kwargs4graph={'cmap': 'viridis'}):
+    def __init__(self, parent, image, set_crop_output_listener, kwargs4graph={'cmap': 'viridis'}, **kwargs):
         super(GraphicalRoiIdx, self).__init__(parent)
 
         logger = get_registered_logger_instance()

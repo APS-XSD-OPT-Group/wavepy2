@@ -101,7 +101,7 @@ from wavepy2.tools.common.widgets.graphical_select_point_idx import GraphicalSel
 class CorrectDPCCenter(WavePyInteractiveWidget):
     __harmonic = ["01", "10"]
 
-    def __init__(self, parent):
+    def __init__(self, parent, **kwargs):
         super(CorrectDPCCenter, self).__init__(parent, message="Correct DPC Center", title="Correct DPC Center")
 
         self.__logger  = get_registered_logger_instance()

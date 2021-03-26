@@ -102,7 +102,7 @@ from PyQt5.QtCore import Qt
 
 class CropWidgetPlot(AbstractCropWidget, WavePyWidget):
 
-    def __init__(self):
+    def __init__(self, **kwargs):
         AbstractCropWidget.__init__(self)
         WavePyWidget.__init__(self, parent=None)
 
@@ -126,6 +126,6 @@ class CropWidgetPlot(AbstractCropWidget, WavePyWidget):
 
 class CropDialogPlot(AbstractCropWidget, WavePyInteractiveWidget):
 
-    def __init__(self, parent):
+    def __init__(self, parent, **kwargs):
         AbstractCropWidget.__init__(self)
         WavePyInteractiveWidget.__init__(self, parent, message="New Crop?", title="Crop Image")

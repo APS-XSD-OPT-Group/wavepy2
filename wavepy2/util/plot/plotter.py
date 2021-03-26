@@ -64,7 +64,7 @@ class FigureToSave():
 
 
 class WavePyWidget(QWidget, WavePyGenericWidget):
-    def __init__(self, parent=None):
+    def __init__(self, parent=None, **kwargs):
         super(WavePyWidget, self).__init__(parent=parent)
 
         self.__allows_saving = True
@@ -117,7 +117,7 @@ class WavePyWidget(QWidget, WavePyGenericWidget):
 
 class WavePyInteractiveWidget(QDialog, WavePyGenericWidget):
 
-    def __init__(self, parent, message, title):
+    def __init__(self, parent, message, title, **kwargs):
         super(QDialog, self).__init__(parent)
 
         self.setWindowTitle(message)
@@ -207,7 +207,7 @@ class __AbstractPlotter(PlotterFacade):
         if not issubclass(widget_class, WavePyWidget): raise ValueError("Widget class is not a WavePyWidget")
 
         try:
-            plot_widget_instance = widget_class()
+            plot_widget_instance = widget_class(**kwargs)
             plot_widget_instance.build_widget(**kwargs)
 
             return plot_widget_instance
@@ -321,7 +321,7 @@ class __AbstractActivePlotter(__AbstractPlotter):
         if not issubclass(widget_class, WavePyInteractiveWidget): raise ValueError("Widget class is not a WavePyWidget")
 
         try:
-            interactive_widget_instance = widget_class(parent=container_widget)
+            interactive_widget_instance = widget_class(parent=container_widget, **kwargs)
             interactive_widget_instance.build_widget(**kwargs)
         except Exception as e:
             raise ValueError("Plot Widget can't be created: " + str(e))

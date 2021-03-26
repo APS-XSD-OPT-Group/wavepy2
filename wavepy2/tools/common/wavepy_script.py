@@ -56,11 +56,11 @@ class WavePyScript():
         self.__args = {**self.__args, **self._parse_additional_parameters(**kwargs)}
 
     def run_script(self):
-        self.__initialize_utils(**self.__args)
+        self._initialize_utils(**self.__args)
         self._run_script(**self.__args)
 
     def show_help(self):
-        print("\nTo run this script:  python -m wavepy2.tools " + self.get_script_id() + " <options>\n")
+        print("\nTo run this script:  python -m wavepy2.tools " + self._get_script_id() + " <options>\n")
         print("Options:")
         print("  -l<logger mode>\n")
         print("   logger modes:\n" +
@@ -78,16 +78,13 @@ class WavePyScript():
 
         sys.exit(0)
 
-    def get_script_id(self): raise NotImplementedError
-    def get_ini_file_name(self): raise NotImplementedError
-
     ######################################################################
     # PROTECTED
 
+    def _get_script_id(self): raise NotImplementedError
+    def _get_ini_file_name(self): raise NotImplementedError
     def _help_additional_parameters(self): return ""
-
     def _parse_additional_parameters(self, **kwargs): return {}
-
     def _run_script(self, **args): raise NotImplementedError()
 
     def _parse_sys_arguments(self, sys_argv):
@@ -104,24 +101,19 @@ class WavePyScript():
 
         return args
 
-    ######################################################################
-    # PRIVATE
-
     def _parse_additional_sys_argument(self, sys_argument, args): pass
 
-    def __initialize_utils(self, LOGGER_MODE=LoggerMode.FULL, PLOTTER_MODE=PlotterMode.FULL, INI_MODE=IniMode.LOCAL_FILE, **args):
+    def _initialize_utils(self, LOGGER_MODE=LoggerMode.FULL, PLOTTER_MODE=PlotterMode.FULL, INI_MODE=IniMode.LOCAL_FILE, **args):
         print("Logger Mode : " + LoggerMode.get_logger_mode(LOGGER_MODE))
         print("Plotter Mode: " + PlotterMode.get_plotter_mode(PLOTTER_MODE))
 
-        # ==========================================================================
-        # %% Script initialization
-        # ==========================================================================
-
         register_logger_single_instance(logger_mode=LOGGER_MODE)
-        register_ini_instance(INI_MODE, ini_file_name=self.get_ini_file_name() if INI_MODE == IniMode.LOCAL_FILE else None)
+        register_ini_instance(INI_MODE,
+                              ini_file_name=self._get_ini_file_name() if INI_MODE == IniMode.LOCAL_FILE else None,
+                              application_name=self._get_application_name())
         register_plotter_instance(plotter_mode=PLOTTER_MODE)
         register_qt_application_instance(QtApplicationMode.SHOW if PLOTTER_MODE in [PlotterMode.FULL, PlotterMode.DISPLAY_ONLY] else QtApplicationMode.HIDE)
 
-
+    def _get_application_name(self): return None
 
 

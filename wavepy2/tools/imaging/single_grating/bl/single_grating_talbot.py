@@ -70,6 +70,8 @@ from wavepy2.tools.imaging.single_grating.widgets.fit_radius_dpc_widget import F
 
 from wavepy2.tools.imaging.single_grating.bl.dpc_profile_analysis import create_dpc_profile_analsysis_manager
 
+APPLICATION_NAME = "Single Grating Talbot"
+
 INITIALIZATION_PARAMETERS_KEY              = "Single Grating Talbot Initialization"
 CALCULATE_DPC_CONTEXT_KEY                  = "Calculate DPC"
 RECROP_DPC_CONTEXT_KEY                     = "Recrop DPC"
@@ -128,7 +130,7 @@ class __SingleGratingTalbot(SingleGratingTalbotFacade):
     def __init__(self):
         self.__plotter     = get_registered_plotter_instance()
         self.__main_logger = get_registered_logger_instance()
-        self.__ini         = get_registered_ini_instance()
+        self.__ini         = get_registered_ini_instance(APPLICATION_NAME)
 
     # %% ==================================================================================================
 
@@ -142,7 +144,8 @@ class __SingleGratingTalbot(SingleGratingTalbotFacade):
                                                                context_window=plotting_properties.get_context_widget(),
                                                                use_unique_id=use_unique_id)
 
-            self.__plotter.push_plot_on_context(INITIALIZATION_PARAMETERS_KEY, SGTInputParametersWidget, unique_id, show_runtime_options=show_runtime_options, **kwargs)
+            self.__plotter.push_plot_on_context(INITIALIZATION_PARAMETERS_KEY, SGTInputParametersWidget, unique_id,
+                                                application_name=APPLICATION_NAME, show_runtime_options=show_runtime_options, **kwargs)
             self.__plotter.draw_context(INITIALIZATION_PARAMETERS_KEY, add_context_label=add_context_label, unique_id=unique_id, **kwargs)
 
             return self.__plotter.get_plots_of_context(INITIALIZATION_PARAMETERS_KEY, unique_id=unique_id)
@@ -153,6 +156,7 @@ class __SingleGratingTalbot(SingleGratingTalbotFacade):
         if self.__plotter.is_active():
             initialization_parameters = self.__plotter.show_interactive_plot(SGTInputParametersDialog,
                                                                              container_widget=plotting_properties.get_container_widget(),
+                                                                             application_name=APPLICATION_NAME,
                                                                              show_runtime_options=plotting_properties.get_parameter("show_runtime_options", True),
                                                                              **kwargs)
         else:
@@ -203,6 +207,7 @@ class __SingleGratingTalbot(SingleGratingTalbotFacade):
         return crop_image.draw_colorbar_crop_image(img=img,
                                                    pixelsize=pixelsize,
                                                    plotting_properties=plotting_properties,
+                                                   application_name=APPLICATION_NAME,
                                                    **kwargs)
 
     def crop_initial_image(self, initialization_parameters, plotting_properties=PlottingProperties(), **kwargs):
@@ -213,6 +218,7 @@ class __SingleGratingTalbot(SingleGratingTalbotFacade):
             img, idx4crop, img_size_o, _, _ = crop_image.colorbar_crop_image(img=img,
                                                                              pixelsize=pixelsize,
                                                                              plotting_properties=plotting_properties,
+                                                                             application_name=APPLICATION_NAME,
                                                                              **kwargs)
         else:
             img_size_o   = np.shape(img)
@@ -345,6 +351,7 @@ class __SingleGratingTalbot(SingleGratingTalbotFacade):
 
         return crop_image.draw_crop_image(img=img_to_crop,
                                           plotting_properties=plotting_properties,
+                                          application_name=APPLICATION_NAME,
                                           **kwargs)
 
     def crop_dpc(self, dpc_result, initialization_parameters, plotting_properties=PlottingProperties(), **kwargs):
@@ -356,6 +363,7 @@ class __SingleGratingTalbot(SingleGratingTalbotFacade):
 
             _, idx2ndCrop, _ = crop_image.crop_image(img=img_to_crop,
                                                      plotting_properties=plotting_properties,
+                                                     application_name=APPLICATION_NAME,
                                                      **kwargs)
         else:
             idx2ndCrop = [0, -1, 0, -1]
@@ -1126,6 +1134,7 @@ class __SingleGratingTalbot(SingleGratingTalbotFacade):
                                           pixelsize=pixelsize,
                                           kargs4graph={'cmap': 'viridis', 'vmin': vmin, 'vmax': vmax},
                                           plotting_properties=plotting_properties,
+                                          application_name=APPLICATION_NAME,
                                           **kwargs)
 
     @classmethod
@@ -1147,6 +1156,7 @@ class __SingleGratingTalbot(SingleGratingTalbotFacade):
                                                    pixelsize=pixelsize,
                                                    kargs4graph=kargs4graph,
                                                    plotting_properties=plotting_properties,
+                                                   application_name=APPLICATION_NAME,
                                                    **kwargs)
         else:
             idx4crop = [0, -1, 0, -1]

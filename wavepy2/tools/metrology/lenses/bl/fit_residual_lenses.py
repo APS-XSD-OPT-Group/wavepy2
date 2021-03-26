@@ -76,6 +76,8 @@ class FitResidualLensesFacade:
 def create_fit_residual_lenses_manager():
     return __FitResidualLenses()
 
+APPLICATION_NAME = "Fit Residual Lenses"
+
 CROP_THICKNESS_CONTEXT_KEY = "Crop and Show Thickness"
 CENTER_IMAGE_CONTEXT_KEY = "Center Image"
 FIT_RADIUS_DPC_CONTEXT_KEY = "Fit Radius DPC"
@@ -86,13 +88,13 @@ class __FitResidualLenses(FitResidualLensesFacade):
     def __init__(self):
         self.__plotter     = get_registered_plotter_instance()
         self.__main_logger = get_registered_logger_instance()
-        self.__ini         = get_registered_ini_instance()
+        self.__ini         = get_registered_ini_instance(APPLICATION_NAME)
 
     # %% ==================================================================================================
 
     def get_initialization_parameters(self, script_logger_mode):
         if self.__plotter.is_active():
-            initialization_parameters = self.__plotter.show_interactive_plot(FRLInputParametersWidget, container_widget=None)
+            initialization_parameters = self.__plotter.show_interactive_plot(FRLInputParametersWidget, application_name=APPLICATION_NAME, container_widget=None)
         else:
             initialization_parameters = generate_initialization_parameters_frl(thickness_file_name=self.__ini.get_string_from_ini("Files", "file with thickness"),
                                                                                str4title=self.__ini.get_string_from_ini("Parameters", "String for Titles", default="Be Lens"),

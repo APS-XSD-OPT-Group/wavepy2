@@ -43,7 +43,8 @@
 # POSSIBILITY OF SUCH DAMAGE.                                             #
 # #########################################################################
 
-from wavepy2.tools.diagnostic.coherence.bl.single_grating_coherence_z_scan import create_single_grating_coherence_z_scan_manager, SINGLE_THREAD, MULTI_THREAD
+from wavepy2.tools.diagnostic.coherence.bl.single_grating_coherence_z_scan import create_single_grating_coherence_z_scan_manager, APPLICATION_NAME, \
+    SINGLE_THREAD, MULTI_THREAD
 from wavepy2.tools.diagnostic.coherence.bl.single_grating_coherence_z_scan import \
     CALCULATE_HARMONIC_PERIODS_CONTEXT_KEY, RUN_CALCULATION_CONTEXT_KEY, SORT_CALCULATION_RESULT_CONTEXT_KEY, FIT_CALCULATION_RESULT_CONTEXT_KEY
 
@@ -59,8 +60,9 @@ from multiprocessing import cpu_count
 class MainSingleGratingCoherenceZScan(WavePyScript):
     SCRIPT_ID = "coh-sgz"
 
-    def get_script_id(self): return MainSingleGratingCoherenceZScan.SCRIPT_ID
-    def get_ini_file_name(self): return ".single_grating_coherence_z_scan.ini"
+    def _get_script_id(self): return MainSingleGratingCoherenceZScan.SCRIPT_ID
+    def _get_application_name(self): return APPLICATION_NAME
+    def _get_ini_file_name(self): return ".single_grating_coherence_z_scan.ini"
 
     def _parse_additional_sys_argument(self, sys_argument, args):
         if   "-f" == sys_argument[:2]: args["SHOW_FOURIER"] = int(sys_argument[2:]) > 0
@@ -147,7 +149,7 @@ class MainSingleGratingCoherenceZScan(WavePyScript):
             # %% Final Operations
             # ==========================================================================
 
-            get_registered_ini_instance().push()
+            get_registered_ini_instance(self._get_application_name()).push()
             get_registered_qt_application_instance().show_application_closer()
 
             # ==========================================================================

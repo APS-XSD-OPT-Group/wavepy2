@@ -54,7 +54,7 @@ from wavepy2.util.plot.plot_tools import WIDGET_FIXED_WIDTH, widgetBox, separato
 
 
 class FigureSlideColorbar(QWidget):
-    def __init__(self, parent, image, title='', xlabel='', ylabel='', cmin_o=None, cmax_o=None, **kwargs4imshow):
+    def __init__(self, parent, image, title='', xlabel='', ylabel='', cmin_o=None, cmax_o=None, **kwargs):
         super(FigureSlideColorbar, self).__init__(parent)
 
         __radio1_values = ['gray', 'gray_r', 'viridis', 'viridis_r', 'inferno', 'rainbow', 'RdGy_r']
@@ -74,7 +74,7 @@ class FigureSlideColorbar(QWidget):
         ax = figure.subplots()
         figure.subplots_adjust(left=-0.25, bottom=0.25)
 
-        surface = ax.imshow(image, cmap='viridis', **kwargs4imshow)
+        surface = ax.imshow(image, cmap='viridis', **kwargs)
         surface.cmap.set_over('#FF0000')  # Red
         surface.cmap.set_under('#8B008B')  # Light Cyan
 

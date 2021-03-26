@@ -56,8 +56,8 @@ from wavepy2.util.plot.plotter import WavePyInteractiveWidget, WavePyWidget
 class AbstractColorbarCropWidget():
     __initialized = False
 
-    def __init__(self):
-        self.__ini     = get_registered_ini_instance()
+    def __init__(self, application_name=None):
+        self.__ini     = get_registered_ini_instance(application_name)
         self.__logger  = get_registered_logger_instance()
 
     def build_widget(self, **kwargs):
@@ -136,8 +136,8 @@ from PyQt5.QtCore import Qt
 
 class ColorbarCropWidgetPlot(AbstractColorbarCropWidget, WavePyWidget):
 
-    def __init__(self):
-        AbstractColorbarCropWidget.__init__(self)
+    def __init__(self, application_name=None, **kwargs):
+        AbstractColorbarCropWidget.__init__(self, application_name)
         WavePyWidget.__init__(self, parent=None)
 
         layout = QHBoxLayout()
@@ -160,6 +160,6 @@ class ColorbarCropWidgetPlot(AbstractColorbarCropWidget, WavePyWidget):
 
 class ColorbarCropDialogPlot(AbstractColorbarCropWidget, WavePyInteractiveWidget):
 
-    def __init__(self, parent):
-        AbstractColorbarCropWidget.__init__(self)
+    def __init__(self, parent, application_name=None, **kwargs):
+        AbstractColorbarCropWidget.__init__(self, application_name)
         WavePyInteractiveWidget.__init__(self, parent, message="New Crop?", title="Crop Image")
