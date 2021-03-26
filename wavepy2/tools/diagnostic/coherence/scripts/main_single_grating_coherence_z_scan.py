@@ -113,11 +113,19 @@ class MainSingleGratingCoherenceZScan(WavePyScript):
             # %% Initialization parameters
             # ==========================================================================
 
-            initialization_parameters = single_grating_coherence_z_scan_manager.get_initialization_parameters(SCRIPT_LOGGER_MODE, SHOW_FOURIER)
+            initialization_parameters = single_grating_coherence_z_scan_manager.manager_initialization(single_grating_coherence_z_scan_manager.get_initialization_parameters(),
+                                                                                                       SCRIPT_LOGGER_MODE,
+                                                                                                       SHOW_FOURIER)
+
+            # ==========================================================================
+            # %% CROP Initial Image
+            # ==========================================================================
+
+            initial_crop_result = single_grating_coherence_z_scan_manager.crop_dark_image(single_grating_coherence_z_scan_manager.crop_initial_image(initialization_parameters))
 
             # ==========================================================================
 
-            harm_periods_result = single_grating_coherence_z_scan_manager.calculate_harmonic_periods(initialization_parameters)
+            harm_periods_result = single_grating_coherence_z_scan_manager.calculate_harmonic_periods(initial_crop_result, initialization_parameters)
             plotter.show_context_window(CALCULATE_HARMONIC_PERIODS_CONTEXT_KEY)
 
             # ==========================================================================

@@ -54,7 +54,7 @@ from wavepy2.util.io.read_write_file import read_tiff
 
 from wavepy2.tools.common.wavepy_data import WavePyData
 
-from wavepy2.tools.common.bl import grating_interferometry
+from wavepy2.tools.common.bl import grating_interferometry, crop_image
 
 from wavepy2.tools.common.widgets.crop_widget import CropDialogPlot
 from wavepy2.tools.common.widgets.harmonic_grid_plot_widget import HarmonicGridPlot
@@ -74,11 +74,17 @@ class SingleGratingCoherenceZScanFacade:
 
     def draw_initialization_parameters_widget(self, plotting_properties=PlottingProperties(), **kwargs): raise NotImplementedError()
     def get_initialization_parameters(self, plotting_properties=PlottingProperties(), **kwargs): raise NotImplementedError()
-    def manager_initialization(self, initialization_parameters, script_logger_mode, show_fourier=False): raise NotImplementedError()
+    def manager_initialization(self, initialization_parameters, script_logger_mode=LoggerMode.FULL, show_fourier=False): raise NotImplementedError()
 
-    def calculate_harmonic_periods(self, initialization_parameters): raise NotImplementedError()
-    def run_calculation(self, harm_periods_result, initialization_parameters): raise NotImplementedError()
-    def sort_calculation_result(self, run_calculation_result, initialization_parameters): raise NotImplementedError()
+    def draw_crop_initial_image(self, initialization_parameters, plotting_properties=PlottingProperties(), **kwargs): raise NotImplementedError()
+    def crop_initial_image(self, initialization_parameters, plotting_properties=PlottingProperties(), **kwargs): raise NotImplementedError()
+    def draw_crop_dark_image(self, initial_crop_parameters, plotting_properties=PlottingProperties(), **kwargs): raise NotImplementedError()
+    def crop_dark_image(self, initial_crop_parameters, plotting_properties=PlottingProperties(), **kwargs): raise NotImplementedError()
+
+    def calculate_harmonic_periods(self, initial_crop_parameters, initialization_parameters, plotting_properties=PlottingProperties(), **kwargs): raise NotImplementedError()
+    def run_calculation(self, harm_periods_result, initialization_parameters, plotting_properties=PlottingProperties(), **kwargs): raise NotImplementedError()
+    def sort_calculation_result(self, run_calculation_result, initialization_parameters, plotting_properties=PlottingProperties(), **kwargs): raise NotImplementedError()
+    def fit_calculation_result(self, sort_calculation_result, initialization_parameters, plotting_properties=PlottingProperties(), **kwargs): raise NotImplementedError()
 
 def create_single_grating_coherence_z_scan_manager(mode=MULTI_THREAD, n_cpus=None):
     return __SingleGratingCoherenceZScanMultiThread(n_cpus) if mode == MULTI_THREAD else __SingleGratingCoherenceZScanSingleThread()
@@ -136,7 +142,7 @@ class __SingleGratingCoherenceZScan(SingleGratingCoherenceZScanFacade):
                                                                                logger=self.__main_logger)
         return initialization_parameters
 
-    def manager_initialization(self, initialization_parameters, script_logger_mode, show_fourier=False):
+    def manager_initialization(self, initialization_parameters, script_logger_mode=LoggerMode.FULL, show_fourier=False):
         initialization_parameters.set_parameter("show_fourier", show_fourier)
 
         plotter = get_registered_plotter_instance()
@@ -151,31 +157,95 @@ class __SingleGratingCoherenceZScan(SingleGratingCoherenceZScanFacade):
 
         return initialization_parameters
 
-    def calculate_harmonic_periods(self, initialization_parameters):
-        imgOriginal    = initialization_parameters.get_parameter("img")
+    # %% ==================================================================================================
+
+    def draw_crop_initial_image(self, initialization_parameters, plotting_properties=PlottingProperties(), **kwargs):
+        img             = initialization_parameters.get_parameter("img")
+        pixelsize       = initialization_parameters.get_parameter("pixelsize")
+
+        return crop_image.draw_colorbar_crop_image(img=img,
+                                                   pixelsize=pixelsize,
+                                                   plotting_properties=plotting_properties,
+                                                   message="Crop for all Images",
+                                                   **kwargs)
+
+    def crop_initial_image(self, initialization_parameters, plotting_properties=PlottingProperties(), **kwargs):
+        img_original    = initialization_parameters.get_parameter("img")
+        pixelsize       = initialization_parameters.get_parameter("pixelsize")
+
+        if self.__plotter.is_active():
+            img, idx4crop, img_size_o, cmap, colorlimit = crop_image.colorbar_crop_image(img=img_original,
+                                                                             pixelsize=pixelsize,
+                                                                             plotting_properties=plotting_properties,
+                                                                             message="Crop for all Images",
+                                                                             **kwargs)
+
+            return WavePyData(img_original=img_original,
+                              img=img,
+                              idx4crop=idx4crop,
+                              img_size_o=img_size_o,
+                              cmap=cmap,
+                              colorlimit=colorlimit)
+        else:
+            idx4crop     = self.__ini.get_list_from_ini("Parameters", "Crop")
+            img          = common_tools.crop_matrix_at_indexes(img_original, idx4crop)
+
+            return WavePyData(img_original=img_original,
+                              img=img,
+                              idx4crop=idx4crop)
+
+    def draw_crop_dark_image(self, initial_crop_parameters, plotting_properties=PlottingProperties(), **kwargs):
+        img_original = initial_crop_parameters.get_parameter("img_original")
+        cmap         = initial_crop_parameters.get_parameter("cmap")
+        colorlimit   = initial_crop_parameters.get_parameter("colorlimit")
+
+        return crop_image.draw_crop_image(img=img_original,
+                                          plotting_properties=plotting_properties,
+                                          message="Crop for Dark",
+                                          default_idx4crop=[0, 20, 0, 20],
+                                          kwargs4graph={'cmap': cmap, 'vmin': colorlimit[0], 'vmax': colorlimit[1]},
+                                          **kwargs)
+
+    def crop_dark_image(self, initial_crop_parameters, plotting_properties=PlottingProperties(), **kwargs):
+        img_original = initial_crop_parameters.get_parameter("img_original")
+        cmap         = initial_crop_parameters.get_parameter("cmap")
+        colorlimit   = initial_crop_parameters.get_parameter("colorlimit")
+
+        if self.__plotter.is_active():
+            _, idx4cropDark, _ = crop_image.crop_image(img=img_original,
+                                                       plotting_properties=plotting_properties,
+                                                       message="Crop for Dark",
+                                                       default_idx4crop=[0, 20, 0, 20],
+                                                       kwargs4graph={'cmap': cmap, 'vmin': colorlimit[0], 'vmax': colorlimit[1]},
+                                                       **kwargs)
+        else:
+            idx4cropDark = [0, 20, 0, 20]
+
+        initial_crop_parameters.set_parameter("idx4cropDark", idx4cropDark)
+
+        return initial_crop_parameters
+
+    # %% ==================================================================================================
+
+    def calculate_harmonic_periods(self, initial_crop_parameters, initialization_parameters, plotting_properties=PlottingProperties(), **kwargs):
+        img            = initial_crop_parameters.get_parameter("img",          default_value=initialization_parameters.get_parameter("img"))
+        idx4crop       = initial_crop_parameters.get_parameter("idx4crop",     default_value=self.__ini.get_list_from_ini("Parameters", "Crop"))
+        idx4cropDark   = initial_crop_parameters.get_parameter("idx4cropDark", default_value=[0, 20, 0, 20])
+
         pattern        = initialization_parameters.get_parameter("pattern")
         gratingPeriod  = initialization_parameters.get_parameter("gratingPeriod")
         pixelsize      = initialization_parameters.get_parameter("pixelsize")
 
-        self.__plotter.register_context_window(CALCULATE_HARMONIC_PERIODS_CONTEXT_KEY)
+        add_context_label = plotting_properties.get_parameter("add_context_label", True)
+        use_unique_id     = plotting_properties.get_parameter("use_unique_id", False)
 
-        if self.__plotter.is_active():
-            img, idx4crop, _, cmap, colorlimit = self.__plotter.show_interactive_plot(ColorbarCropDialogPlot, container_widget=None, img=imgOriginal, pixelsize=[pixelsize, pixelsize], message="Crop for all Images")
-
-            _, idx4cropDark, _ = self.__plotter.show_interactive_plot(CropDialogPlot,
-                                                                   container_widget=None,
-                                                                   img=imgOriginal,
-                                                                   message="Crop for Dark ",
-                                                                   default_idx4crop=[0, 20, 0, 20],
-                                                                   kwargs4graph={'cmap': cmap, 'vmin': colorlimit[0], 'vmax': colorlimit[1]})
-            self.__ini.push()
-        else:
-            idx4crop     = self.__ini.get_list_from_ini("Parameters", "Crop")
-            img          = common_tools.crop_matrix_at_indexes(imgOriginal, idx4crop)
-            idx4cropDark = [0, 20, 0, 20]
+        unique_id = self.__plotter.register_context_window(CALCULATE_HARMONIC_PERIODS_CONTEXT_KEY,
+                                                           context_window=plotting_properties.get_context_widget(),
+                                                           use_unique_id=use_unique_id)
 
         # Plot Image AFTER crop
-        self.__plotter.push_plot_on_context(CALCULATE_HARMONIC_PERIODS_CONTEXT_KEY, ShowCroppedFigure, img=img, pixelsize=[pixelsize, pixelsize], allows_saving=False)
+        self.__plotter.push_plot_on_context(CALCULATE_HARMONIC_PERIODS_CONTEXT_KEY, ShowCroppedFigure, unique_id,
+                                            img=img, pixelsize=[pixelsize, pixelsize], allows_saving=False, **kwargs)
 
         self.__main_logger.print_message("Idx for cropping: " + str(idx4crop))
 
@@ -236,14 +306,13 @@ class __SingleGratingCoherenceZScan(SingleGratingCoherenceZScanFacade):
         self.__script_logger.print('Uniform Filter Size : {:d}'.format(unFilterSize))
         self.__script_logger.print('Search Region : {:d}'.format(searchRegion))
 
-        self.__draw_context(CALCULATE_HARMONIC_PERIODS_CONTEXT_KEY)
+        self.__plotter.draw_context(CALCULATE_HARMONIC_PERIODS_CONTEXT_KEY, add_context_label=add_context_label, unique_id=unique_id, **kwargs)
 
         return WavePyData(period_harm_Vert=period_harm_Vert, period_harm_Horz=period_harm_Horz, img=img, idx4crop=idx4crop, idx4cropDark=idx4cropDark)
 
+    # %% ==================================================================================================
 
-    def run_calculation(self, harm_periods_result, initialization_parameters):
-        self.__plotter.register_context_window(RUN_CALCULATION_CONTEXT_KEY)
-
+    def run_calculation(self, harm_periods_result, initialization_parameters, plotting_properties=PlottingProperties(), **kwargs):
         period_harm_Vert = harm_periods_result.get_parameter("period_harm_Vert")
         period_harm_Horz = harm_periods_result.get_parameter("period_harm_Horz")
         sample_img       = harm_periods_result.get_parameter("img")
@@ -252,23 +321,30 @@ class __SingleGratingCoherenceZScan(SingleGratingCoherenceZScanFacade):
 
         show_fourier    = initialization_parameters.get_parameter("show_fourier", False)
         listOfDataFiles = initialization_parameters.get_parameter("listOfDataFiles")
-        zvec = initialization_parameters.get_parameter("zvec")
+        zvec            = initialization_parameters.get_parameter("zvec")
         sourceDistanceV = initialization_parameters.get_parameter("sourceDistanceV")
         sourceDistanceH = initialization_parameters.get_parameter("sourceDistanceH")
-        unFilterSize = initialization_parameters.get_parameter("unFilterSize")
-        searchRegion = initialization_parameters.get_parameter("searchRegion")
+        unFilterSize    = initialization_parameters.get_parameter("unFilterSize")
+        searchRegion    = initialization_parameters.get_parameter("searchRegion")
+
+        add_context_label = plotting_properties.get_parameter("add_context_label", True)
+        use_unique_id     = plotting_properties.get_parameter("use_unique_id", False)
+
+        unique_id = self.__plotter.register_context_window(RUN_CALCULATION_CONTEXT_KEY,
+                                                           context_window=plotting_properties.get_context_widget(),
+                                                           use_unique_id=use_unique_id)
 
         result = self._get_calculation_result(period_harm_Vert,
-                                           period_harm_Horz,
-                                           idx4crop,
-                                           idx4cropDark,
-                                           listOfDataFiles,
-                                           zvec,
-                                           sourceDistanceV,
-                                           sourceDistanceH,
-                                           unFilterSize,
-                                           searchRegion,
-                                           np.min(zvec))
+                                              period_harm_Horz,
+                                              idx4crop,
+                                              idx4cropDark,
+                                              listOfDataFiles,
+                                              zvec,
+                                              sourceDistanceV,
+                                              sourceDistanceH,
+                                              unFilterSize,
+                                              searchRegion,
+                                              np.min(zvec))
 
         if show_fourier:
             for i in range(len(result)):
@@ -276,21 +352,30 @@ class __SingleGratingCoherenceZScan(SingleGratingCoherenceZScanFacade):
                 harmonicPeriod = result[i]["harmonicPeriod"]
                 image_name     = result[i]["image_name"]
 
-                self.__plotter.push_plot_on_context(RUN_CALCULATION_CONTEXT_KEY, HarmonicGridPlot, imgFFT=imgFFT, harmonicPeriod=harmonicPeriod, image_name=image_name, allows_saving=False)
-                self.__plotter.push_plot_on_context(RUN_CALCULATION_CONTEXT_KEY, HarmonicPeakPlot, imgFFT=imgFFT, harmonicPeriod=harmonicPeriod, image_name=image_name, allows_saving=False)
+                self.__plotter.push_plot_on_context(RUN_CALCULATION_CONTEXT_KEY, HarmonicGridPlot, unique_id,
+                                                    imgFFT=imgFFT, harmonicPeriod=harmonicPeriod, image_name=image_name, allows_saving=False, **kwargs)
+                self.__plotter.push_plot_on_context(RUN_CALCULATION_CONTEXT_KEY, HarmonicPeakPlot, unique_id,
+                                                    imgFFT=imgFFT, harmonicPeriod=harmonicPeriod, image_name=image_name, allows_saving=False, **kwargs)
 
-        self.__draw_context(RUN_CALCULATION_CONTEXT_KEY)
+        self.__plotter.draw_context(RUN_CALCULATION_CONTEXT_KEY, add_context_label=add_context_label, unique_id=unique_id, **kwargs)
 
         return WavePyData(res=[res_i["visib_1st_harmonics"] for res_i in result], img=sample_img)
 
-    def sort_calculation_result(self, run_calculation_result, initialization_parameters):
-        self.__plotter.register_context_window(SORT_CALCULATION_RESULT_CONTEXT_KEY)
+    # %% ==================================================================================================
+
+    def sort_calculation_result(self, run_calculation_result, initialization_parameters, plotting_properties=PlottingProperties(), **kwargs):
+        img       = run_calculation_result.get_parameter("img")
+        res       = run_calculation_result.get_parameter("res")
 
         pixelsize = initialization_parameters.get_parameter("pixelsize")
         zvec      = initialization_parameters.get_parameter("zvec")
 
-        img       = run_calculation_result.get_parameter("img")
-        res       = run_calculation_result.get_parameter("res")
+        add_context_label = plotting_properties.get_parameter("add_context_label", True)
+        use_unique_id     = plotting_properties.get_parameter("use_unique_id", False)
+
+        unique_id = self.__plotter.register_context_window(SORT_CALCULATION_RESULT_CONTEXT_KEY,
+                                                           context_window=plotting_properties.get_context_widget(),
+                                                           use_unique_id=use_unique_id)
 
         contrastV = np.asarray([x[0] for x in res])
         contrastH = np.asarray([x[1] for x in res])
@@ -305,35 +390,49 @@ class __SingleGratingCoherenceZScan(SingleGratingCoherenceZScanFacade):
         self.__plotter.save_csv_file(np.c_[zvec.T, contrastV.T, contrastH.T, pattern_period_Vert_z.T, pattern_period_Horz_z.T],
                                      headerList=['z [m]', 'Vert Contrast', 'Horz Contrast', 'Vert Period [m]', 'Horz Period [m]'])
 
-        self.__plotter.push_plot_on_context(SORT_CALCULATION_RESULT_CONTEXT_KEY, VisibilityPlot, zvec=zvec, contrastV=contrastV, contrastH=contrastH)
+        self.__plotter.push_plot_on_context(SORT_CALCULATION_RESULT_CONTEXT_KEY, VisibilityPlot, unique_id,
+                                            zvec=zvec, contrastV=contrastV, contrastH=contrastH, **kwargs)
 
-        self.__draw_context(SORT_CALCULATION_RESULT_CONTEXT_KEY)
+        self.__plotter.draw_context(SORT_CALCULATION_RESULT_CONTEXT_KEY, add_context_label=add_context_label, unique_id=unique_id, **kwargs)
 
         return WavePyData(pattern_period_Vert_z=pattern_period_Vert_z, pattern_period_Horz_z=pattern_period_Horz_z, contrastV=contrastV, contrastH=contrastH)
 
-    def fit_calculation_result(self, sort_calculation_result, initialization_parameters):
-        self.__plotter.register_context_window(FIT_CALCULATION_RESULT_CONTEXT_KEY)
+    # %% ==================================================================================================
 
-        zvec                   = initialization_parameters.get_parameter("zvec")
-
+    def fit_calculation_result(self, sort_calculation_result, initialization_parameters, plotting_properties=PlottingProperties(), **kwargs):
         pattern_period_Vert_z  = sort_calculation_result.get_parameter("pattern_period_Vert_z")
         contrastV              = sort_calculation_result.get_parameter("contrastV")
         pattern_period_Horz_z  = sort_calculation_result.get_parameter("pattern_period_Horz_z")
         contrastH              = sort_calculation_result.get_parameter("contrastH")
 
+        zvec                   = initialization_parameters.get_parameter("zvec")
+
+        add_context_label = plotting_properties.get_parameter("add_context_label", True)
+        use_unique_id     = plotting_properties.get_parameter("use_unique_id", False)
+
+        unique_id = self.__plotter.register_context_window(FIT_CALCULATION_RESULT_CONTEXT_KEY,
+                                                           context_window=plotting_properties.get_context_widget(),
+                                                           use_unique_id=use_unique_id)
+
         sourceDistance_from_fit_V, patternPeriodFromData_V = self.__fit_period_vs_z(zvec,
                                                                                     pattern_period_Vert_z,
                                                                                     contrastV,
                                                                                     direction='Vertical',
-                                                                                    threshold=0.002)
+                                                                                    threshold=0.002,
+                                                                                    context_key=FIT_CALCULATION_RESULT_CONTEXT_KEY,
+                                                                                    unique_id=unique_id,
+                                                                                    **kwargs)
 
         sourceDistance_from_fit_H, patternPeriodFromData_H = self.__fit_period_vs_z(zvec,
                                                                                     pattern_period_Horz_z,
                                                                                     contrastH,
                                                                                     direction='Horizontal',
-                                                                                    threshold=0.0005)
+                                                                                    threshold=0.0005,
+                                                                                    context_key=FIT_CALCULATION_RESULT_CONTEXT_KEY,
+                                                                                    unique_id=unique_id,
+                                                                                    **kwargs)
 
-        self.__draw_context(FIT_CALCULATION_RESULT_CONTEXT_KEY)
+        self.__plotter.draw_context(FIT_CALCULATION_RESULT_CONTEXT_KEY, add_context_label=add_context_label, unique_id=unique_id, **kwargs)
 
         return WavePyData(sourceDistance_from_fit_V=sourceDistance_from_fit_V,
                           patternPeriodFromData_V=patternPeriodFromData_V,
@@ -356,7 +455,7 @@ class __SingleGratingCoherenceZScan(SingleGratingCoherenceZScanFacade):
                                 searchRegion,
                                 min_zvec): raise NotImplementedError()
 
-    def __fit_period_vs_z(self, zvec, pattern_period_z, contrast, direction, threshold=0.005, context_key=FIT_CALCULATION_RESULT_CONTEXT_KEY):
+    def __fit_period_vs_z(self, zvec, pattern_period_z, contrast, direction, threshold=0.005, context_key=FIT_CALCULATION_RESULT_CONTEXT_KEY, unique_id=None, **kwargs):
         args_for_NOfit = np.argwhere(contrast < threshold).flatten()
         args_for_fit = np.argwhere(contrast >= threshold).flatten()
 
@@ -371,7 +470,7 @@ class __SingleGratingCoherenceZScan(SingleGratingCoherenceZScanFacade):
 
         output_data = WavePyData()
 
-        self.__plotter.push_plot_on_context(context_key, FitPeriodVsZPlot,
+        self.__plotter.push_plot_on_context(context_key, FitPeriodVsZPlot, unique_id,
                                             zvec=zvec,
                                             args_for_NOfit=args_for_NOfit,
                                             args_for_fit=args_for_fit,
@@ -380,13 +479,11 @@ class __SingleGratingCoherenceZScan(SingleGratingCoherenceZScanFacade):
                                             ls1=ls1,
                                             lc2=lc2,
                                             direction=direction,
-                                            output_data=output_data)
+                                            output_data=output_data,
+                                            **kwargs)
 
 
         return output_data.get_parameter("sourceDistance"), output_data.get_parameter("patternPeriodFromData")
-
-    def __draw_context(self, context_key):
-        self.__plotter.draw_context_on_widget(context_key, container_widget=self.__plotter.get_context_container_widget(context_key))
 
 #=========================================================================================
 # MULTI-THREADING SECTION

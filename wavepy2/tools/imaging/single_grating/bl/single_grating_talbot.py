@@ -54,13 +54,12 @@ from wavepy2.util.ini.initializer import get_registered_ini_instance
 
 from wavepy2.tools.common.wavepy_data import WavePyData
 
-from wavepy2.tools.common.bl import grating_interferometry, surface_from_grad
+from wavepy2.tools.common.bl import grating_interferometry, surface_from_grad, crop_image
 from wavepy2.tools.common.widgets.plot_intensities_harms_widget import PlotIntensitiesHarms
 from wavepy2.tools.common.widgets.plot_dark_field_widget import PlotDarkField
 from wavepy2.tools.common.widgets.plot_integration_widget import PlotIntegration
 
 from wavepy2.tools.common.physical_properties import get_delta
-from wavepy2.tools.common.bl import crop_image
 from wavepy2.tools.common.widgets.show_cropped_figure_widget import ShowCroppedFigure
 from wavepy2.tools.common.widgets.error_integration_widget import ErrorIntegration
 
@@ -200,32 +199,25 @@ class __SingleGratingTalbot(SingleGratingTalbotFacade):
     def draw_crop_initial_image(self, initialization_parameters, plotting_properties=PlottingProperties(), **kwargs):
         img             = initialization_parameters.get_parameter("img")
         pixelsize       = initialization_parameters.get_parameter("pixelsize")
-        use_colorbar    = plotting_properties.get_parameter("use_colorbar", True)
 
-        if use_colorbar:
-            return crop_image.draw_colorbar_crop_image(img=img,
-                                                       pixelsize=pixelsize,
-                                                       plotting_properties=plotting_properties,
-                                                       **kwargs)
-        else:
-            return crop_image.draw_crop_image(img=img,
-                                              plotting_properties=plotting_properties,
-                                              **kwargs)
+        return crop_image.draw_colorbar_crop_image(img=img,
+                                                   pixelsize=pixelsize,
+                                                   plotting_properties=plotting_properties,
+                                                   **kwargs)
 
     def crop_initial_image(self, initialization_parameters, plotting_properties=PlottingProperties(), **kwargs):
         img             = initialization_parameters.get_parameter("img")
         pixelsize       = initialization_parameters.get_parameter("pixelsize")
-        use_colorbar    = plotting_properties.get_parameter("use_colorbar", True)
 
-        if use_colorbar:
+        if self.__plotter.is_active():
             img, idx4crop, img_size_o, _, _ = crop_image.colorbar_crop_image(img=img,
                                                                              pixelsize=pixelsize,
                                                                              plotting_properties=plotting_properties,
                                                                              **kwargs)
         else:
-            img, idx4crop, img_size_o = crop_image.crop_image(img=img,
-                                                              plotting_properties=plotting_properties,
-                                                              **kwargs)
+            img_size_o   = np.shape(img)
+            idx4crop     = self.__ini.get_list_from_ini("Parameters", "Crop")
+            img          = common_tools.crop_matrix_at_indexes(img, idx4crop)
 
         return WavePyData(img=img,
                           idx4crop=idx4crop,
@@ -359,11 +351,9 @@ class __SingleGratingTalbot(SingleGratingTalbotFacade):
         differential_phase_01 = dpc_result.get_parameter("differential_phase_01")
         differential_phase_10 = dpc_result.get_parameter("differential_phase_10")
 
-        self.__plotter.register_context_window(RECROP_DPC_CONTEXT_KEY)
-
-        img_to_crop = np.sqrt((differential_phase_01 - differential_phase_01.mean()) ** 2 + (differential_phase_10 - differential_phase_10.mean()) ** 2)
-
         if self.__plotter.is_active():
+            img_to_crop = np.sqrt((differential_phase_01 - differential_phase_01.mean()) ** 2 + (differential_phase_10 - differential_phase_10.mean()) ** 2)
+
             _, idx2ndCrop, _ = crop_image.crop_image(img=img_to_crop,
                                                      plotting_properties=plotting_properties,
                                                      **kwargs)
