@@ -48,6 +48,7 @@ from wavepy2.util.common import common_tools
 from wavepy2.util.common.common_tools import FourierTransform
 from wavepy2.util.log.logger import get_registered_logger_instance, get_registered_secondary_logger, register_secondary_logger, LoggerMode
 from wavepy2.util.plot.plotter import get_registered_plotter_instance
+from wavepy2.util.plot.plot_tools import PlottingProperties
 from wavepy2.util.ini.initializer import get_registered_ini_instance
 from wavepy2.util.io.read_write_file import read_tiff
 
@@ -61,7 +62,7 @@ from wavepy2.tools.common.widgets.harmonic_peak_plot_widget import HarmonicPeakP
 from wavepy2.tools.common.widgets.colorbar_crop_widget import ColorbarCropDialogPlot
 from wavepy2.tools.common.widgets.show_cropped_figure_widget import ShowCroppedFigure
 
-from wavepy2.tools.diagnostic.coherence.widgets.sgz_input_parameters_widget import SGZInputParametersWidget, generate_initialization_parameters_sgz, PATTERNS, ZVEC_FROM
+from wavepy2.tools.diagnostic.coherence.widgets.sgz_input_parameters_widget import SGZInputParametersWidget, SGZInputParametersDialog, generate_initialization_parameters_sgz, PATTERNS, ZVEC_FROM
 from wavepy2.tools.diagnostic.coherence.widgets.visibility_widget import VisibilityPlot
 from wavepy2.tools.diagnostic.coherence.widgets.fit_period_vs_z_widget import FitPeriodVsZPlot
 
@@ -70,6 +71,11 @@ MULTI_THREAD = 1
 
 class SingleGratingCoherenceZScanFacade:
     def get_initialization_parameters(self, script_logger_mode): raise NotImplementedError()
+
+    def draw_initialization_parameters_widget(self, plotting_properties=PlottingProperties(), **kwargs): raise NotImplementedError()
+    def get_initialization_parameters(self, plotting_properties=PlottingProperties(), **kwargs): raise NotImplementedError()
+    def manager_initialization(self, initialization_parameters, script_logger_mode, show_fourier=False): raise NotImplementedError()
+
     def calculate_harmonic_periods(self, initialization_parameters): raise NotImplementedError()
     def run_calculation(self, harm_periods_result, initialization_parameters): raise NotImplementedError()
     def sort_calculation_result(self, run_calculation_result, initialization_parameters): raise NotImplementedError()
@@ -77,6 +83,7 @@ class SingleGratingCoherenceZScanFacade:
 def create_single_grating_coherence_z_scan_manager(mode=MULTI_THREAD, n_cpus=None):
     return __SingleGratingCoherenceZScanMultiThread(n_cpus) if mode == MULTI_THREAD else __SingleGratingCoherenceZScanSingleThread()
 
+INITIALIZATION_PARAMETERS_KEY          = "Single Grating Z Scan Initialization"
 CALCULATE_HARMONIC_PERIODS_CONTEXT_KEY = "Calculate Harmonic Periods"
 RUN_CALCULATION_CONTEXT_KEY            = "Run Calculation"
 SORT_CALCULATION_RESULT_CONTEXT_KEY    = "Sort Calculation Result"
@@ -89,9 +96,27 @@ class __SingleGratingCoherenceZScan(SingleGratingCoherenceZScanFacade):
         self.__main_logger = get_registered_logger_instance()
         self.__ini         = get_registered_ini_instance()
 
-    def get_initialization_parameters(self, script_logger_mode, show_fourier=False):
+    def draw_initialization_parameters_widget(self, plotting_properties=PlottingProperties(), **kwargs):
         if self.__plotter.is_active():
-            initialization_parameters = self.__plotter.show_interactive_plot(SGZInputParametersWidget, container_widget=None)
+            add_context_label    = plotting_properties.get_parameter("add_context_label", True)
+            use_unique_id        = plotting_properties.get_parameter("use_unique_id", False)
+
+            unique_id = self.__plotter.register_context_window(INITIALIZATION_PARAMETERS_KEY,
+                                                               context_window=plotting_properties.get_context_widget(),
+                                                               use_unique_id=use_unique_id)
+
+            self.__plotter.push_plot_on_context(INITIALIZATION_PARAMETERS_KEY, SGZInputParametersWidget, unique_id, **kwargs)
+            self.__plotter.draw_context(INITIALIZATION_PARAMETERS_KEY, add_context_label=add_context_label, unique_id=unique_id, **kwargs)
+
+            return self.__plotter.get_plots_of_context(INITIALIZATION_PARAMETERS_KEY, unique_id=unique_id)
+        else:
+            return None
+
+    def get_initialization_parameters(self, plotting_properties=PlottingProperties(), **kwargs):
+        if self.__plotter.is_active():
+            initialization_parameters = self.__plotter.show_interactive_plot(SGZInputParametersDialog,
+                                                                             container_widget=plotting_properties.get_container_widget(),
+                                                                             **kwargs)
         else:
             initialization_parameters = generate_initialization_parameters_sgz(dataFolder         = self.__ini.get_string_from_ini("Files", "data directory"),
                                                                                samplefileName     = self.__ini.get_string_from_ini("Files", "sample file name"),
@@ -109,7 +134,9 @@ class __SingleGratingCoherenceZScan(SingleGratingCoherenceZScanFacade):
                                                                                unFilterSize       = self.__ini.get_int_from_ini("Parameters", "size for uniform filter", default=1),
                                                                                searchRegion       = self.__ini.get_int_from_ini("Parameters", "size for region for searching", default=1),
                                                                                logger=self.__main_logger)
+        return initialization_parameters
 
+    def manager_initialization(self, initialization_parameters, script_logger_mode, show_fourier=False):
         initialization_parameters.set_parameter("show_fourier", show_fourier)
 
         plotter = get_registered_plotter_instance()

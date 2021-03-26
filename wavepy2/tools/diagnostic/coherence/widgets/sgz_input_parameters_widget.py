@@ -50,7 +50,7 @@ from wavepy2.util.common.common_tools import PATH_SEPARATOR
 from wavepy2.util.ini.initializer import get_registered_ini_instance
 from wavepy2.util.log.logger import get_registered_logger_instance
 from wavepy2.util.plot import plot_tools
-from wavepy2.util.plot.plotter import WavePyInteractiveWidget
+from wavepy2.util.plot.plotter import WavePyInteractiveWidget, WavePyWidget
 from wavepy2.util.io.read_write_file import read_tiff
 
 from wavepy2.tools.common.wavepy_data import WavePyData
@@ -130,12 +130,11 @@ def generate_initialization_parameters_sgz(dataFolder,
                       searchRegion=searchRegion,
                       saveFileSuf=fname2save)
 
-class SGZInputParametersWidget(WavePyInteractiveWidget):
+class AbstractSGZInputParametersWidget():
     WIDTH  = 800
     HEIGHT = 520
 
-    def __init__(self, parent):
-        super(SGZInputParametersWidget, self).__init__(parent, message="Input Parameters", title="Input Parameters")
+    def __init__(self):
         self.__ini     = get_registered_ini_instance()
         self.__logger  = get_registered_logger_instance()
 
@@ -156,21 +155,26 @@ class SGZInputParametersWidget(WavePyInteractiveWidget):
         self.searchRegion       = self.__ini.get_int_from_ini("Parameters", "size for region for searching", default=1)
 
     def build_widget(self, **kwargs):
-        self.setFixedWidth(self.WIDTH)
-        self.setFixedHeight(self.HEIGHT)
+        try:    widget_width = kwargs["widget_width"]
+        except: widget_width = self.WIDTH
+        try:    widget_height = kwargs["widget_height"]
+        except: widget_height = self.HEIGHT
+
+        self.setFixedWidth(widget_width)
+        self.setFixedHeight(widget_height)
 
         tabs = plot_tools.tabWidget(self.get_central_widget())
 
         ini_widget = QWidget()
-        ini_widget.setFixedHeight(self.HEIGHT-10)
-        ini_widget.setFixedWidth(self.WIDTH-10)
+        ini_widget.setFixedHeight(widget_height-10)
+        ini_widget.setFixedWidth(widget_width-10)
         runtime_widget = QWidget()
-        runtime_widget.setFixedHeight(self.HEIGHT-10)
-        runtime_widget.setFixedWidth(self.WIDTH-10)
+        runtime_widget.setFixedHeight(widget_height-10)
+        runtime_widget.setFixedWidth(widget_width-10)
 
         plot_tools.createTabPage(tabs, "Initialization Parameter", widgetToAdd=ini_widget)
 
-        main_box = plot_tools.widgetBox(ini_widget, "", width=self.WIDTH-70, height=self.HEIGHT-50)
+        main_box = plot_tools.widgetBox(ini_widget, "", width=widget_width-70, height=widget_height-50)
 
         select_dataDirectory_box = plot_tools.widgetBox(main_box, orientation="horizontal")
         self.le_dataDirectory = plot_tools.lineEdit(select_dataDirectory_box, self, "dataDirectory", label="Data Directory", labelWidth=150, valueType=str, orientation="horizontal")
@@ -260,3 +264,35 @@ class SGZInputParametersWidget(WavePyInteractiveWidget):
     def get_rejected_output(self):
         self.__logger.print_error("Initialization Canceled, Program exit")
         sys.exit(1)
+
+
+from PyQt5.QtWidgets import QVBoxLayout, QHBoxLayout
+from PyQt5.QtCore import Qt
+
+class SGZInputParametersWidget(AbstractSGZInputParametersWidget, WavePyWidget):
+    def __init__(self):
+        AbstractSGZInputParametersWidget.__init__(self)
+        WavePyWidget.__init__(self, parent=None)
+
+        layout = QHBoxLayout()
+        layout.setAlignment(Qt.AlignCenter)
+        self.setLayout(layout)
+
+        self.__central_widget = QWidget()
+        self.__central_widget.setLayout(QVBoxLayout())
+
+        layout.addWidget(self.__central_widget)
+
+    def get_central_widget(self):
+        return self.__central_widget
+
+    def get_plot_tab_name(self):
+        return "Single Grating Z Scan Initialization Parameters"
+
+    def allows_saving(self):
+        return False
+
+class SGZInputParametersDialog(AbstractSGZInputParametersWidget, WavePyInteractiveWidget):
+    def __init__(self, parent):
+        AbstractSGZInputParametersWidget.__init__(self)
+        WavePyInteractiveWidget.__init__(self, parent, message="Input Parameters", title="Input Parameters")
