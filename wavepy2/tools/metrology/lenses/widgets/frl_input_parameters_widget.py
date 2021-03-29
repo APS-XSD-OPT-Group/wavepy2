@@ -50,7 +50,7 @@ from wavepy2.util.common import common_tools
 from wavepy2.util.ini.initializer import get_registered_ini_instance
 from wavepy2.util.log.logger import get_registered_logger_instance
 from wavepy2.util.plot import plot_tools
-from wavepy2.util.plot.plotter import WavePyInteractiveWidget
+from wavepy2.util.plot.plotter import WavePyWidget, WavePyInteractiveWidget
 
 from wavepy2.tools.common.wavepy_data import WavePyData
 
@@ -113,12 +113,11 @@ def generate_initialization_parameters_frl(thickness_file_name,
                       crop_image=crop_image,
                       fit_radius_dpc=fit_radius_dpc)
 
-class FRLInputParametersWidget(WavePyInteractiveWidget):
+class AbstractFRLInputParametersWidget():
     WIDTH  = 800
     HEIGHT = 430
 
-    def __init__(self, parent, application_name=None, **kwargs):
-        super(FRLInputParametersWidget, self).__init__(parent, message="Input Parameters", title="Input Parameters")
+    def __init__(self, application_name=None):
         self.__ini     = get_registered_ini_instance(application_name)
         self.__logger  = get_registered_logger_instance()
 
@@ -195,3 +194,34 @@ class FRLInputParametersWidget(WavePyInteractiveWidget):
     def get_rejected_output(self):
         self.__logger.print_error("Initialization Canceled, Program exit")
         sys.exit(1)
+
+from PyQt5.QtWidgets import QVBoxLayout, QHBoxLayout
+from PyQt5.QtCore import Qt
+
+class FRLInputParametersWidget(AbstractFRLInputParametersWidget, WavePyWidget):
+    def __init__(self, application_name=None, **kwargs):
+        AbstractFRLInputParametersWidget.__init__(self, application_name)
+        WavePyWidget.__init__(self, parent=None)
+
+        layout = QHBoxLayout()
+        layout.setAlignment(Qt.AlignCenter)
+        self.setLayout(layout)
+
+        self.__central_widget = QWidget()
+        self.__central_widget.setLayout(QVBoxLayout())
+
+        layout.addWidget(self.__central_widget)
+
+    def get_central_widget(self):
+        return self.__central_widget
+
+    def get_plot_tab_name(self):
+        return "Fit Residual Lenses Initialization Parameters"
+
+    def allows_saving(self):
+        return False
+
+class FRLInputParametersDialog(AbstractFRLInputParametersWidget, WavePyInteractiveWidget):
+    def __init__(self, parent, application_name=None, **kwargs):
+        AbstractFRLInputParametersWidget.__init__(self, application_name)
+        WavePyInteractiveWidget.__init__(self, parent, message="Input Parameters", title="Input Parameters")

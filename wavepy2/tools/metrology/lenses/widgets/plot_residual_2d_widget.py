@@ -63,15 +63,17 @@ class PlotResidualParabolicLens2D(WavePyWidget):
         pixelsize     = kwargs["pixelsize"]
         fitted        = kwargs["fitted"]
         fitParameters = kwargs["fitParameters"]
-        try: str4title    = kwargs["str4title"]
+        try:    str4title    = kwargs["str4title"]
         except: str4title = ""
-        try: saveSdfData    = kwargs["saveSdfData"]
+        try:    saveSdfData    = kwargs["saveSdfData"]
         except: saveSdfData = False
-        try: vlimErrSigma    = kwargs["vlimErrSigma"]
+        try:    vlimErrSigma    = kwargs["vlimErrSigma"]
         except: vlimErrSigma = 1
-        try: plot3dFlag    = kwargs["plot3dFlag"]
+        try:    plot3dFlag    = kwargs["plot3dFlag"]
         except: plot3dFlag = True
-        context_key = kwargs["context"]
+        context_key = kwargs["container_context_key"]
+        try:    unique_id   =  kwargs["container_unique_id"]
+        except: unique_id = None
         output_data = kwargs["output_data"]
 
         logger  = get_registered_logger_instance()
@@ -109,7 +111,7 @@ class PlotResidualParabolicLens2D(WavePyWidget):
         cmap4graph.set_over("m")
         cmap4graph.set_under("c")
 
-        plotter.push_plot_on_context(context_key, PlotProfile,
+        plotter.push_plot_on_context(context_key, PlotProfile, unique_id,
                                      xmatrix=xmatrix * factorx,
                                      ymatrix=ymatrix * factory,
                                      zmatrix=errorThickness * factorz,
@@ -123,7 +125,7 @@ class PlotResidualParabolicLens2D(WavePyWidget):
                                                "vmax": vlimErr,
                                                "extend": "both"})
 
-        plotter.push_plot_on_context(context_key, CountourPlot,
+        plotter.push_plot_on_context(context_key, CountourPlot, unique_id,
                                      xmatrix=xmatrix * factorx,
                                      ymatrix=ymatrix * factory,
                                      zmatrix=errorThickness * factorz,
@@ -137,7 +139,7 @@ class PlotResidualParabolicLens2D(WavePyWidget):
         # Plot 3D
 
         if plot3dFlag:
-            plotter.push_plot_on_context(context_key, Plot3D,
+            plotter.push_plot_on_context(context_key, Plot3D, unique_id,
                                          xmatrix=xmatrix[argNotNAN].flatten() * factorx,
                                          ymatrix=ymatrix[argNotNAN].flatten() * factory,
                                          zmatrix=errorThickness[argNotNAN].flatten() * factorz,

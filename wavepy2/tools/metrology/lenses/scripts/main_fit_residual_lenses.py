@@ -70,7 +70,8 @@ class MainFitResidualLenses(WavePyScript):
         # %% Initialization parameters
         # ==========================================================================
 
-        initialization_parameters = fit_residual_lenses_manager.get_initialization_parameters(SCRIPT_LOGGER_MODE)
+        initialization_parameters = fit_residual_lenses_manager.manager_initialization(fit_residual_lenses_manager.get_initialization_parameters(),
+                                                                                       SCRIPT_LOGGER_MODE)
 
         crop_result = fit_residual_lenses_manager.crop_thickness(initialization_parameters)
         plotter.show_context_window(CROP_THICKNESS_CONTEXT_KEY)

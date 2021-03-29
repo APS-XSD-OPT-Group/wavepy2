@@ -56,10 +56,8 @@ from wavepy2.tools.common.wavepy_data import WavePyData
 
 from wavepy2.tools.common.bl import grating_interferometry, crop_image
 
-from wavepy2.tools.common.widgets.crop_widget import CropDialogPlot
 from wavepy2.tools.common.widgets.harmonic_grid_plot_widget import HarmonicGridPlot
 from wavepy2.tools.common.widgets.harmonic_peak_plot_widget import HarmonicPeakPlot
-from wavepy2.tools.common.widgets.colorbar_crop_widget import ColorbarCropDialogPlot
 from wavepy2.tools.common.widgets.show_cropped_figure_widget import ShowCroppedFigure
 
 from wavepy2.tools.diagnostic.coherence.widgets.sgz_input_parameters_widget import SGZInputParametersWidget, SGZInputParametersDialog, generate_initialization_parameters_sgz, PATTERNS, ZVEC_FROM
@@ -70,8 +68,6 @@ SINGLE_THREAD = 0
 MULTI_THREAD = 1
 
 class SingleGratingCoherenceZScanFacade:
-    def get_initialization_parameters(self, script_logger_mode): raise NotImplementedError()
-
     def draw_initialization_parameters_widget(self, plotting_properties=PlottingProperties(), **kwargs): raise NotImplementedError()
     def get_initialization_parameters(self, plotting_properties=PlottingProperties(), **kwargs): raise NotImplementedError()
     def manager_initialization(self, initialization_parameters, script_logger_mode=LoggerMode.FULL, show_fourier=False): raise NotImplementedError()
@@ -91,7 +87,7 @@ def create_single_grating_coherence_z_scan_manager(mode=MULTI_THREAD, n_cpus=Non
 
 APPLICATION_NAME = "Single Grating Z Scan"
 
-INITIALIZATION_PARAMETERS_KEY          = "Single Grating Z Scan Initialization"
+INITIALIZATION_PARAMETERS_KEY          = APPLICATION_NAME + " Initialization"
 CALCULATE_HARMONIC_PERIODS_CONTEXT_KEY = "Calculate Harmonic Periods"
 RUN_CALCULATION_CONTEXT_KEY            = "Run Calculation"
 SORT_CALCULATION_RESULT_CONTEXT_KEY    = "Sort Calculation Result"

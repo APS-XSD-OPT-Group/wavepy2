@@ -48,36 +48,46 @@ from scipy.optimize import curve_fit
 
 from wavepy2.util.common import common_tools
 from wavepy2.util.common.common_tools import hc
+
 from wavepy2.util.plot import plot_tools
-from wavepy2.util.log.logger import get_registered_logger_instance, get_registered_secondary_logger, register_secondary_logger, LoggerMode
+from wavepy2.util.log.logger import get_registered_logger_instance, get_registered_secondary_logger, \
+    register_secondary_logger, LoggerMode
 
 from wavepy2.util.plot.plotter import get_registered_plotter_instance
 from wavepy2.util.ini.initializer import get_registered_ini_instance
+from wavepy2.util.plot.plot_tools import PlottingProperties
 
 from wavepy2.tools.common.wavepy_data import WavePyData
 from wavepy2.tools.common import physical_properties 
+from wavepy2.tools.common.bl import crop_image
 
-from wavepy2.tools.common.widgets.crop_widget import CropDialogPlot
 from wavepy2.tools.common.widgets.plot_profile_widget import PlotProfile
 from wavepy2.tools.common.widgets.simple_plot_widget import SimplePlot
-from wavepy2.tools.metrology.lenses.widgets.frl_input_parameters_widget import FRLInputParametersWidget, generate_initialization_parameters_frl, LENS_GEOMETRIES
+from wavepy2.tools.metrology.lenses.widgets.frl_input_parameters_widget import FRLInputParametersWidget, FRLInputParametersDialog, \
+    generate_initialization_parameters_frl, LENS_GEOMETRIES
 from wavepy2.tools.metrology.lenses.widgets.fit_radius_dpc_widget import FitRadiusDPC
 from wavepy2.tools.metrology.lenses.widgets.plot_residual_1d_widget import PlotResidual1D
 from wavepy2.tools.metrology.lenses.widgets.plot_residual_2d_widget import PlotResidualParabolicLens2D
 from wavepy2.tools.metrology.lenses.widgets.slope_error_hist_widget import SlopeErrorHist
 
 class FitResidualLensesFacade:
-    def get_initialization_parameters(self, script_logger_mode): raise NotImplementedError()
-    def crop_thickness(self, initialization_parameters): raise NotImplementedError()
-    def center_image(self, crop_thickness_result, initialization_parameters): raise NotImplementedError()
-    def fit_radius_dpc(self, center_image_result, initialization_parameters): raise NotImplementedError()
-    def do_fit(self, fit_radius_dpc_result, initialization_parameters): raise NotImplementedError()
+    def draw_initialization_parameters_widget(self, plotting_properties=PlottingProperties(), **kwargs): raise NotImplementedError()
+    def get_initialization_parameters(self, plotting_properties=PlottingProperties(), **kwargs): raise NotImplementedError()
+    def manager_initialization(self, initialization_parameters, script_logger_mode=LoggerMode.FULL, show_fourier=False): raise NotImplementedError()
+
+    def draw_crop_thickness(self, initialization_parameters, plotting_properties=PlottingProperties(), **kwargs): raise NotImplementedError()
+    def crop_thickness(self, initialization_parameters, plotting_properties=PlottingProperties(), **kwargs): raise NotImplementedError()
+
+    def center_image(self, crop_thickness_result, initialization_parameters, plotting_properties=PlottingProperties(), **kwargs): raise NotImplementedError()
+    def fit_radius_dpc(self, center_image_result, initialization_parameters, plotting_properties=PlottingProperties(), **kwargs): raise NotImplementedError()
+    def do_fit(self, fit_radius_dpc_result, initialization_parameters, plotting_properties=PlottingProperties(), **kwargs): raise NotImplementedError()
 
 def create_fit_residual_lenses_manager():
     return __FitResidualLenses()
 
 APPLICATION_NAME = "Fit Residual Lenses"
 
+INITIALIZATION_PARAMETERS_KEY = APPLICATION_NAME + " Initialization"
 CROP_THICKNESS_CONTEXT_KEY = "Crop and Show Thickness"
 CENTER_IMAGE_CONTEXT_KEY = "Center Image"
 FIT_RADIUS_DPC_CONTEXT_KEY = "Fit Radius DPC"
@@ -92,9 +102,25 @@ class __FitResidualLenses(FitResidualLensesFacade):
 
     # %% ==================================================================================================
 
-    def get_initialization_parameters(self, script_logger_mode):
+    def draw_initialization_parameters_widget(self, plotting_properties=PlottingProperties(), **kwargs):
         if self.__plotter.is_active():
-            initialization_parameters = self.__plotter.show_interactive_plot(FRLInputParametersWidget, application_name=APPLICATION_NAME, container_widget=None)
+            add_context_label    = plotting_properties.get_parameter("add_context_label", True)
+            use_unique_id        = plotting_properties.get_parameter("use_unique_id", False)
+
+            unique_id = self.__plotter.register_context_window(INITIALIZATION_PARAMETERS_KEY,
+                                                               context_window=plotting_properties.get_context_widget(),
+                                                               use_unique_id=use_unique_id)
+
+            self.__plotter.push_plot_on_context(INITIALIZATION_PARAMETERS_KEY, FRLInputParametersWidget, unique_id, application_name=APPLICATION_NAME, **kwargs)
+            self.__plotter.draw_context(INITIALIZATION_PARAMETERS_KEY, add_context_label=add_context_label, unique_id=unique_id, **kwargs)
+
+            return self.__plotter.get_plots_of_context(INITIALIZATION_PARAMETERS_KEY, unique_id=unique_id)
+        else:
+            return None
+
+    def get_initialization_parameters(self, plotting_properties=PlottingProperties(), **kwargs):
+        if self.__plotter.is_active():
+            initialization_parameters = self.__plotter.show_interactive_plot(FRLInputParametersDialog, application_name=APPLICATION_NAME, container_widget=None)
         else:
             initialization_parameters = generate_initialization_parameters_frl(thickness_file_name=self.__ini.get_string_from_ini("Files", "file with thickness"),
                                                                                str4title=self.__ini.get_string_from_ini("Parameters", "String for Titles", default="Be Lens"),
@@ -105,6 +131,9 @@ class __FitResidualLenses(FitResidualLensesFacade):
                                                                                crop_image=self.__ini.get_boolean_from_ini("Runtime", "crop image", default=False),
                                                                                fit_radius_dpc=self.__ini.get_boolean_from_ini("Runtime", "fit radius dpc", default=False))
 
+        return initialization_parameters
+
+    def manager_initialization(self, initialization_parameters, script_logger_mode=LoggerMode.FULL):
         plotter = get_registered_plotter_instance()
         plotter.register_save_file_prefix(initialization_parameters.get_parameter("saveFileSuf"))
 
@@ -120,8 +149,34 @@ class __FitResidualLenses(FitResidualLensesFacade):
 
         return initialization_parameters
 
-    def crop_thickness(self, initialization_parameters):
-        self.__plotter.register_context_window(CROP_THICKNESS_CONTEXT_KEY)
+
+
+    # %% ==================================================================================================
+
+    def draw_crop_initial_image(self, initialization_parameters, plotting_properties=PlottingProperties(), **kwargs):
+        crop_thickness = initialization_parameters.get_parameter("crop_image")
+        thickness      = initialization_parameters.get_parameter("thickness")
+
+        if crop_thickness:
+            thickness_to_crop = np.copy(thickness)
+            thickness_to_crop[np.isnan(thickness)] = 0.0
+            thickness_to_crop *= 1e6
+
+            return crop_image.crop_image(img=thickness_to_crop,
+                                         plotting_properties=plotting_properties,
+                                         application_name=APPLICATION_NAME,
+                                         message="Crop Thickness",
+                                         **kwargs)
+        else:
+            return None
+
+    def manage_crop_thickness(self, crop_result, initialization_parameters, plotting_properties=PlottingProperties(), **kwargs):
+        add_context_label = plotting_properties.get_parameter("add_context_label", True)
+        use_unique_id     = plotting_properties.get_parameter("use_unique_id", False)
+
+        unique_id = self.__plotter.register_context_window(CROP_THICKNESS_CONTEXT_KEY,
+                                                           context_window=plotting_properties.get_context_widget(),
+                                                           use_unique_id=use_unique_id)
 
         crop_thickness = initialization_parameters.get_parameter("crop_image")
         thickness      = initialization_parameters.get_parameter("thickness")
@@ -129,11 +184,7 @@ class __FitResidualLenses(FitResidualLensesFacade):
         yy             = initialization_parameters.get_parameter("yy")
 
         if crop_thickness:
-            thickness_temp = np.copy(thickness)
-            thickness_temp[np.isnan(thickness)] = 0.0
-
-            if self.__plotter.is_active(): _, idx4crop, _ = self.__plotter.show_interactive_plot(CropDialogPlot, container_widget=None, img=thickness_temp*1e6)
-            else: idx4crop = [0, -1, 0, -1]
+            idx4crop = crop_result.get_parameter("idx4crop", [0, -1, 0, -1])
 
             thickness = common_tools.crop_matrix_at_indexes(thickness, idx4crop)
             xx = common_tools.crop_matrix_at_indexes(xx, idx4crop)
@@ -141,21 +192,50 @@ class __FitResidualLenses(FitResidualLensesFacade):
 
             stride = thickness.shape[0] // 125
 
-            self.__plotter.push_plot_on_context(CROP_THICKNESS_CONTEXT_KEY, PlotProfile,
+            self.__plotter.push_plot_on_context(CROP_THICKNESS_CONTEXT_KEY, PlotProfile, unique_id,
                                                 xmatrix=xx[::stride, ::stride] * 1e6,
                                                 ymatrix=yy[::stride, ::stride] * 1e6,
                                                 zmatrix=thickness[::stride, ::stride] * 1e6,
                                                 xlabel=r"$x$ [$\mu m$ ]",
                                                 ylabel=r"$y$ [$\mu m$ ]",
                                                 zlabel=r"$z$ [$\mu m$ ]",
-                                                arg4main={"cmap": "Spectral_r"})
+                                                arg4main={"cmap": "Spectral_r"},
+                                                **kwargs)
 
-        self.__draw_context(CROP_THICKNESS_CONTEXT_KEY)
+        self.__plotter.draw_context(CROP_THICKNESS_CONTEXT_KEY, add_context_label=add_context_label, unique_id=unique_id, **kwargs)
 
         return WavePyData(thickness=thickness, xx=xx, yy=yy)
 
-    def center_image(self, crop_thickness_result, initialization_parameters):
-        self.__plotter.register_context_window(CENTER_IMAGE_CONTEXT_KEY)
+    def crop_thickness(self, initialization_parameters, plotting_properties=PlottingProperties(), **kwargs):
+        crop_thickness = initialization_parameters.get_parameter("crop_image")
+        thickness      = initialization_parameters.get_parameter("thickness")
+
+        if crop_thickness and  self.__plotter.is_active():
+            thickness_to_crop = np.copy(thickness)
+            thickness_to_crop[np.isnan(thickness)] = 0.0
+            thickness_to_crop *= 1e6
+
+            _, idx4crop, _ = crop_image.crop_image(img=thickness_to_crop,
+                                                   plotting_properties=plotting_properties,
+                                                   application_name=APPLICATION_NAME,
+                                                   message="Crop Thickness",
+                                                   **kwargs)
+
+        else:
+            idx4crop= [0, -1, 0, -1]
+
+        return self.manage_crop_thickness(WavePyData(idx4crop=idx4crop), initialization_parameters, plotting_properties, **kwargs)
+
+
+    # %% ==================================================================================================
+
+    def center_image(self, crop_thickness_result, initialization_parameters, plotting_properties=PlottingProperties(), **kwargs):
+        add_context_label = plotting_properties.get_parameter("add_context_label", True)
+        use_unique_id     = plotting_properties.get_parameter("use_unique_id", False)
+
+        unique_id = self.__plotter.register_context_window(CENTER_IMAGE_CONTEXT_KEY,
+                                                           context_window=plotting_properties.get_context_widget(),
+                                                           use_unique_id=use_unique_id)
 
         pixelsize = initialization_parameters.get_parameter("pixelsize")
 
@@ -167,24 +247,29 @@ class __FitResidualLenses(FitResidualLensesFacade):
         radius4centering = np.min(thickness.shape) * np.min(pixelsize) * .75
         thickness = self.__center_lens_array_max_fit(thickness, pixelsize, radius4centering)
 
-        self.__plotter.push_plot_on_context(CENTER_IMAGE_CONTEXT_KEY, SimplePlot,
+        self.__plotter.push_plot_on_context(CENTER_IMAGE_CONTEXT_KEY, SimplePlot, unique_id,
                                             img=thickness * 1e6,
                                             pixelsize=pixelsize,
                                             title="Thickness",
                                             xlabel=r"$x$ [$\mu m$ ]",
-                                            ylabel=r"$y$ [$\mu m$ ]")
+                                            ylabel=r"$y$ [$\mu m$ ]", **kwargs)
 
         self.__script_logger.print("Array cropped to have the max at the center of the array")
 
         text2datfile = "# file name, Type of Fit, Curved Radius from fit [um],"
         text2datfile += " diameter4fit [um], sigma [um], pv [um]\n"
 
-        self.__draw_context(CENTER_IMAGE_CONTEXT_KEY)
+        self.__plotter.draw_context(CENTER_IMAGE_CONTEXT_KEY, add_context_label=add_context_label, unique_id=unique_id, **kwargs)
 
         return WavePyData(thickness=thickness, xx=xx, yy=yy, text2datfile=text2datfile)
 
-    def fit_radius_dpc(self, center_image_result, initialization_parameters):
-        self.__plotter.register_context_window(FIT_RADIUS_DPC_CONTEXT_KEY)
+    def fit_radius_dpc(self, center_image_result, initialization_parameters, plotting_properties=PlottingProperties(), **kwargs):
+        add_context_label = plotting_properties.get_parameter("add_context_label", True)
+        use_unique_id     = plotting_properties.get_parameter("use_unique_id", False)
+
+        unique_id = self.__plotter.register_context_window(FIT_RADIUS_DPC_CONTEXT_KEY,
+                                                           context_window=plotting_properties.get_context_widget(),
+                                                           use_unique_id=use_unique_id)
 
         fname        = initialization_parameters.get_parameter("thickness_file_name")
         thickness    = center_image_result.get_parameter("thickness")
@@ -204,21 +289,25 @@ class __FitResidualLenses(FitResidualLensesFacade):
 
                 (dpy, _, _) = plot_tools.load_sdf_file(dpcFiles[1])
 
-                self.__plotter.push_plot_on_context(FIT_RADIUS_DPC_CONTEXT_KEY, FitRadiusDPC,
+                self.__plotter.push_plot_on_context(FIT_RADIUS_DPC_CONTEXT_KEY, FitRadiusDPC, unique_id,
                                                     dpx=dpx,
                                                     dpy=dpy,
                                                     pixelsize=pixelsize_dpc,
                                                     radius4fit=np.min((-xx[0, 0], xx[-1, -1], -yy[0, 0], yy[-1, -1])) * 0.9,
                                                     kwave=self.__kwave,
-                                                    str4title="")
+                                                    str4title="", **kwargs)
 
-        self.__draw_context(FIT_RADIUS_DPC_CONTEXT_KEY)
+        self.__plotter.draw_context(FIT_RADIUS_DPC_CONTEXT_KEY, add_context_label=add_context_label, unique_id=unique_id, **kwargs)
 
         return WavePyData(thickness=thickness, xx=xx, yy=yy, text2datfile=text2datfile)
 
+    def do_fit(self, fit_radius_dpc_result, initialization_parameters, plotting_properties=PlottingProperties(), **kwargs):
+        add_context_label = plotting_properties.get_parameter("add_context_label", True)
+        use_unique_id     = plotting_properties.get_parameter("use_unique_id", False)
 
-    def do_fit(self, fit_radius_dpc_result, initialization_parameters):
-        self.__plotter.register_context_window(DO_FIT_CONTEXT_KEY)
+        unique_id = self.__plotter.register_context_window(DO_FIT_CONTEXT_KEY,
+                                                           context_window=plotting_properties.get_context_widget(),
+                                                           use_unique_id=use_unique_id)
 
         nominalRadius     = initialization_parameters.get_parameter("nominalRadius")
         diameter4fit_list = initialization_parameters.get_parameter("diameter4fit_list")
@@ -261,7 +350,7 @@ class __FitResidualLenses(FitResidualLensesFacade):
             xmatrix, ymatrix = common_tools.grid_coord(thickness_cropped, pixelsize)
 
             isNotNAN = np.isfinite(thickness_cropped[thickness_cropped.shape[0] // 2, :])
-            self.__plotter.push_plot_on_context(DO_FIT_CONTEXT_KEY, PlotResidual1D,
+            self.__plotter.push_plot_on_context(DO_FIT_CONTEXT_KEY, PlotResidual1D, unique_id,
                                                 xvec=xmatrix[0, isNotNAN],
                                                 data=thickness_cropped[thickness_cropped.shape[0] // 2, isNotNAN],
                                                 fitted=fitted[thickness_cropped.shape[0] // 2, isNotNAN],
@@ -269,11 +358,11 @@ class __FitResidualLenses(FitResidualLensesFacade):
                                                 str4title=str4graphs +
                                                           "\nFit center profile Horizontal, " +
                                                           " R = {:.4g} um".format(fitParameters[0] * 1e6),
-                                                saveAscii=True)
+                                                saveAscii=True, **kwargs)
 
 
             isNotNAN = np.isfinite(thickness_cropped[:, thickness_cropped.shape[1]//2])
-            self.__plotter.push_plot_on_context(DO_FIT_CONTEXT_KEY, PlotResidual1D,
+            self.__plotter.push_plot_on_context(DO_FIT_CONTEXT_KEY, PlotResidual1D, unique_id,
                                                 xvec=ymatrix[isNotNAN, 0],
                                                 data=thickness_cropped[isNotNAN, thickness_cropped.shape[1]//2],
                                                 fitted=fitted[isNotNAN, thickness_cropped.shape[1]//2],
@@ -281,11 +370,11 @@ class __FitResidualLenses(FitResidualLensesFacade):
                                                 str4title=str4graphs +
                                                           "\nFit center profile Vertical, " +
                                                           r" R = {:.4g} $\mu m$".format(fitParameters[0] * 1e6),
-                                                saveAscii=True)
+                                                saveAscii=True, **kwargs)
 
             output_data = {}
 
-            self.__plotter.push_plot_on_context(DO_FIT_CONTEXT_KEY, PlotResidualParabolicLens2D,
+            self.__plotter.push_plot_on_context(DO_FIT_CONTEXT_KEY, PlotResidualParabolicLens2D, unique_id,
                                                 thickness=thickness_cropped,
                                                 pixelsize=pixelsize,
                                                 fitted=fitted,
@@ -295,7 +384,9 @@ class __FitResidualLenses(FitResidualLensesFacade):
                                                 vlimErrSigma=4,
                                                 plot3dFlag=True,
                                                 output_data=output_data,
-                                                context=DO_FIT_CONTEXT_KEY)
+                                                container_context_key=DO_FIT_CONTEXT_KEY,
+                                                container_unique_id=unique_id,
+                                                **kwargs)
 
             sigma = output_data["sigma"]
             pv = output_data["pv"]
@@ -303,13 +394,13 @@ class __FitResidualLenses(FitResidualLensesFacade):
             material = "C"
             delta_lens, _, _ = physical_properties.get_delta(phenergy, material=material)
             
-            self.__plotter.push_plot_on_context(DO_FIT_CONTEXT_KEY, SlopeErrorHist,
+            self.__plotter.push_plot_on_context(DO_FIT_CONTEXT_KEY, SlopeErrorHist, unique_id,
                                                 thickness=thickness_cropped,
                                                 pixelsize=pixelsize,
                                                 fitted=fitted,
                                                 delta=delta_lens,
                                                 str4title=str4graphs + " " + str(phenergy/1000) + " KeV, " + material,
-                                                output_data={})
+                                                output_data={}, **kwargs)
 
             text2datfile += self.__plotter.get_save_file_prefix()
             text2datfile += ",\t Nominal"
@@ -322,15 +413,12 @@ class __FitResidualLenses(FitResidualLensesFacade):
         text_file.close()
         self.__main_logger.print_message("Data saved at " + fname_summary)
 
-        self.__draw_context(DO_FIT_CONTEXT_KEY)
+        self.__plotter.draw_context(DO_FIT_CONTEXT_KEY, add_context_label=add_context_label, unique_id=unique_id, **kwargs)
 
         return WavePyData()
 
     ###################################################################
     # PRIVATE METHODS
-
-    def __draw_context(self, context_key):
-        self.__plotter.draw_context_on_widget(context_key, container_widget=self.__plotter.get_context_container_widget(context_key))
 
     # =============================================================================
     # %% 2D Fit
