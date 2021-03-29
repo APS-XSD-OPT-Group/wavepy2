@@ -133,20 +133,24 @@ class AbstractFRLInputParametersWidget():
         self.fit_radius_dpc     = self.__ini.get_boolean_from_ini("Runtime", "fit radius dpc", default=False)
 
     def build_widget(self, **kwargs):
-        self.setFixedWidth(self.WIDTH)
-        self.setFixedHeight(self.HEIGHT)
+        try:    show_runtime_options = kwargs["show_runtime_options"]
+        except: show_runtime_options = True
+        try:    widget_width = kwargs["widget_width"]
+        except: widget_width = self.WIDTH
+        try:    widget_height = kwargs["widget_height"]
+        except: widget_height = self.HEIGHT
 
-        tabs = plot_tools.tabWidget(self.get_central_widget())
+        self.setFixedWidth(widget_width)
+        self.setFixedHeight(widget_height)
+
+        if show_runtime_options: tabs = plot_tools.tabWidget(self.get_central_widget())
 
         ini_widget = QWidget()
         ini_widget.setFixedHeight(self.HEIGHT-10)
         ini_widget.setFixedWidth(self.WIDTH-10)
-        runtime_widget = QWidget()
-        runtime_widget.setFixedHeight(self.HEIGHT-10)
-        runtime_widget.setFixedWidth(self.WIDTH-10)
 
-        plot_tools.createTabPage(tabs, "Initialization Parameter", widgetToAdd=ini_widget)
-        plot_tools.createTabPage(tabs, "Runtime Parameter", widgetToAdd=runtime_widget)
+        if show_runtime_options: plot_tools.createTabPage(tabs, "Initialization Parameter", widgetToAdd=ini_widget)
+        else: self.get_central_widget().layout().addWidget(ini_widget)
 
         main_box = plot_tools.widgetBox(ini_widget, "", width=self.WIDTH-70, height=self.HEIGHT-50)
 
@@ -160,10 +164,17 @@ class AbstractFRLInputParametersWidget():
         plot_tools.comboBox(main_box, self, "lensGeometry", label="Lens Geometry", items=LENS_GEOMETRIES, orientation="horizontal")
         plot_tools.lineEdit(main_box, self, "phenergy", label="Photon Energy", labelWidth=250, valueType=float, orientation="horizontal")
 
-        main_box = plot_tools.widgetBox(runtime_widget, "", width=self.WIDTH-70, height=self.HEIGHT-50)
+        if show_runtime_options:
+            runtime_widget = QWidget()
+            runtime_widget.setFixedHeight(widget_height-10)
+            runtime_widget.setFixedWidth(widget_width-10)
 
-        plot_tools.checkBox(main_box, self, "crop_image", "Crop Thickness Image")
-        plot_tools.checkBox(main_box, self, "fit_radius_dpc", "Fit Radius DPC")
+            plot_tools.createTabPage(tabs, "Runtime Parameter", widgetToAdd=runtime_widget)
+
+            main_box = plot_tools.widgetBox(runtime_widget, "", width=self.WIDTH-70, height=self.HEIGHT-50)
+
+            plot_tools.checkBox(main_box, self, "crop_image", "Crop Thickness Image")
+            plot_tools.checkBox(main_box, self, "fit_radius_dpc", "Fit Radius DPC")
 
         self.update()
 

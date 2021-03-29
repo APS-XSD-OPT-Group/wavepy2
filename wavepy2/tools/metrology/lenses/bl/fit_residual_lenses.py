@@ -76,6 +76,7 @@ class FitResidualLensesFacade:
     def manager_initialization(self, initialization_parameters, script_logger_mode=LoggerMode.FULL, show_fourier=False): raise NotImplementedError()
 
     def draw_crop_thickness(self, initialization_parameters, plotting_properties=PlottingProperties(), **kwargs): raise NotImplementedError()
+    def manage_crop_thickness(self, crop_thickness_result, initialization_parameters, plotting_properties=PlottingProperties(), **kwargs): raise NotImplementedError
     def crop_thickness(self, initialization_parameters, plotting_properties=PlottingProperties(), **kwargs): raise NotImplementedError()
 
     def center_image(self, crop_thickness_result, initialization_parameters, plotting_properties=PlottingProperties(), **kwargs): raise NotImplementedError()
@@ -153,7 +154,7 @@ class __FitResidualLenses(FitResidualLensesFacade):
 
     # %% ==================================================================================================
 
-    def draw_crop_initial_image(self, initialization_parameters, plotting_properties=PlottingProperties(), **kwargs):
+    def draw_crop_thickness(self, initialization_parameters, plotting_properties=PlottingProperties(), **kwargs):
         crop_thickness = initialization_parameters.get_parameter("crop_image")
         thickness      = initialization_parameters.get_parameter("thickness")
 
@@ -162,15 +163,15 @@ class __FitResidualLenses(FitResidualLensesFacade):
             thickness_to_crop[np.isnan(thickness)] = 0.0
             thickness_to_crop *= 1e6
 
-            return crop_image.crop_image(img=thickness_to_crop,
-                                         plotting_properties=plotting_properties,
-                                         application_name=APPLICATION_NAME,
-                                         message="Crop Thickness",
-                                         **kwargs)
+            return crop_image.draw_crop_image(img=thickness_to_crop,
+                                              plotting_properties=plotting_properties,
+                                              application_name=APPLICATION_NAME,
+                                              message="Crop Thickness",
+                                              **kwargs)
         else:
             return None
 
-    def manage_crop_thickness(self, crop_result, initialization_parameters, plotting_properties=PlottingProperties(), **kwargs):
+    def manage_crop_thickness(self, crop_thickness_result, initialization_parameters, plotting_properties=PlottingProperties(), **kwargs):
         add_context_label = plotting_properties.get_parameter("add_context_label", True)
         use_unique_id     = plotting_properties.get_parameter("use_unique_id", False)
 
@@ -184,7 +185,7 @@ class __FitResidualLenses(FitResidualLensesFacade):
         yy             = initialization_parameters.get_parameter("yy")
 
         if crop_thickness:
-            idx4crop = crop_result.get_parameter("idx4crop", [0, -1, 0, -1])
+            idx4crop = crop_thickness_result.get_parameter("idx4crop", [0, -1, 0, -1])
 
             thickness = common_tools.crop_matrix_at_indexes(thickness, idx4crop)
             xx = common_tools.crop_matrix_at_indexes(xx, idx4crop)
