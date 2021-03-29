@@ -107,11 +107,12 @@ class WavePyScript():
         print("Logger Mode : " + LoggerMode.get_logger_mode(LOGGER_MODE))
         print("Plotter Mode: " + PlotterMode.get_plotter_mode(PLOTTER_MODE))
 
-        register_logger_single_instance(logger_mode=LOGGER_MODE)
+        register_logger_single_instance(logger_mode=LOGGER_MODE,
+                                        application_name=self._get_application_name())
         register_ini_instance(INI_MODE,
                               ini_file_name=self._get_ini_file_name() if INI_MODE == IniMode.LOCAL_FILE else None,
                               application_name=self._get_application_name())
-        register_plotter_instance(plotter_mode=PLOTTER_MODE)
+        register_plotter_instance(plotter_mode=PLOTTER_MODE, application_name=self._get_application_name())
         register_qt_application_instance(QtApplicationMode.SHOW if PLOTTER_MODE in [PlotterMode.FULL, PlotterMode.DISPLAY_ONLY] else QtApplicationMode.HIDE)
 
     def _get_application_name(self): return None

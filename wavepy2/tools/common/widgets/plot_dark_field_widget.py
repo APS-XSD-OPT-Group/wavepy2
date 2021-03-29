@@ -51,6 +51,9 @@ from warnings import filterwarnings
 filterwarnings("ignore")
 
 class PlotDarkField(WavePyWidget):
+    def __init__(self, parent=None, application_name=None, **kwargs):
+        WavePyWidget.__init__(self, parent=parent, application_name=application_name)
+
     def get_plot_tab_name(self): return "Dark Field"
 
     def build_mpl_figure(self, **kwargs):

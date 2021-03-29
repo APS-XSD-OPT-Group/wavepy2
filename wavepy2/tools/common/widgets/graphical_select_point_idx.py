@@ -51,10 +51,10 @@ from wavepy2.util.plot.plot_tools import WIDGET_FIXED_WIDTH
 from wavepy2.util.log.logger import get_registered_logger_instance
 
 class GraphicalSelectPointIdx(QWidget):
-    def __init__(self, parent, image, selection_listener, args_for_listener, **kwargs):
+    def __init__(self, parent, image, selection_listener, args_for_listener, application_name=None, **kwargs):
         super(GraphicalSelectPointIdx, self).__init__(parent)
 
-        logger = get_registered_logger_instance()
+        logger = get_registered_logger_instance(application_name=application_name)
 
         layout = QHBoxLayout()
 

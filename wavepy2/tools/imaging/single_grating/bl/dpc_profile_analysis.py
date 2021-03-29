@@ -61,29 +61,28 @@ from wavepy2.util.common.common_tools import hc
 class DPCProfileAnalysisFacade():
     def dpc_profile_analysis(self, dpc_profile_analysis_data, initialization_parameters, plotting_properties=PlottingProperties(), **kwargs): raise NotImplementedError()
 
+APPLICATION_NAME = "DPC Profile Analysis"
 
-def create_dpc_profile_analsysis_manager():
-    return __DPCProfileAnalysis()
+def create_dpc_profile_analsysis_manager(application_name=None):
+    return __DPCProfileAnalysis(APPLICATION_NAME if application_name is None else application_name)
 
 DPC_PROFILE_ANALYSYS_CONTEXT_KEY = "DPC Profile Analysis"
 
 class __DPCProfileAnalysis(DPCProfileAnalysisFacade):
-    def __init__(self):
-        self.__main_logger   = get_registered_logger_instance()
-        self.__script_logger = get_registered_secondary_logger()
-        self.__plotter       = get_registered_plotter_instance()
+    def __init__(self, application_name):
+        self.__main_logger   = get_registered_logger_instance(application_name=application_name)
+        self.__script_logger = get_registered_secondary_logger(application_name=application_name)
+        self.__plotter       = get_registered_plotter_instance(application_name=application_name)
 
     def dpc_profile_analysis(self, dpc_profile_analysis_data, initialization_parameters, plotting_properties=PlottingProperties(), **kwargs):
         phenergy          = initialization_parameters.get_parameter("phenergy")
 
-        differential_phase_H        = dpc_profile_analysis_data.get_parameter("differential_phase_H", None)
-        differential_phase_V        = dpc_profile_analysis_data.get_parameter("differential_phase_V", None)
-        virtual_pixelsize = dpc_profile_analysis_data.get_parameter("virtual_pixelsize")
+        differential_phase_H  = dpc_profile_analysis_data.get_parameter("differential_phase_H", None)
+        differential_phase_V  = dpc_profile_analysis_data.get_parameter("differential_phase_V", None)
+        virtual_pixelsize     = dpc_profile_analysis_data.get_parameter("virtual_pixelsize")
 
         fnameH            = dpc_profile_analysis_data.get_parameter("fnameH", None)
         fnameV            = dpc_profile_analysis_data.get_parameter("fnameV", None)
-        grazing_angle     = dpc_profile_analysis_data.get_parameter("grazing_angle", 0.0)
-        projectionFromDiv = dpc_profile_analysis_data.get_parameter("projectionFromDiv", 1.0)
         nprofiles         = dpc_profile_analysis_data.get_parameter("nprofiles", 1)
         remove1stOrderDPC = dpc_profile_analysis_data.get_parameter("remove1stOrderDPC", False)
         remove2ndOrder    = dpc_profile_analysis_data.get_parameter("remove2ndOrder", False)

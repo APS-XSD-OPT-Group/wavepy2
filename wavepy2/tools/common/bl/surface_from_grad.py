@@ -102,7 +102,6 @@ References
 import numpy as np
 
 from wavepy2.util.common import common_tools
-from wavepy2.util.plot.plotter import get_registered_plotter_instance
 
 __authors__ = "Walan Grizolli"
 

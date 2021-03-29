@@ -96,9 +96,9 @@ FIT_CALCULATION_RESULT_CONTEXT_KEY     = "Fit Calculation Result"
 class __SingleGratingCoherenceZScan(SingleGratingCoherenceZScanFacade):
 
     def __init__(self):
-        self.__plotter     = get_registered_plotter_instance()
-        self.__main_logger = get_registered_logger_instance()
-        self.__ini         = get_registered_ini_instance(APPLICATION_NAME)
+        self.__plotter     = get_registered_plotter_instance(application_name=APPLICATION_NAME)
+        self.__main_logger = get_registered_logger_instance(application_name=APPLICATION_NAME)
+        self.__ini         = get_registered_ini_instance(application_name=APPLICATION_NAME)
 
     def draw_initialization_parameters_widget(self, plotting_properties=PlottingProperties(), **kwargs):
         if self.__plotter.is_active():
@@ -109,7 +109,7 @@ class __SingleGratingCoherenceZScan(SingleGratingCoherenceZScanFacade):
                                                                context_window=plotting_properties.get_context_widget(),
                                                                use_unique_id=use_unique_id)
 
-            self.__plotter.push_plot_on_context(INITIALIZATION_PARAMETERS_KEY, SGZInputParametersWidget, unique_id, application_name=APPLICATION_NAME, **kwargs)
+            self.__plotter.push_plot_on_context(INITIALIZATION_PARAMETERS_KEY, SGZInputParametersWidget, unique_id, **kwargs)
             self.__plotter.draw_context(INITIALIZATION_PARAMETERS_KEY, add_context_label=add_context_label, unique_id=unique_id, **kwargs)
 
             return self.__plotter.get_plots_of_context(INITIALIZATION_PARAMETERS_KEY, unique_id=unique_id)
@@ -120,7 +120,6 @@ class __SingleGratingCoherenceZScan(SingleGratingCoherenceZScanFacade):
         if self.__plotter.is_active():
             initialization_parameters = self.__plotter.show_interactive_plot(SGZInputParametersDialog,
                                                                              container_widget=plotting_properties.get_container_widget(),
-                                                                             application_name=APPLICATION_NAME,
                                                                              **kwargs)
         else:
             initialization_parameters = generate_initialization_parameters_sgz(dataFolder         = self.__ini.get_string_from_ini("Files", "data directory"),
@@ -144,15 +143,14 @@ class __SingleGratingCoherenceZScan(SingleGratingCoherenceZScanFacade):
     def manager_initialization(self, initialization_parameters, script_logger_mode=LoggerMode.FULL, show_fourier=False):
         initialization_parameters.set_parameter("show_fourier", show_fourier)
 
-        plotter = get_registered_plotter_instance()
-        plotter.register_save_file_prefix(initialization_parameters.get_parameter("saveFileSuf"))
+        self.__plotter.register_save_file_prefix(initialization_parameters.get_parameter("saveFileSuf"))
 
-        if not script_logger_mode == LoggerMode.NONE: stream = open(plotter.get_save_file_prefix() + "_" + common_tools.datetime_now_str() + ".log", "wt")
+        if not script_logger_mode == LoggerMode.NONE: stream = open(self.__plotter.get_save_file_prefix() + "_" + common_tools.datetime_now_str() + ".log", "wt")
         else: stream = None
 
-        register_secondary_logger(stream=stream, logger_mode=script_logger_mode)
+        register_secondary_logger(stream=stream, logger_mode=script_logger_mode, application_name=APPLICATION_NAME)
 
-        self.__script_logger = get_registered_secondary_logger()
+        self.__script_logger = get_registered_secondary_logger(application_name=APPLICATION_NAME)
 
         return initialization_parameters
 
@@ -271,7 +269,8 @@ class __SingleGratingCoherenceZScan(SingleGratingCoherenceZScanFacade):
                                                                        [period_harm_Vert, period_harm_Horz],
                                                                        harmonic_ij=['1', '0'],
                                                                        searchRegion=40,
-                                                                       isFFT=False)
+                                                                       isFFT=False,
+                                                                       logger=self.__main_logger)
 
         self.__main_logger.print_message('Obtain harmonic 01 experimentally')
 
@@ -279,7 +278,8 @@ class __SingleGratingCoherenceZScan(SingleGratingCoherenceZScanFacade):
                                                                        [period_harm_Vert, period_harm_Horz],
                                                                        harmonic_ij=['0', '1'],
                                                                        searchRegion=40,
-                                                                       isFFT=False)
+                                                                       isFFT=False,
+                                                                       logger=self.__main_logger)
 
         dataFolder = initialization_parameters.get_parameter("dataFolder")
         startDist = initialization_parameters.get_parameter("startDist")
@@ -507,7 +507,7 @@ def _run_calculation(parameters):
         unFilterSize = parameters
 
         # python3.8 do not share the same environment, so the Singleton is not active
-        try: get_registered_logger_instance().print_message("loop " + str(i) + ": " + data_file_i)
+        try: get_registered_logger_instance(APPLICATION_NAME).print_message("loop " + str(i) + ": " + data_file_i)
         except: print("loop " + str(i) + ": " + data_file_i)
 
         img = read_tiff(data_file_i)
@@ -597,7 +597,7 @@ class __SingleGratingCoherenceZScanMultiThread(__SingleGratingCoherenceZScan):
         tzero = time.time()
         pool = Pool(self.__n_cpus)
 
-        get_registered_logger_instance().print_message("%d cpu used for this calculation" % self.__n_cpus)
+        get_registered_logger_instance(APPLICATION_NAME).print_message("%d cpu used for this calculation" % self.__n_cpus)
 
         parameters = []
         for i in range(len(listOfDataFiles)): parameters.append([i,
@@ -615,6 +615,6 @@ class __SingleGratingCoherenceZScanMultiThread(__SingleGratingCoherenceZScan):
         res = pool.map(_run_calculation, parameters)
         pool.close()
 
-        get_registered_logger_instance().print_message("Time spent: {0:.3f} s".format(time.time() - tzero))
+        get_registered_logger_instance(APPLICATION_NAME).print_message("Time spent: {0:.3f} s".format(time.time() - tzero))
 
         return res

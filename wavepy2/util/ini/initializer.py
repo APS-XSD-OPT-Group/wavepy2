@@ -45,7 +45,7 @@
 from wavepy2.util import Singleton, synchronized_method
 
 import os
-from configparser import ConfigParser, NoSectionError, NoOptionError
+from configparser import ConfigParser
 
 from wavepy2.util.log.logger import get_registered_logger_instance
 
@@ -153,43 +153,24 @@ class __LocalIniFile(IniFacade):
     def push(self):
         with open(self.__ini_file_name, "w") as ini_file: self.__config_parser.write(ini_file)
 
-from wavepy2.util.common.common_tools import AlreadyInitializedError
+from wavepy2.util.common.common_tools import GenericRegistry
 
 @Singleton
-class __IniRegistry:
-    __NO_APPLICATION = "<NO APPLICATION>"
-
+class __IniRegistry(GenericRegistry):
     def __init__(self):
-        self.__ini_instance = {self.__NO_APPLICATION: None}
+        GenericRegistry.__init__(self, registry_name="Ini")
 
     @synchronized_method
     def register_ini(self, ini_facade_instance, application_name=None):
-        if ini_facade_instance is None: raise ValueError("Ini Instance is None")
-        if not isinstance(ini_facade_instance, IniFacade): raise ValueError("Ini Instance do not implement Ini Facade")
-
-        application_name = self.__get_application_name(application_name)
-
-        if application_name in self.__ini_instance.keys():
-            if self.__ini_instance[application_name] is None: self.__ini_instance[application_name] = ini_facade_instance
-            else:raise AlreadyInitializedError("Ini Instance already initialized")
-        else:
-            self.__ini_instance[application_name] = ini_facade_instance
+        super().register_instance(ini_facade_instance, application_name)
 
     @synchronized_method
     def reset(self, application_name=None):
-        application_name = self.__get_application_name(application_name)
-
-        if application_name in self.__ini_instance.keys(): self.__ini_instance[self.__get_application_name(application_name)] = None
-        else: raise ValueError("Ini Instance not existing")
+        super().reset(application_name)
 
     def get_ini_instance(self, application_name=None):
-        application_name = self.__get_application_name(application_name)
+        return super().get_instance(application_name)
 
-        if application_name in self.__ini_instance.keys(): return self.__ini_instance[self.__get_application_name(application_name)]
-        else: raise ValueError("Ini Instance not existing")
-
-    def __get_application_name(self, application_name):
-        return self.__NO_APPLICATION if application_name is None else application_name
 
 # -----------------------------------------------------
 # Factory Methods

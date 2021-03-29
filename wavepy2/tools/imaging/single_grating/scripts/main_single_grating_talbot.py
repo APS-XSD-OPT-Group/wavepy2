@@ -64,7 +64,7 @@ class MainSingleGratingTalbot(WavePyScript):
     def _get_application_name(self): return APPLICATION_NAME
 
     def _run_script(self, SCRIPT_LOGGER_MODE=LoggerMode.FULL, **args):
-        plotter = get_registered_plotter_instance()
+        plotter = get_registered_plotter_instance(application_name=self._get_application_name())
 
         single_grating_talbot_manager = create_single_grating_talbot_manager()
 

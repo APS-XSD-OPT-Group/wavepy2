@@ -57,8 +57,9 @@ class AbstractColorbarCropWidget():
     __initialized = False
 
     def __init__(self, application_name=None):
-        self.__ini     = get_registered_ini_instance(application_name)
-        self.__logger  = get_registered_logger_instance()
+        self.__application_name = application_name
+        self.__ini     = get_registered_ini_instance(application_name=application_name)
+        self.__logger  = get_registered_logger_instance(application_name=application_name)
 
     def build_widget(self, **kwargs):
         img         = kwargs["img"]
@@ -82,6 +83,7 @@ class AbstractColorbarCropWidget():
                                                   extent=common_tools.extent_func(self.__cropped_img, pixelsize) * 1e6)
 
         self.crop_image = GraphicalRoiIdx(self,
+                                          application_name=self.__application_name,
                                           image=img,
                                           set_crop_output_listener=self.create_cropped_output)
 
@@ -138,7 +140,7 @@ class ColorbarCropWidgetPlot(AbstractColorbarCropWidget, WavePyWidget):
 
     def __init__(self, application_name=None, **kwargs):
         AbstractColorbarCropWidget.__init__(self, application_name)
-        WavePyWidget.__init__(self, parent=None)
+        WavePyWidget.__init__(self, parent=None, application_name=application_name)
 
         layout = QHBoxLayout()
         layout.setAlignment(Qt.AlignCenter)
@@ -162,4 +164,4 @@ class ColorbarCropDialogPlot(AbstractColorbarCropWidget, WavePyInteractiveWidget
 
     def __init__(self, parent, application_name=None, **kwargs):
         AbstractColorbarCropWidget.__init__(self, application_name)
-        WavePyInteractiveWidget.__init__(self, parent, message="New Crop?", title="Crop Image")
+        WavePyInteractiveWidget.__init__(self, parent, message="New Crop?", title="Crop Image", application_name=application_name)

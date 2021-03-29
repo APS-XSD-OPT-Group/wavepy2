@@ -58,6 +58,11 @@ from warnings import filterwarnings
 filterwarnings("ignore")
 
 class IntegrateDPCCumSum(WavePyWidget):
+    def __init__(self, parent=None, application_name=None, **kwargs):
+        super(IntegrateDPCCumSum, self).__init__(parent=parent, application_name=application_name)
+
+        self.__plotter = get_registered_plotter_instance(application_name=application_name)
+
     def get_plot_tab_name(self): return "Integrate Cumulative Sum " + self.__title
 
     def build_widget(self, **kwargs):
@@ -140,7 +145,7 @@ class IntegrateDPCCumSum(WavePyWidget):
         if grazing_angle//.00001 > 0:  header.append('grazing_angle = {:.4g}'.format(grazing_angle))
         if projectionFromDiv//1 != 1: header.append('projection due divergence = {:.2f}x'.format(projectionFromDiv))
 
-        get_registered_plotter_instance().save_csv_file(data2saveV, file_prefix=saveFileSuf, file_suffix='_integrated_' + xlabel, headerList=header)
+        self.__plotter.save_csv_file(data2saveV, file_prefix=saveFileSuf, file_suffix='_integrated_' + xlabel, headerList=header)
 
         output_data.set_parameter("integrated", np.asarray(list_integrated).T)
 

@@ -6,14 +6,16 @@ from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from PyQt5.QtWidgets import QHBoxLayout
 from PyQt5.QtCore import Qt
 
-from wavepy2.util.common import common_tools
 from wavepy2.util.plot import plot_tools
-from wavepy2.util.plot.plotter import WavePyWidget, get_registered_plotter_instance
+from wavepy2.util.plot.plotter import WavePyWidget
 
 from warnings import filterwarnings
 filterwarnings("ignore")
 
 class FitPeriodVsZPlot(WavePyWidget):
+    def __init__(self, parent=None, application_name=None, **kwargs):
+        WavePyWidget.__init__(self, parent=parent, application_name=application_name)
+
     def get_plot_tab_name(self): return "Pattern Period vs Detector distance " + self.__direction
 
     def build_widget(self, **kwargs):

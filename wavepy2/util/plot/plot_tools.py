@@ -123,8 +123,8 @@ WIDGET_FIXED_WIDTH = 800
 from wavepy2.util.log.logger import get_registered_logger_instance
 from wavepy2.util.common import common_tools
 
-def save_sdf_file(array, pixelsize=[1, 1], fname='output.sdf', extraHeader={}):
-    logger = get_registered_logger_instance()
+def save_sdf_file(array, pixelsize=[1, 1], fname='output.sdf', extraHeader={}, application_name=None):
+    logger = get_registered_logger_instance(application_name=application_name)
 
     if len(array.shape) != 2:
         logger.print_error('Function save_sdf: array must be 2-dimensional')
@@ -160,8 +160,8 @@ def save_sdf_file(array, pixelsize=[1, 1], fname='output.sdf', extraHeader={}):
     logger.print_message(fname + ' saved!')
 
 
-def save_csv_file(arrayList, fname='output.csv', headerList=[], comments=''):
-    logger = get_registered_logger_instance()
+def save_csv_file(arrayList, fname='output.csv', headerList=[], comments='', application_name=None):
+    logger = get_registered_logger_instance(application_name=application_name)
 
     header = ''
     if headerList != []:

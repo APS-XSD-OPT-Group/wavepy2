@@ -128,9 +128,9 @@ def create_single_grating_talbot_manager():
 class __SingleGratingTalbot(SingleGratingTalbotFacade):
 
     def __init__(self):
-        self.__plotter     = get_registered_plotter_instance()
-        self.__main_logger = get_registered_logger_instance()
-        self.__ini         = get_registered_ini_instance(APPLICATION_NAME)
+        self.__plotter     = get_registered_plotter_instance(application_name=APPLICATION_NAME)
+        self.__main_logger = get_registered_logger_instance(application_name=APPLICATION_NAME)
+        self.__ini         = get_registered_ini_instance(application_name=APPLICATION_NAME)
 
     # %% ==================================================================================================
 
@@ -144,8 +144,7 @@ class __SingleGratingTalbot(SingleGratingTalbotFacade):
                                                                context_window=plotting_properties.get_context_widget(),
                                                                use_unique_id=use_unique_id)
 
-            self.__plotter.push_plot_on_context(INITIALIZATION_PARAMETERS_KEY, SGTInputParametersWidget, unique_id,
-                                                application_name=APPLICATION_NAME, show_runtime_options=show_runtime_options, **kwargs)
+            self.__plotter.push_plot_on_context(INITIALIZATION_PARAMETERS_KEY, SGTInputParametersWidget, unique_id, show_runtime_options=show_runtime_options, **kwargs)
             self.__plotter.draw_context(INITIALIZATION_PARAMETERS_KEY, add_context_label=add_context_label, unique_id=unique_id, **kwargs)
 
             return self.__plotter.get_plots_of_context(INITIALIZATION_PARAMETERS_KEY, unique_id=unique_id)
@@ -156,7 +155,6 @@ class __SingleGratingTalbot(SingleGratingTalbotFacade):
         if self.__plotter.is_active():
             initialization_parameters = self.__plotter.show_interactive_plot(SGTInputParametersDialog,
                                                                              container_widget=plotting_properties.get_container_widget(),
-                                                                             application_name=APPLICATION_NAME,
                                                                              show_runtime_options=plotting_properties.get_parameter("show_runtime_options", True),
                                                                              **kwargs)
         else:
@@ -182,19 +180,18 @@ class __SingleGratingTalbot(SingleGratingTalbotFacade):
         return initialization_parameters
 
     def manager_initialization(self, initialization_parameters, script_logger_mode):
-        plotter = get_registered_plotter_instance()
-        plotter.register_save_file_prefix(initialization_parameters.get_parameter("saveFileSuf"))
+        self.__plotter.register_save_file_prefix(initialization_parameters.get_parameter("saveFileSuf"))
 
-        if not script_logger_mode == LoggerMode.NONE: stream = open(plotter.get_save_file_prefix() + "_" + common_tools.datetime_now_str() + ".log", "wt")
+        if not script_logger_mode == LoggerMode.NONE: stream = open(self.__plotter.get_save_file_prefix() + "_" + common_tools.datetime_now_str() + ".log", "wt")
         else: stream = None
 
-        register_secondary_logger(stream=stream, logger_mode=script_logger_mode)
+        register_secondary_logger(stream=stream, logger_mode=script_logger_mode, application_name=APPLICATION_NAME)
 
         self.__wavelength = hc / initialization_parameters.get_parameter("phenergy")
         self.__kwave = 2 * np.pi / self.__wavelength
 
-        self.__script_logger                = get_registered_secondary_logger()
-        self.__dpc_profile_analysis_manager = create_dpc_profile_analsysis_manager()
+        self.__script_logger                = get_registered_secondary_logger(application_name=APPLICATION_NAME)
+        self.__dpc_profile_analysis_manager = create_dpc_profile_analsysis_manager(application_name=APPLICATION_NAME)
 
         return initialization_parameters
 
@@ -281,14 +278,16 @@ class __SingleGratingTalbot(SingleGratingTalbotFacade):
             (_, period_harm_Hor) = grating_interferometry.exp_harm_period(imgRef, [period_harm_Vert_o, period_harm_Hor_o],
                                                                           harmonic_ij=['0', '1'],
                                                                           searchRegion=30,
-                                                                          isFFT=False)
+                                                                          isFFT=False,
+                                                                          logger=self.__main_logger)
 
             self.__main_logger.print_message('MESSAGE: Obtain harmonic 10 experimentally')
 
             (period_harm_Vert, _) = grating_interferometry.exp_harm_period(imgRef, [period_harm_Vert_o, period_harm_Hor_o],
                                                                            harmonic_ij=['1', '0'],
                                                                            searchRegion=30,
-                                                                           isFFT=False)
+                                                                           isFFT=False,
+                                                                           logger=self.__main_logger)
 
             harmPeriod = [period_harm_Vert, period_harm_Hor]
 
@@ -302,7 +301,9 @@ class __SingleGratingTalbot(SingleGratingTalbotFacade):
                                                                          harmonicPeriod=harmPeriod,
                                                                          unwrapFlag=unwrapFlag,
                                                                          context_key=CALCULATE_DPC_CONTEXT_KEY,
-                                                                         unique_id=unique_id, **kwargs)
+                                                                         unique_id=unique_id,
+                                                                         logger=self.__main_logger, plotter=self.__plotter,
+                                                                         **kwargs)
 
         virtual_pixelsize = [0, 0]
         virtual_pixelsize[0] = pixelsize[0]*img.shape[0]/int00.shape[0]
@@ -1148,7 +1149,7 @@ class __SingleGratingTalbot(SingleGratingTalbotFacade):
         else:
             kargs4graph = {}
 
-        plotter = get_registered_plotter_instance()
+        plotter = get_registered_plotter_instance(application_name=APPLICATION_NAME)
 
         if plotter.is_active():
             _, idx4crop, _ = crop_image.crop_image(img=image_to_crop,

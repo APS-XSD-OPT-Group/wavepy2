@@ -21,6 +21,9 @@ from warnings import filterwarnings
 filterwarnings("ignore")
 
 class PlotIntegration(WavePyWidget):
+    def __init__(self, parent=None, application_name=None, **kwargs):
+        WavePyWidget.__init__(self, parent=parent, application_name=application_name)
+
     def get_plot_tab_name(self): return self.__title
 
     def build_widget(self, **kwargs):

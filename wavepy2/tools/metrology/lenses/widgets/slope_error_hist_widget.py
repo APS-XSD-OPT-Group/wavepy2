@@ -53,6 +53,11 @@ from warnings import filterwarnings
 filterwarnings("ignore")
 
 class SlopeErrorHist(WavePyWidget):
+    def __init__(self, parent=None, application_name=None, **kwargs):
+        super(SlopeErrorHist, self).__init__(parent=parent, application_name=application_name)
+
+        self.__script_logger  = get_registered_secondary_logger(application_name=application_name)
+
     def get_plot_tab_name(self): return "Slope Error"
 
     def build_mpl_figure(self, **kwargs):
@@ -65,8 +70,6 @@ class SlopeErrorHist(WavePyWidget):
         except: str4title = ""
         output_data = kwargs["output_data"]
         
-        script_logger = get_registered_secondary_logger()
-
         errorThickness = thickness - fitted
 
         fig = Figure(figsize=(15, 8))
@@ -97,8 +100,8 @@ class SlopeErrorHist(WavePyWidget):
         
         fig.suptitle(str4title, fontsize=18, weight="bold")
 
-        script_logger.print("Slope Error Hor SDV = " + "{:.3f}".format(sigma_seh * factor_seh) + unit_seh + " rad")
-        script_logger.print("Slope Error Ver SDV = " + "{:.3f}".format(sigma_sev * factor_sev) + unit_sev + " rad")
+        self.__script_logger.print("Slope Error Hor SDV = " + "{:.3f}".format(sigma_seh * factor_seh) + unit_seh + " rad")
+        self.__script_logger.print("Slope Error Ver SDV = " + "{:.3f}".format(sigma_sev * factor_sev) + unit_sev + " rad")
 
         output_data["sigma_seh"] = sigma_seh
         output_data["sigma_sev"] = sigma_sev

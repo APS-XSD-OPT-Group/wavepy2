@@ -54,8 +54,9 @@ FIXED_WIDTH=800
 class AbstractCropWidget():
     __initialized = False
 
-    def __init__(self):
-        self.__logger  = get_registered_logger_instance()
+    def __init__(self, application_name=None):
+        self.__application_name = application_name
+        self.__logger  = get_registered_logger_instance(application_name=application_name)
 
     def build_widget(self, **kwargs):
         img = kwargs["img"]
@@ -68,8 +69,8 @@ class AbstractCropWidget():
 
         self.__initialize(img, default_idx4crop)
 
-        try:    crop_image = GraphicalRoiIdx(self, image=img, set_crop_output_listener=self.create_cropped_output, kwargs4graph=kwargs["kwargs4graph"])
-        except: crop_image = GraphicalRoiIdx(self, image=img, set_crop_output_listener=self.create_cropped_output)
+        try:    crop_image = GraphicalRoiIdx(self, application_name=self.__application_name, image=img, set_crop_output_listener=self.create_cropped_output, kwargs4graph=kwargs["kwargs4graph"])
+        except: crop_image = GraphicalRoiIdx(self, application_name=self.__application_name, image=img, set_crop_output_listener=self.create_cropped_output)
 
         tab_widget = plot_tools.tabWidget(self.get_central_widget())
 
@@ -102,9 +103,9 @@ from PyQt5.QtCore import Qt
 
 class CropWidgetPlot(AbstractCropWidget, WavePyWidget):
 
-    def __init__(self, **kwargs):
-        AbstractCropWidget.__init__(self)
-        WavePyWidget.__init__(self, parent=None)
+    def __init__(self, application_name=None, **kwargs):
+        AbstractCropWidget.__init__(self, application_name)
+        WavePyWidget.__init__(self, parent=None, application_name=application_name)
 
         layout = QHBoxLayout()
         layout.setAlignment(Qt.AlignCenter)
@@ -126,6 +127,6 @@ class CropWidgetPlot(AbstractCropWidget, WavePyWidget):
 
 class CropDialogPlot(AbstractCropWidget, WavePyInteractiveWidget):
 
-    def __init__(self, parent, **kwargs):
-        AbstractCropWidget.__init__(self)
-        WavePyInteractiveWidget.__init__(self, parent, message="New Crop?", title="Crop Image")
+    def __init__(self, parent, application_name=None, **kwargs):
+        AbstractCropWidget.__init__(self, application_name)
+        WavePyInteractiveWidget.__init__(self, parent, message="New Crop?", title="Crop Image", application_name=application_name)

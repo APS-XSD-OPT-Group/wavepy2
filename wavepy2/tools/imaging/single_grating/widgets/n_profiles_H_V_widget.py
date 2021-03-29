@@ -63,6 +63,11 @@ from warnings import filterwarnings
 filterwarnings("ignore")
 
 class NProfilesHV(WavePyWidget):
+    def __init__(self, parent=None, application_name=None, **kwargs):
+        super(NProfilesHV, self).__init__(parent=parent, application_name=application_name)
+
+        self.__plotter = get_registered_plotter_instance(application_name=application_name)
+
     def get_plot_tab_name(self): return "N Profiles H/V"
 
     def build_widget(self, **kwargs):
@@ -91,15 +96,12 @@ class NProfilesHV(WavePyWidget):
         labels_H = None
         labels_V = None
 
-        plotter = get_registered_plotter_instance()
-
         rcParams['lines.markersize'] = 4
         rcParams['lines.linewidth'] = 2
 
         # Horizontal
         if np.all(np.isfinite(arrayH)):
-            figure1_h, figure2_h, data2saveH, labels_H = self.__create_H_plot(plotter,
-                                                                              arrayH,
+            figure1_h, figure2_h, data2saveH, labels_H = self.__create_H_plot(arrayH,
                                                                               arrayV,
                                                                               zlabel,
                                                                               titleH,
@@ -117,8 +119,7 @@ class NProfilesHV(WavePyWidget):
 
         # Vertical
         if np.all(np.isfinite(arrayV)):
-            figure1_v, figure2_v, data2saveV, labels_V = self.__create_V_plot(plotter,
-                                                                              arrayH,
+            figure1_v, figure2_v, data2saveV, labels_V = self.__create_V_plot(arrayH,
                                                                               arrayV,
                                                                               zlabel,
                                                                               titleV,
@@ -164,7 +165,7 @@ class NProfilesHV(WavePyWidget):
 
         return figure
 
-    def __create_H_plot(self, plotter, arrayH, arrayV, zlabel, titleH, saveFileSuf, nprofiles, remove1stOrderDPC, filter_width, fit_coefs, xxGrid):
+    def __create_H_plot(self, arrayH, arrayV, zlabel, titleH, saveFileSuf, nprofiles, remove1stOrderDPC, filter_width, fit_coefs, xxGrid):
         figure1 = Figure(figsize=(12, 12 * 9 / 16))
 
         xvec       = xxGrid[0, :]
@@ -206,7 +207,7 @@ class NProfilesHV(WavePyWidget):
 
         header.append(zlabel + ', Filter Width = {:d} pixels'.format(filter_width))
 
-        plotter.save_csv_file(data2saveH, file_prefix=saveFileSuf, file_suffix='_WF_profiles_H', headerList=header)
+        self.__plotter.save_csv_file(data2saveH, file_prefix=saveFileSuf, file_suffix='_WF_profiles_H', headerList=header)
 
         figure2 = Figure(figsize=(12, 12 * 9 / 16))
         figure2.gca().imshow(arrayH, cmap='RdGy', vmin=common_tools.mean_plus_n_sigma(arrayH, -3), vmax=common_tools.mean_plus_n_sigma(arrayH, 3))
@@ -229,7 +230,7 @@ class NProfilesHV(WavePyWidget):
         return figure1, figure2, data2saveH, labels_H
 
 
-    def __create_V_plot(self, plotter, arrayH, arrayV, zlabel, titleV, saveFileSuf, nprofiles, remove1stOrderDPC, filter_width, fit_coefs, yyGrid):
+    def __create_V_plot(self, arrayH, arrayV, zlabel, titleV, saveFileSuf, nprofiles, remove1stOrderDPC, filter_width, fit_coefs, yyGrid):
         figure1 = Figure(figsize=(12, 12 * 9 / 16))
 
         xvec = yyGrid[:, 0]
@@ -272,7 +273,7 @@ class NProfilesHV(WavePyWidget):
 
         header.append(zlabel + ', Filter Width = {:d} pixels'.format(filter_width))
 
-        plotter.save_csv_file(data2saveV, file_prefix=saveFileSuf, file_suffix='_WF_profiles_V', headerList=header)
+        self.__plotter.save_csv_file(data2saveV, file_prefix=saveFileSuf, file_suffix='_WF_profiles_V', headerList=header)
 
         figure2 = Figure(figsize=(12, 12 * 9 / 16))
         figure2.gca().imshow(arrayV, cmap='RdGy', vmin=common_tools.mean_plus_n_sigma(arrayV, -3), vmax=common_tools.mean_plus_n_sigma(arrayV, 3))

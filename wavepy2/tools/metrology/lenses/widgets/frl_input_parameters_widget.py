@@ -118,8 +118,8 @@ class AbstractFRLInputParametersWidget():
     HEIGHT = 430
 
     def __init__(self, application_name=None):
-        self.__ini     = get_registered_ini_instance(application_name)
-        self.__logger  = get_registered_logger_instance()
+        self.__ini     = get_registered_ini_instance(application_name=application_name)
+        self.__logger  = get_registered_logger_instance(application_name=application_name)
 
         self.thickness_file_name  = self.__ini.get_string_from_ini("Files", "file with thickness")
 
@@ -212,7 +212,7 @@ from PyQt5.QtCore import Qt
 class FRLInputParametersWidget(AbstractFRLInputParametersWidget, WavePyWidget):
     def __init__(self, application_name=None, **kwargs):
         AbstractFRLInputParametersWidget.__init__(self, application_name)
-        WavePyWidget.__init__(self, parent=None)
+        WavePyWidget.__init__(self, parent=None, application_name=application_name)
 
         layout = QHBoxLayout()
         layout.setAlignment(Qt.AlignCenter)
@@ -235,4 +235,4 @@ class FRLInputParametersWidget(AbstractFRLInputParametersWidget, WavePyWidget):
 class FRLInputParametersDialog(AbstractFRLInputParametersWidget, WavePyInteractiveWidget):
     def __init__(self, parent, application_name=None, **kwargs):
         AbstractFRLInputParametersWidget.__init__(self, application_name)
-        WavePyInteractiveWidget.__init__(self, parent, message="Input Parameters", title="Input Parameters")
+        WavePyInteractiveWidget.__init__(self, parent, message="Input Parameters", title="Input Parameters", application_name=application_name)

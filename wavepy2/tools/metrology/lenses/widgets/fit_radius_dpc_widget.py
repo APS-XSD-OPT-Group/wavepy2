@@ -52,6 +52,11 @@ from warnings import filterwarnings
 filterwarnings("ignore")
 
 class FitRadiusDPC(WavePyWidget):
+    def __init__(self, parent=None, application_name=None, **kwargs):
+        super(FitRadiusDPC, self).__init__(parent=parent, application_name=application_name)
+
+        self.__logger  = get_registered_logger_instance(application_name=application_name)
+
     def get_plot_tab_name(self): return "Fit Radius"
 
     def build_mpl_figure(self, **kwargs):
@@ -61,8 +66,6 @@ class FitRadiusDPC(WavePyWidget):
         kwave     = kwargs["kwave"]
         str4title = kwargs["str4title"]
         radius4fit = kwargs["radius4fit"]
-
-        logger   = get_registered_logger_instance()
 
         xVec = common_tools.realcoordvec(dpx.shape[1], pixelsize[1])
         yVec = common_tools.realcoordvec(dpx.shape[0], pixelsize[0])
@@ -85,9 +88,9 @@ class FitRadiusDPC(WavePyWidget):
         ax1.plot(xVec[lim_x:-lim_x + 1] * 1e6, lin_funcx(xVec[lim_x:-lim_x + 1]), '--c', lw=2, label='Fit 1/2')
         curvrad_x = kwave / (lin_fitx[0])
 
-        logger.print_message('lin_fitx[0] x: {:.3g} m'.format(lin_fitx[0]))
-        logger.print_message('lin_fitx[1] x: {:.3g} m'.format(lin_fitx[1]))
-        logger.print_message('Curvature Radius of WF x: {:.3g} m'.format(curvrad_x))
+        self.__logger.print_message('lin_fitx[0] x: {:.3g} m'.format(lin_fitx[0]))
+        self.__logger.print_message('lin_fitx[1] x: {:.3g} m'.format(lin_fitx[1]))
+        self.__logger.print_message('Curvature Radius of WF x: {:.3g} m'.format(curvrad_x))
 
         ax1.ticklabel_format(style='sci', axis='y', scilimits=(0, 1))
         ax1.set_xlabel(r'[$\mu m$]')
@@ -104,7 +107,7 @@ class FitRadiusDPC(WavePyWidget):
         lin_funcy = np.poly1d(lin_fity)
         ax2.plot(yVec[lim_y:-lim_y + 1] * 1e6, lin_funcy(yVec[lim_y:-lim_y + 1]), '--c', lw=2, label='Fit 1/2')
         curvrad_y = kwave / (lin_fity[0])
-        logger.print_message('Curvature Radius of WF y: {:.3g} m'.format(curvrad_y))
+        self.__logger.print_message('Curvature Radius of WF y: {:.3g} m'.format(curvrad_y))
 
         ax2.ticklabel_format(style='sci', axis='y', scilimits=(0, 1))
         ax2.set_xlabel(r'[$\mu m$]')

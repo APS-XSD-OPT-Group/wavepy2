@@ -52,6 +52,7 @@ from PyQt5.QtCore import Qt
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 
 class WavePyGenericWidget(object):
+    def __init__(self, application_name=None): self._application_name = application_name
     def build_widget(self, **kwargs): raise NotImplementedError()
 
 class FigureToSave():
@@ -64,8 +65,9 @@ class FigureToSave():
 
 
 class WavePyWidget(QWidget, WavePyGenericWidget):
-    def __init__(self, parent=None, **kwargs):
-        super(WavePyWidget, self).__init__(parent=parent)
+    def __init__(self, parent=None, application_name=None, **kwargs):
+        QWidget.__init__(self, parent=parent)
+        WavePyGenericWidget.__init__(self, application_name=application_name)
 
         self.__allows_saving = True
 
@@ -100,7 +102,7 @@ class WavePyWidget(QWidget, WavePyGenericWidget):
         if not hasattr(self, "__figures_to_save") or self.__figures_to_save is None: self.__figures_to_save = []
         self.__figures_to_save.append(FigureToSave(figure=figure,
                                                    figure_file_name=figure_file_name if not common_tools.is_empty_string(figure_file_name) else \
-                                                       common_tools.get_unique_filename(get_registered_plotter_instance().get_save_file_prefix(), "png")))
+                                                       common_tools.get_unique_filename(get_registered_plotter_instance(application_name=self._application_name).get_save_file_prefix(), "png")))
 
     def build_mpl_figure(self, **kwargs): raise NotImplementedError()
 
@@ -113,8 +115,9 @@ class WavePyWidget(QWidget, WavePyGenericWidget):
 
 class WavePyInteractiveWidget(QDialog, WavePyGenericWidget):
 
-    def __init__(self, parent, message, title, **kwargs):
-        super(QDialog, self).__init__(parent)
+    def __init__(self, parent, message, title, application_name=None, **kwargs):
+        QDialog.__init__(self, parent)
+        WavePyGenericWidget.__init__(self, application_name=application_name)
 
         self.setWindowTitle(message)
         self.setModal(True)
@@ -189,7 +192,10 @@ class PlotterMode:
         if plotter_mode==cls.SAVE_ONLY: return "Save Only" 
         if plotter_mode==cls.NONE: return "None" 
 
-class __AbstractPlotter(PlotterFacade):
+class _AbstractPlotter(PlotterFacade):
+
+    def __init__(self, application_name=None):
+        self._application_name = application_name
 
     @classmethod
     def _save_images(cls, plot_widget_instance, **kwargs):
@@ -199,11 +205,11 @@ class __AbstractPlotter(PlotterFacade):
             for figure_to_save in figures_to_save: figure_to_save.save_figure(**kwargs)
 
     @classmethod
-    def _build_plot(cls, widget_class, **kwargs):
+    def _build_plot(cls, widget_class, application_name, **kwargs):
         if not issubclass(widget_class, WavePyWidget): raise ValueError("Widget class is not a WavePyWidget")
 
         try:
-            plot_widget_instance = widget_class(**kwargs)
+            plot_widget_instance = widget_class(parent=None, application_name=application_name, **kwargs)
             plot_widget_instance.build_widget(**kwargs)
 
             return plot_widget_instance
@@ -219,13 +225,13 @@ class __AbstractPlotter(PlotterFacade):
 
     def save_sdf_file(self, array, pixelsize=[1, 1], file_prefix=None, file_suffix="", extraHeader={}):
         file_name = self._get_file_name(file_prefix, file_suffix, "sdf")
-        plot_tools.save_sdf_file(array, pixelsize, file_name, extraHeader)
+        plot_tools.save_sdf_file(array, pixelsize, file_name, extraHeader, self._application_name)
 
         return file_name
 
     def save_csv_file(self, array_list, file_prefix=None, file_suffix="", headerList=[], comments=""):
         file_name = self._get_file_name(file_prefix, file_suffix, "csv")
-        plot_tools.save_csv_file(array_list, file_name, headerList, comments)
+        plot_tools.save_csv_file(array_list, file_name, headerList, comments, self._application_name)
 
         return file_name
 
@@ -234,8 +240,9 @@ class __AbstractPlotter(PlotterFacade):
 
 from wavepy2.util.plot.plot_tools import DefaultMainWindow
 
-class __AbstractActivePlotter(__AbstractPlotter):
-    def __init__(self):
+class _AbstractActivePlotter(_AbstractPlotter):
+    def __init__(self, application_name=None):
+        _AbstractPlotter.__init__(self, application_name=application_name)
         self.__plot_registry = {}
         self.__context_window_registry = {}
 
@@ -317,7 +324,7 @@ class __AbstractActivePlotter(__AbstractPlotter):
         if not issubclass(widget_class, WavePyInteractiveWidget): raise ValueError("Widget class is not a WavePyWidget")
 
         try:
-            interactive_widget_instance = widget_class(parent=container_widget, **kwargs)
+            interactive_widget_instance = widget_class(parent=container_widget, application_name=self._application_name, **kwargs)
             interactive_widget_instance.build_widget(**kwargs)
         except Exception as e:
             raise ValueError("Plot Widget can't be created: " + str(e))
@@ -329,35 +336,39 @@ class __AbstractActivePlotter(__AbstractPlotter):
         if context_key in self.__context_window_registry: self.__context_window_registry[context_key].show()
         else: pass
 
-class __FullPlotter(__AbstractActivePlotter):
+class __FullPlotter(_AbstractActivePlotter):
+    def __init__(self, application_name=None): _AbstractActivePlotter.__init__(self, application_name=application_name)
     def is_saving(self): return True
     def push_plot_on_context(self, context_key, widget_class, unique_id=None, **kwargs):
-        plot_widget_instance = self._build_plot(widget_class, **kwargs)
+        plot_widget_instance = self._build_plot(widget_class=widget_class, application_name=self._application_name, **kwargs)
         self._register_plot(context_key, plot_widget_instance, unique_id)
         self._save_images(plot_widget_instance, **kwargs)
 
-class __DisplayOnlyPlotter(__AbstractActivePlotter):
+class __DisplayOnlyPlotter(_AbstractActivePlotter):
+    def __init__(self, application_name=None): _AbstractActivePlotter.__init__(self, application_name=application_name)
     def is_saving(self): return False
-    def push_plot_on_context(self, context_key, widget_class, unique_id=None, **kwargs): self._register_plot(context_key, self._build_plot(widget_class, **kwargs), unique_id)
+    def push_plot_on_context(self, context_key, widget_class, unique_id=None, **kwargs): self._register_plot(context_key, self._build_plot(widget_class=widget_class, application_name=self._application_name, **kwargs), unique_id)
     def save_sdf_file(self, array, pixelsize=[1, 1], file_prefix=None, file_suffix="", extraHeader={}): return self._get_file_name(file_prefix, file_suffix, "sdf")
     def save_csv_file(self, array_list, file_prefix=None, file_suffix="", headerList=[], comments=""): return self._get_file_name(file_prefix, file_suffix, "csv")
 
-class __SaveOnlyPlotter(__AbstractActivePlotter):
+class __SaveOnlyPlotter(_AbstractActivePlotter):
+    def __init__(self, application_name=None): _AbstractActivePlotter.__init__(self, application_name=application_name)
     def is_active(self): return False
     def is_saving(self): return True
     def register_context_window(self, context_key, context_window=None, use_unique_id=False): pass
-    def push_plot_on_context(self, context_key, widget_class, unique_id=None, **kwargs): self._save_images(self._build_plot(widget_class, **kwargs))
+    def push_plot_on_context(self, context_key, widget_class, unique_id=None, **kwargs): self._save_images(self._build_plot(widget_class=widget_class, application_name=self._application_name, **kwargs))
     def get_context_container_widget(self, context_key, unique_id=None): return None
     def get_plots_of_context(self, context_key, unique_id=None): pass
     def draw_context_on_widget(self, context_key, container_widget, add_context_label=True, unique_id=None, **kwargs): pass
     def show_interactive_plot(self, widget_class, container_widget, **kwargs): pass
     def show_context_window(self, context_key, unique_id=None): pass
 
-class __NullPlotter(__AbstractPlotter):
+class __NullPlotter(_AbstractPlotter):
+    def __init__(self, application_name=None): _AbstractActivePlotter.__init__(self, application_name=application_name)
     def is_active(self): return False
     def is_saving(self): return False
     def register_context_window(self, context_key, context_window=None, use_unique_id=False): pass
-    def push_plot_on_context(self, context_key, widget_class, unique_id=None, **kwargs): self._build_plot(widget_class, **kwargs) # necessary for some operations
+    def push_plot_on_context(self, context_key, widget_class, unique_id=None, **kwargs): self._build_plot(widget_class=widget_class, application_name=self._application_name, **kwargs) # necessary for some operations
     def get_context_container_widget(self, context_key, unique_id=None): return None
     def get_plots_of_context(self, context_key, unique_id=None): pass
     def draw_context_on_widget(self, context_key, container_widget, add_context_label=True, unique_id=None, **kwargs): pass
@@ -366,40 +377,36 @@ class __NullPlotter(__AbstractPlotter):
     def save_sdf_file(self, array, pixelsize=[1, 1], file_prefix=None, file_suffix="", extraHeader={}): return self._get_file_name(file_prefix, file_suffix, "sdf")
     def save_csv_file(self, array_list, file_prefix=None, file_suffix="", headerList=[], comments=""): return self._get_file_name(file_prefix, file_suffix, "csv")
 
-from wavepy2.util.common.common_tools import AlreadyInitializedError
+from wavepy2.util.common.common_tools import GenericRegistry
 
 @Singleton
-class __PlotterRegistry:
+class __PlotterRegistry(GenericRegistry):
 
     def __init__(self):
-        self.__plotter_instance = None
+        GenericRegistry.__init__(self, registry_name="Plotter")
 
     @synchronized_method
-    def register_plotter(self, plotter_facade_instance = None):
-        if plotter_facade_instance is None: raise ValueError("Plotter Instance is None")
-        if not isinstance(plotter_facade_instance, PlotterFacade): raise ValueError("Plotter Instance do not implement Plotter Facade")
-
-        if self.__plotter_instance is None: self.__plotter_instance = plotter_facade_instance
-        else: raise AlreadyInitializedError("Plotter Instance already initialized")
+    def register_plotter(self, plotter_facade_instance, application_name=None):
+        super().register_instance(plotter_facade_instance, application_name)
 
     @synchronized_method
-    def reset(self):
-        self.__plotter_instance = None
+    def reset(self, application_name=None):
+        super().reset(application_name)
 
-    def get_plotter_instance(self):
-        return self.__plotter_instance
+    def get_plotter_instance(self, application_name=None):
+        return super().get_instance(application_name)
 
 # -----------------------------------------------------
 # Factory Methods
 
-def register_plotter_instance(plotter_mode=PlotterMode.FULL, reset=False):
+def register_plotter_instance(plotter_mode=PlotterMode.FULL, reset=False, application_name=None):
     if reset: __PlotterRegistry.Instance().reset()
 
-    if plotter_mode   == PlotterMode.FULL:         __PlotterRegistry.Instance().register_plotter(__FullPlotter())
-    elif plotter_mode == PlotterMode.DISPLAY_ONLY: __PlotterRegistry.Instance().register_plotter(__DisplayOnlyPlotter())
-    elif plotter_mode == PlotterMode.SAVE_ONLY:    __PlotterRegistry.Instance().register_plotter(__SaveOnlyPlotter())
-    elif plotter_mode == PlotterMode.NONE:         __PlotterRegistry.Instance().register_plotter(__NullPlotter())
+    if plotter_mode   == PlotterMode.FULL:         __PlotterRegistry.Instance().register_plotter(__FullPlotter(application_name), application_name)
+    elif plotter_mode == PlotterMode.DISPLAY_ONLY: __PlotterRegistry.Instance().register_plotter(__DisplayOnlyPlotter(application_name), application_name)
+    elif plotter_mode == PlotterMode.SAVE_ONLY:    __PlotterRegistry.Instance().register_plotter(__SaveOnlyPlotter(application_name), application_name)
+    elif plotter_mode == PlotterMode.NONE:         __PlotterRegistry.Instance().register_plotter(__NullPlotter(application_name), application_name)
 
-def get_registered_plotter_instance():
-    return __PlotterRegistry.Instance().get_plotter_instance()
+def get_registered_plotter_instance(application_name=None):
+    return __PlotterRegistry.Instance().get_plotter_instance(application_name)
 

@@ -106,7 +106,7 @@ class MainSingleGratingCoherenceZScan(WavePyScript):
     def _run_script(self, SCRIPT_LOGGER_MODE=LoggerMode.FULL, **args):
         SHOW_FOURIER, THREADING, N_CPUS = self.__parse_args(**args)
 
-        plotter = get_registered_plotter_instance()
+        plotter = get_registered_plotter_instance(application_name=self._get_application_name())
 
         try:
             single_grating_coherence_z_scan_manager = create_single_grating_coherence_z_scan_manager(THREADING, N_CPUS)

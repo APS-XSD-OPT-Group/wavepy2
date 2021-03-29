@@ -56,6 +56,12 @@ from warnings import filterwarnings
 filterwarnings("ignore")
 
 class PlotResidualParabolicLens2D(WavePyWidget):
+    def __init__(self, parent=None, application_name=None, **kwargs):
+        super(PlotResidualParabolicLens2D, self).__init__(parent=parent, application_name=application_name)
+
+        self.__logger  = get_registered_logger_instance(application_name=application_name)
+        self.__plotter = get_registered_plotter_instance(application_name=application_name)
+
     def get_plot_tab_name(self): return "Residual 2D"
 
     def build_mpl_figure(self, **kwargs):
@@ -76,9 +82,6 @@ class PlotResidualParabolicLens2D(WavePyWidget):
         except: unique_id = None
         output_data = kwargs["output_data"]
 
-        logger  = get_registered_logger_instance()
-        plotter = get_registered_plotter_instance()
-
         xmatrix, ymatrix = common_tools.grid_coord(thickness, pixelsize)
 
         errorThickness = thickness - fitted
@@ -89,10 +92,10 @@ class PlotResidualParabolicLens2D(WavePyWidget):
         factorz, unitz = common_tools.choose_unit(errorThickness[argNotNAN])
 
         ptp = np.ptp(errorThickness[argNotNAN].flatten() * factorz)
-        logger.print_message("PV: {0:4.3g} ".format(ptp) + unitz[-1] + "m")
+        self.__logger.print_message("PV: {0:4.3g} ".format(ptp) + unitz[-1] + "m")
 
         sigmaError = np.std(errorThickness[argNotNAN].flatten() * factorz)
-        logger.print_message("SDV: {0:4.3g} ".format(sigmaError) + unitz[-1] + "m")
+        self.__logger.print_message("SDV: {0:4.3g} ".format(sigmaError) + unitz[-1] + "m")
 
         str4title += r" Residual, R $= {:.4g} \mu m$,".format(fitParameters[0] * 1e6) + "\n" + \
                      r"PV $= {0:.2f}$ ".format(ptp) + "$" + unitz + "  m$, SDV $= {0:.2f}$ ".format(sigmaError) + "$" + unitz + "  m$"
@@ -111,52 +114,52 @@ class PlotResidualParabolicLens2D(WavePyWidget):
         cmap4graph.set_over("m")
         cmap4graph.set_under("c")
 
-        plotter.push_plot_on_context(context_key, PlotProfile, unique_id,
-                                     xmatrix=xmatrix * factorx,
-                                     ymatrix=ymatrix * factory,
-                                     zmatrix=errorThickness * factorz,
-                                     title="Residual",
-                                     str4title=str4title,
-                                     xlabel=r"[$" + unitx + "  m$ ]",
-                                     ylabel=r"[$" + unity + "  m$ ]",
-                                     zlabel=r"[$" + unitz + "  m$ ]",
-                                     arg4main={"cmap": "Spectral_r",
-                                               "vmin": -vlimErr,
-                                               "vmax": vlimErr,
-                                               "extend": "both"})
+        self.__plotter.push_plot_on_context(context_key, PlotProfile, unique_id,
+                                            xmatrix=xmatrix * factorx,
+                                            ymatrix=ymatrix * factory,
+                                            zmatrix=errorThickness * factorz,
+                                            title="Residual",
+                                            str4title=str4title,
+                                            xlabel=r"[$" + unitx + "  m$ ]",
+                                            ylabel=r"[$" + unity + "  m$ ]",
+                                            zlabel=r"[$" + unitz + "  m$ ]",
+                                            arg4main={"cmap": "Spectral_r",
+                                                      "vmin": -vlimErr,
+                                                      "vmax": vlimErr,
+                                                      "extend": "both"})
 
-        plotter.push_plot_on_context(context_key, CountourPlot, unique_id,
-                                     xmatrix=xmatrix * factorx,
-                                     ymatrix=ymatrix * factory,
-                                     zmatrix=errorThickness * factorz,
-                                     str4title=str4title,
-                                     unitx=unitx,
-                                     unity=unity,
-                                     unitz=unitz,
-                                     vlimErr=vlimErr,
-                                     cmap4graph=cmap4graph)
+        self.__plotter.push_plot_on_context(context_key, CountourPlot, unique_id,
+                                            xmatrix=xmatrix * factorx,
+                                            ymatrix=ymatrix * factory,
+                                            zmatrix=errorThickness * factorz,
+                                            str4title=str4title,
+                                            unitx=unitx,
+                                            unity=unity,
+                                            unitz=unitz,
+                                            vlimErr=vlimErr,
+                                            cmap4graph=cmap4graph)
 
         # Plot 3D
 
         if plot3dFlag:
-            plotter.push_plot_on_context(context_key, Plot3D, unique_id,
-                                         xmatrix=xmatrix[argNotNAN].flatten() * factorx,
-                                         ymatrix=ymatrix[argNotNAN].flatten() * factory,
-                                         zmatrix=errorThickness[argNotNAN].flatten() * factorz,
-                                         str4title=str4title,
-                                         unitx=unitx,
-                                         unity=unity,
-                                         unitz=unitz,
-                                         vlimErr=vlimErr,
-                                         cmap4graph=cmap4graph)
+            self.__plotter.push_plot_on_context(context_key, Plot3D, unique_id,
+                                                xmatrix=xmatrix[argNotNAN].flatten() * factorx,
+                                                ymatrix=ymatrix[argNotNAN].flatten() * factory,
+                                                zmatrix=errorThickness[argNotNAN].flatten() * factorz,
+                                                str4title=str4title,
+                                                unitx=unitx,
+                                                unity=unity,
+                                                unitz=unitz,
+                                                vlimErr=vlimErr,
+                                                cmap4graph=cmap4graph)
 
         if saveSdfData:
             mask_for_sdf = errorThickness * 0.0
             mask_for_sdf[~argNotNAN] = 1.0
             errorThickness[~argNotNAN] = 00000000
 
-            plotter.save_sdf_file(errorThickness, pixelsize, file_suffix="_residual")
-            plotter.save_sdf_file(mask_for_sdf, pixelsize, file_suffix="_residual_mask")
+            self.__plotter.save_sdf_file(errorThickness, pixelsize, file_suffix="_residual")
+            self.__plotter.save_sdf_file(mask_for_sdf, pixelsize, file_suffix="_residual_mask")
 
         output_data["sigma"] = sigmaError / factorz
         output_data["pv"]    = ptp / factorz
@@ -165,6 +168,9 @@ class PlotResidualParabolicLens2D(WavePyWidget):
 
 
 class CountourPlot(WavePyWidget):
+    def __init__(self, parent=None, application_name=None, **kwargs):
+        WavePyWidget.__init__(self, parent=parent, application_name=application_name)
+
     def get_plot_tab_name(self): return "Residual 2D - Countour"
 
     def build_mpl_figure(self, **kwargs):
@@ -202,6 +208,11 @@ class CountourPlot(WavePyWidget):
 
 
 class Plot3D(WavePyWidget):
+    def __init__(self, parent=None, application_name=None, **kwargs):
+        super(Plot3D, self).__init__(parent=parent, application_name=application_name)
+
+        self.__logger  = get_registered_logger_instance(application_name=application_name)
+
     def get_plot_tab_name(self): return "Residual 2D - Plot 3D"
 
     def build_mpl_figure(self, **kwargs):
@@ -215,9 +226,7 @@ class Plot3D(WavePyWidget):
         vlimErr    = kwargs["vlimErr"]
         cmap4graph = kwargs["cmap4graph"]
 
-        logger  = get_registered_logger_instance()
-
-        logger.print_message("Plotting 3d in the background")
+        self.__logger.print_message("Plotting 3d in the background")
 
         fig = Figure(figsize=(10, 7), facecolor="white")
         ax = fig.gca(projection="3d")

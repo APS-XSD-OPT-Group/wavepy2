@@ -62,7 +62,7 @@ class MainFitResidualLenses(WavePyScript):
     def _get_ini_file_name(self): return ".fit_residual_lenses.ini"
 
     def _run_script(self, SCRIPT_LOGGER_MODE=LoggerMode.FULL, **args):
-        plotter = get_registered_plotter_instance()
+        plotter = get_registered_plotter_instance(application_name=self._get_application_name())
 
         fit_residual_lenses_manager = create_fit_residual_lenses_manager()
 

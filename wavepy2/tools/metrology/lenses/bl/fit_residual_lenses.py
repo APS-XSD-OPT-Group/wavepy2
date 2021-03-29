@@ -97,9 +97,9 @@ DO_FIT_CONTEXT_KEY = "Do fit"
 class __FitResidualLenses(FitResidualLensesFacade):
 
     def __init__(self):
-        self.__plotter     = get_registered_plotter_instance()
-        self.__main_logger = get_registered_logger_instance()
-        self.__ini         = get_registered_ini_instance(APPLICATION_NAME)
+        self.__plotter     = get_registered_plotter_instance(application_name=APPLICATION_NAME)
+        self.__main_logger = get_registered_logger_instance(application_name=APPLICATION_NAME)
+        self.__ini         = get_registered_ini_instance(application_name=APPLICATION_NAME)
 
     # %% ==================================================================================================
 
@@ -112,7 +112,7 @@ class __FitResidualLenses(FitResidualLensesFacade):
                                                                context_window=plotting_properties.get_context_widget(),
                                                                use_unique_id=use_unique_id)
 
-            self.__plotter.push_plot_on_context(INITIALIZATION_PARAMETERS_KEY, FRLInputParametersWidget, unique_id, application_name=APPLICATION_NAME, **kwargs)
+            self.__plotter.push_plot_on_context(INITIALIZATION_PARAMETERS_KEY, FRLInputParametersWidget, unique_id, **kwargs)
             self.__plotter.draw_context(INITIALIZATION_PARAMETERS_KEY, add_context_label=add_context_label, unique_id=unique_id, **kwargs)
 
             return self.__plotter.get_plots_of_context(INITIALIZATION_PARAMETERS_KEY, unique_id=unique_id)
@@ -121,7 +121,7 @@ class __FitResidualLenses(FitResidualLensesFacade):
 
     def get_initialization_parameters(self, plotting_properties=PlottingProperties(), **kwargs):
         if self.__plotter.is_active():
-            initialization_parameters = self.__plotter.show_interactive_plot(FRLInputParametersDialog, application_name=APPLICATION_NAME, container_widget=None)
+            initialization_parameters = self.__plotter.show_interactive_plot(FRLInputParametersDialog, container_widget=None)
         else:
             initialization_parameters = generate_initialization_parameters_frl(thickness_file_name=self.__ini.get_string_from_ini("Files", "file with thickness"),
                                                                                str4title=self.__ini.get_string_from_ini("Parameters", "String for Titles", default="Be Lens"),
@@ -135,18 +135,17 @@ class __FitResidualLenses(FitResidualLensesFacade):
         return initialization_parameters
 
     def manager_initialization(self, initialization_parameters, script_logger_mode=LoggerMode.FULL):
-        plotter = get_registered_plotter_instance()
-        plotter.register_save_file_prefix(initialization_parameters.get_parameter("saveFileSuf"))
+        self.__plotter.register_save_file_prefix(initialization_parameters.get_parameter("saveFileSuf"))
 
-        if not script_logger_mode == LoggerMode.NONE: stream = open(plotter.get_save_file_prefix() + "_" + common_tools.datetime_now_str() + ".log", "wt")
+        if not script_logger_mode == LoggerMode.NONE: stream = open(self.__plotter.get_save_file_prefix() + "_" + common_tools.datetime_now_str() + ".log", "wt")
         else: stream = None
 
-        register_secondary_logger(stream=stream, logger_mode=script_logger_mode)
+        register_secondary_logger(stream=stream, logger_mode=script_logger_mode, application_name=APPLICATION_NAME)
 
         self.__wavelength = hc / initialization_parameters.get_parameter("phenergy")
         self.__kwave = 2 * np.pi / self.__wavelength
 
-        self.__script_logger = get_registered_secondary_logger()
+        self.__script_logger = get_registered_secondary_logger(application_name=APPLICATION_NAME)
 
         return initialization_parameters
 

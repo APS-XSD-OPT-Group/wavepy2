@@ -43,58 +43,32 @@
 # POSSIBILITY OF SUCH DAMAGE.                                             #
 # #########################################################################
 import numpy as np
+from scipy.ndimage.filters import uniform_filter
+from skimage.restoration import unwrap_phase
+
 from wavepy2.tools.common.widgets.extract_harmonic_plot_widget import ExtractHarmonicPlot
 from wavepy2.tools.common.widgets.harmonic_grid_plot_widget import HarmonicGridPlot
 from wavepy2.tools.common.widgets.single_grating_harmonic_images_widget import SingleGratingHarmonicImages
-from wavepy2.util.log.logger   import get_registered_logger_instance
-from wavepy2.util.plot.plotter import get_registered_plotter_instance
+from wavepy2.util.log.logger   import LoggerFacade
+from wavepy2.util.plot.plotter import PlotterFacade
 from wavepy2.util.common.common_tools import FourierTransform, get_idxPeak_ij, get_idxPeak_ij_exp, crop_matrix_at_indexes, mean_plus_n_sigma
 
-from skimage.restoration import unwrap_phase
 
-def __check_harmonic_inside_image(harV, harH, nRows, nColumns, periodVert, periodHor):
-    """
-    Check if full harmonic image is within the main image
-    """
-    logger = get_registered_logger_instance()
+class MockLogger(LoggerFacade):
+    def print(self, message): pass
+    def print_message(self, message): pass
+    def print_warning(self, message): pass
+    def print_error(self, message): pass
+    def print_other(self, message, prefix, color): pass
 
-    errFlag = False
+class MockPlotter(PlotterFacade):
+    def push_plot_on_context(self, context_key, widget_class, unique_id=None, **kwargs): pass
 
-    if (harV + .5)*periodVert > nRows / 2:
-        logger.print_error("Harmonic Peak {:d}{:d}".format(harV, harH) + " is out of image vertical range.")
-        errFlag = True
-
-    if (harH + .5)*periodHor > nColumns / 2:
-        logger.print_error("Harmonic Peak {:d}{:d}".format(harV, harH) + " is out of image horizontal range.")
-        errFlag = True
-
-    if errFlag:
-        raise ValueError("ERROR: Harmonic Peak " +
-                         "{:d}{:d} is ".format(harV, harH) +
-                         "out of image frequency range.")
-
-def __error_harmonic_peak(imgFFT, harV, harH, periodVert, periodHor, searchRegion=10):
-    """
-    Error in pixels (in the reciprocal space) between the harmonic peak and
-    the provided theoretical value
-    """
-
-    #  Estimate harmonic positions
-
-    idxPeak_ij     = get_idxPeak_ij(harV, harH, imgFFT.shape[0], imgFFT.shape[1], periodVert, periodHor)
-    idxPeak_ij_exp = get_idxPeak_ij_exp(imgFFT, harV, harH, periodVert, periodHor, searchRegion)
-
-    del_i = idxPeak_ij_exp[0] - idxPeak_ij[0]
-    del_j = idxPeak_ij_exp[1] - idxPeak_ij[1]
-
-    return del_i, del_j
-
-def exp_harm_period(img, harmonicPeriod, harmonic_ij='00', searchRegion=10, isFFT=False):
+def exp_harm_period(img, harmonicPeriod, harmonic_ij='00', searchRegion=10, isFFT=False, logger=MockLogger()):
     """
     Function to obtain the position (in pixels) in the reciprocal space
     of the first harmonic ().
     """
-    logger = get_registered_logger_instance()
 
     (nRows, nColumns) = img.shape # this is important in the case of FFT = false it takes the direct space
 
@@ -125,134 +99,7 @@ def exp_harm_period(img, harmonicPeriod, harmonic_ij='00', searchRegion=10, isFF
 
     return periodVert + del_i, periodHor + del_j
 
-def extract_harmonic(imgFFT, harmonicPeriod, harmonic_ij='00', searchRegion=10, context_key="extract_harmonic", image_name="Image", unique_id=None, **kwargs):
-    logger  = get_registered_logger_instance()
-    plotter = get_registered_plotter_instance()
-
-    (nRows, nColumns) = imgFFT.shape
-
-    harV = int(harmonic_ij[0])
-    harH = int(harmonic_ij[1])
-
-    periodVert = harmonicPeriod[0]
-    periodHor = harmonicPeriod[1]
-
-    logger.print_message("Extracting harmonic " + harmonic_ij[0] + harmonic_ij[1])
-    logger.print_message("Harmonic period Horizontal: {:d} pixels".format(periodHor))
-    logger.print_message("Harmonic period Vertical: {:d} pixels".format(periodVert))
-
-    # adjusts for 1D grating
-    if periodVert <= 0 or periodVert is None:
-        periodVert = nRows
-        logger.print_message("Assuming Horizontal 1D Grating")
-
-    if periodHor <= 0 or periodHor is None:
-        periodHor = nColumns
-        logger.print_message("Assuming Vertical 1D Grating")
-
-    __check_harmonic_inside_image(harV, harH, nRows, nColumns, periodVert, periodHor)
-
-    intensity = (np.abs(imgFFT))
-
-    #  Estimate harmonic positions
-    idxPeak_ij   = get_idxPeak_ij(harV, harH, nRows, nColumns, periodVert, periodHor)
-    del_i, del_j = __error_harmonic_peak(imgFFT, harV, harH, periodVert, periodHor, searchRegion)
-
-    logger.print_message("extract_harmonic: harmonic peak " + harmonic_ij[0] + harmonic_ij[1] + " is misplaced by:")
-    logger.print_message("{:d} pixels in vertical, {:d} pixels in hor".format(del_i, del_j))
-    logger.print_message("Theoretical peak index: {:d},{:d} [VxH]".format(idxPeak_ij[0], idxPeak_ij[1]))
-
-    if ((np.abs(del_i) > searchRegion // 2) or (np.abs(del_j) > searchRegion // 2)):
-        logger.print_warning("Harmonic Peak " + harmonic_ij[0] + harmonic_ij[1] + " is too far from theoretical value.")
-        logger.print_warning("{:d} pixels in vertical, {:d} pixels in hor".format(del_i, del_j))
-
-    plotter.push_plot_on_context(context_key, ExtractHarmonicPlot, unique_id,
-                                 intensity=intensity,
-                                 idxPeak_ij=idxPeak_ij,
-                                 harmonic_ij=harmonic_ij,
-                                 nColumns=nColumns,
-                                 nRows=nRows,
-                                 periodVert=periodVert,
-                                 periodHor=periodHor,
-                                 image_name=image_name, **kwargs)
-
-    return imgFFT[idxPeak_ij[0] - periodVert // 2:
-                  idxPeak_ij[0] + periodVert//2,
-                  idxPeak_ij[1] - periodHor//2:
-                  idxPeak_ij[1] + periodHor//2]
-
-def single_grating_harmonic_images(img, harmonicPeriod, searchRegion=10, context_key="single_grating_harmonic", image_name="", unique_id=None, **kwargs):
-    """
-    Auxiliary function to process the data of single 2D grating Talbot imaging.
-    It obtain the (real space) harmonic images  00, 01 and 10.
-
-    Parameters
-    ----------
-    img : 	ndarray – Data (data_exchange format)
-        Experimental image, whith proper blank image, crop and rotation already
-        applied.
-
-    harmonicPeriod : list of integers in the format [periodVert, periodHor]
-        ``periodVert`` and ``periodVert`` are the period of the harmonics in
-        the reciprocal space in pixels. For the checked board grating,
-        periodVert = sqrt(2) * pixel Size / grating Period * number of
-        rows in the image. For 1D grating, set one of the values to negative or
-        zero (it will set the period to number of rows or colunms).
-
-    searchRegion: int
-        search for the peak will be in a region of harmonicPeriod/searchRegion
-        around the theoretical peak position. See also
-        `:py:func:`wavepy.grating_interferometry.plot_harmonic_grid`
-
-    Returns
-    -------
-    three 2D ndarray data
-        Images obtained from the harmonics 00, 01 and 10.
-
-    """
-    plotter = get_registered_plotter_instance()
-
-    imgFFT = FourierTransform.fft2d(img)
-
-    plotter.push_plot_on_context(context_key, HarmonicGridPlot, unique_id, imgFFT=imgFFT, harmonicPeriod=harmonicPeriod, image_name=image_name, **kwargs)
-
-    imgFFT00 = extract_harmonic(imgFFT,
-                                harmonicPeriod=harmonicPeriod,
-                                harmonic_ij='00',
-                                searchRegion=searchRegion,
-                                context_key=context_key,
-                                image_name=image_name, unique_id=unique_id, **kwargs)
-
-    imgFFT01 = extract_harmonic(imgFFT,
-                                harmonicPeriod=harmonicPeriod,
-                                harmonic_ij=['0', '1'],
-                                searchRegion=searchRegion,
-                                context_key=context_key,
-                                image_name=image_name, unique_id=unique_id, **kwargs)
-
-    imgFFT10 = extract_harmonic(imgFFT,
-                                harmonicPeriod=harmonicPeriod,
-                                harmonic_ij=['1', '0'],
-                                searchRegion=searchRegion,
-                                context_key=context_key,
-                                image_name=image_name, unique_id=unique_id, **kwargs)
-
-    plotter.push_plot_on_context(context_key, SingleGratingHarmonicImages, unique_id,
-                                 imgFFT00=imgFFT00, imgFFT01=imgFFT01, imgFFT10=imgFFT10,
-                                 image_name=image_name, **kwargs)
-
-    img00 = FourierTransform.ifft2d(imgFFT00)
-
-    # non existing harmonics will return NAN, so here we check NAN
-    if np.all(np.isfinite(imgFFT01)): img01 = FourierTransform.ifft2d(imgFFT01)
-    else: img01 = imgFFT01
-
-    if np.all(np.isfinite(imgFFT10)): img10 = FourierTransform.ifft2d(imgFFT10)
-    else: img10 = imgFFT10
-
-    return (img00, img01, img10)
-
-def single_2Dgrating_analyses(img, img_ref=None, harmonicPeriod=None, unwrapFlag=True, context_key="single_2Dgrating_analyses", unique_id=None, **kwargs):
+def single_2Dgrating_analyses(img, img_ref=None, harmonicPeriod=None, unwrapFlag=True, context_key="single_2Dgrating_analyses", unique_id=None, logger=MockLogger(), plotter=MockPlotter(), **kwargs):
     """
     Function to process the data of single 2D grating Talbot imaging. It
     wraps other functions in order to make all the process transparent
@@ -260,10 +107,10 @@ def single_2Dgrating_analyses(img, img_ref=None, harmonicPeriod=None, unwrapFlag
     """
 
     # Obtain Harmonic images
-    h_img = single_grating_harmonic_images(img, harmonicPeriod, context_key=context_key, unique_id=unique_id, **kwargs)
+    h_img = __single_grating_harmonic_images(img, harmonicPeriod, context_key=context_key, unique_id=unique_id, logger=logger, plotter=plotter, **kwargs)
 
     if img_ref is not None:  # relative wavefront
-        h_img_ref = single_grating_harmonic_images(img_ref, harmonicPeriod, context_key=context_key, image_name="Ref", unique_id=unique_id, **kwargs)
+        h_img_ref = __single_grating_harmonic_images(img_ref, harmonicPeriod, context_key=context_key, image_name="Ref", unique_id=unique_id, logger=logger, plotter=plotter, **kwargs)
 
         int00 = np.abs(h_img[0])/np.abs(h_img_ref[0])
         int01 = np.abs(h_img[1])/np.abs(h_img_ref[1])
@@ -300,8 +147,6 @@ def single_2Dgrating_analyses(img, img_ref=None, harmonicPeriod=None, unwrapFlag
     return [int00, int01, int10,
             darkField01, darkField10,
             arg01, arg10]
-
-from scipy.ndimage.filters import uniform_filter
 
 def visib_1st_harmonics(img, harmonicPeriod, searchRegion=20, unFilterSize=1):
     """
@@ -361,3 +206,170 @@ def visib_1st_harmonics(img, harmonicPeriod, searchRegion=20, unFilterSize=1):
     peak01 = arg_imgFFT[_idxPeak_ij_exp01[0], _idxPeak_ij_exp01[1]]
 
     return 2*peak10/peak00, 2*peak01/peak00, _idxPeak_ij_exp00, _idxPeak_ij_exp10, _idxPeak_ij_exp01
+
+####################################
+# PRIVATE METHODS
+
+def __check_harmonic_inside_image(harV, harH, nRows, nColumns, periodVert, periodHor, logger):
+    """
+    Check if full harmonic image is within the main image
+    """
+    errFlag = False
+
+    if (harV + .5)*periodVert > nRows / 2:
+        logger.print_error("Harmonic Peak {:d}{:d}".format(harV, harH) + " is out of image vertical range.")
+        errFlag = True
+
+    if (harH + .5)*periodHor > nColumns / 2:
+        logger.print_error("Harmonic Peak {:d}{:d}".format(harV, harH) + " is out of image horizontal range.")
+        errFlag = True
+
+    if errFlag:
+        raise ValueError("ERROR: Harmonic Peak " +
+                         "{:d}{:d} is ".format(harV, harH) +
+                         "out of image frequency range.")
+
+def __error_harmonic_peak(imgFFT, harV, harH, periodVert, periodHor, searchRegion=10):
+    """
+    Error in pixels (in the reciprocal space) between the harmonic peak and
+    the provided theoretical value
+    """
+
+    #  Estimate harmonic positions
+
+    idxPeak_ij     = get_idxPeak_ij(harV, harH, imgFFT.shape[0], imgFFT.shape[1], periodVert, periodHor)
+    idxPeak_ij_exp = get_idxPeak_ij_exp(imgFFT, harV, harH, periodVert, periodHor, searchRegion)
+
+    del_i = idxPeak_ij_exp[0] - idxPeak_ij[0]
+    del_j = idxPeak_ij_exp[1] - idxPeak_ij[1]
+
+    return del_i, del_j
+
+def __extract_harmonic(imgFFT, harmonicPeriod, harmonic_ij='00', searchRegion=10, context_key="extract_harmonic", image_name="Image", unique_id=None, logger=MockLogger(), plotter=MockPlotter(), **kwargs):
+    (nRows, nColumns) = imgFFT.shape
+
+    harV = int(harmonic_ij[0])
+    harH = int(harmonic_ij[1])
+
+    periodVert = harmonicPeriod[0]
+    periodHor = harmonicPeriod[1]
+
+    logger.print_message("Extracting harmonic " + harmonic_ij[0] + harmonic_ij[1])
+    logger.print_message("Harmonic period Horizontal: {:d} pixels".format(periodHor))
+    logger.print_message("Harmonic period Vertical: {:d} pixels".format(periodVert))
+
+    # adjusts for 1D grating
+    if periodVert <= 0 or periodVert is None:
+        periodVert = nRows
+        logger.print_message("Assuming Horizontal 1D Grating")
+
+    if periodHor <= 0 or periodHor is None:
+        periodHor = nColumns
+        logger.print_message("Assuming Vertical 1D Grating")
+
+    __check_harmonic_inside_image(harV, harH, nRows, nColumns, periodVert, periodHor, logger)
+
+    intensity = (np.abs(imgFFT))
+
+    #  Estimate harmonic positions
+    idxPeak_ij   = get_idxPeak_ij(harV, harH, nRows, nColumns, periodVert, periodHor)
+    del_i, del_j = __error_harmonic_peak(imgFFT, harV, harH, periodVert, periodHor, searchRegion)
+
+    logger.print_message("extract_harmonic: harmonic peak " + harmonic_ij[0] + harmonic_ij[1] + " is misplaced by:")
+    logger.print_message("{:d} pixels in vertical, {:d} pixels in hor".format(del_i, del_j))
+    logger.print_message("Theoretical peak index: {:d},{:d} [VxH]".format(idxPeak_ij[0], idxPeak_ij[1]))
+
+    if ((np.abs(del_i) > searchRegion // 2) or (np.abs(del_j) > searchRegion // 2)):
+        logger.print_warning("Harmonic Peak " + harmonic_ij[0] + harmonic_ij[1] + " is too far from theoretical value.")
+        logger.print_warning("{:d} pixels in vertical, {:d} pixels in hor".format(del_i, del_j))
+
+    plotter.push_plot_on_context(context_key, ExtractHarmonicPlot, unique_id,
+                                 intensity=intensity,
+                                 idxPeak_ij=idxPeak_ij,
+                                 harmonic_ij=harmonic_ij,
+                                 nColumns=nColumns,
+                                 nRows=nRows,
+                                 periodVert=periodVert,
+                                 periodHor=periodHor,
+                                 image_name=image_name, **kwargs)
+
+    return imgFFT[idxPeak_ij[0] - periodVert // 2:
+                  idxPeak_ij[0] + periodVert//2,
+                  idxPeak_ij[1] - periodHor//2:
+                  idxPeak_ij[1] + periodHor//2]
+
+def __single_grating_harmonic_images(img, harmonicPeriod, searchRegion=10, context_key="single_grating_harmonic", image_name="", unique_id=None, logger=MockLogger(), plotter=MockPlotter(), **kwargs):
+    """
+    Auxiliary function to process the data of single 2D grating Talbot imaging.
+    It obtain the (real space) harmonic images  00, 01 and 10.
+
+    Parameters
+    ----------
+    img : 	ndarray – Data (data_exchange format)
+        Experimental image, whith proper blank image, crop and rotation already
+        applied.
+
+    harmonicPeriod : list of integers in the format [periodVert, periodHor]
+        ``periodVert`` and ``periodVert`` are the period of the harmonics in
+        the reciprocal space in pixels. For the checked board grating,
+        periodVert = sqrt(2) * pixel Size / grating Period * number of
+        rows in the image. For 1D grating, set one of the values to negative or
+        zero (it will set the period to number of rows or colunms).
+
+    searchRegion: int
+        search for the peak will be in a region of harmonicPeriod/searchRegion
+        around the theoretical peak position. See also
+        `:py:func:`wavepy.grating_interferometry.plot_harmonic_grid`
+
+    Returns
+    -------
+    three 2D ndarray data
+        Images obtained from the harmonics 00, 01 and 10.
+
+    """
+
+    imgFFT = FourierTransform.fft2d(img)
+
+    plotter.push_plot_on_context(context_key, HarmonicGridPlot, unique_id, imgFFT=imgFFT, harmonicPeriod=harmonicPeriod, image_name=image_name, **kwargs)
+
+    imgFFT00 = __extract_harmonic(imgFFT,
+                                  harmonicPeriod=harmonicPeriod,
+                                  harmonic_ij='00',
+                                  searchRegion=searchRegion,
+                                  context_key=context_key,
+                                  image_name=image_name, unique_id=unique_id,
+                                  logger=logger, plotter=plotter,
+                                  **kwargs)
+
+    imgFFT01 = __extract_harmonic(imgFFT,
+                                  harmonicPeriod=harmonicPeriod,
+                                  harmonic_ij=['0', '1'],
+                                  searchRegion=searchRegion,
+                                  context_key=context_key,
+                                  image_name=image_name, unique_id=unique_id,
+                                  logger=logger, plotter=plotter,
+                                  **kwargs)
+
+    imgFFT10 = __extract_harmonic(imgFFT,
+                                  harmonicPeriod=harmonicPeriod,
+                                  harmonic_ij=['1', '0'],
+                                  searchRegion=searchRegion,
+                                  context_key=context_key,
+                                  image_name=image_name, unique_id=unique_id,
+                                  logger=logger, plotter=plotter,
+                                  **kwargs)
+
+    plotter.push_plot_on_context(context_key, SingleGratingHarmonicImages, unique_id,
+                                 imgFFT00=imgFFT00, imgFFT01=imgFFT01, imgFFT10=imgFFT10,
+                                 image_name=image_name, **kwargs)
+
+    img00 = FourierTransform.ifft2d(imgFFT00)
+
+    # non existing harmonics will return NAN, so here we check NAN
+    if np.all(np.isfinite(imgFFT01)): img01 = FourierTransform.ifft2d(imgFFT01)
+    else: img01 = imgFFT01
+
+    if np.all(np.isfinite(imgFFT10)): img10 = FourierTransform.ifft2d(imgFFT10)
+    else: img10 = imgFFT10
+
+    return (img00, img01, img10)

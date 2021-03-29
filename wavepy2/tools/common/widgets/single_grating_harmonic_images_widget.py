@@ -48,6 +48,9 @@ from wavepy2.util.common.common_tools import extent_func, is_empty_string
 from wavepy2.util.plot.plotter import WavePyWidget
 
 class SingleGratingHarmonicImages(WavePyWidget):
+    def __init__(self, parent=None, application_name=None, **kwargs):
+        WavePyWidget.__init__(self, parent=parent, application_name=application_name)
+
     def get_plot_tab_name(self): return self.__image_name + "Intensity in Fourier Space"
 
     def build_mpl_figure(self, **kwargs):

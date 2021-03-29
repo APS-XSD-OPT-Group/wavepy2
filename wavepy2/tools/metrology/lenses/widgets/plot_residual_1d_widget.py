@@ -53,6 +53,12 @@ from warnings import filterwarnings
 filterwarnings("ignore")
 
 class PlotResidual1D(WavePyWidget):
+    def __init__(self, parent=None, application_name=None, **kwargs):
+        super(PlotResidual1D, self).__init__(parent=parent, application_name=application_name)
+
+        self.__logger   = get_registered_logger_instance(application_name=application_name)
+        self.__plotter  = get_registered_plotter_instance(application_name=application_name)
+
     def get_plot_tab_name(self): return "Fit center profile " + self.__direction
 
     def build_mpl_figure(self, **kwargs):
@@ -64,8 +70,6 @@ class PlotResidual1D(WavePyWidget):
         try:    saveAscii = kwargs["saveAscii"]
         except: saveAscii = False
 
-        logger   = get_registered_logger_instance()
-
         errorThickness = -data + fitted
         argNotNAN = np.isfinite(errorThickness)
 
@@ -76,8 +80,8 @@ class PlotResidual1D(WavePyWidget):
         ptp        = np.ptp(errorThickness[argNotNAN].flatten() * factory2)
         sigmaError = np.std(errorThickness[argNotNAN].flatten() * factory2)
 
-        logger.print_message("PV: {0:4.3g} ".format(ptp) + unity2[-1] + "m")
-        logger.print_message("SDV: {0:4.3g} ".format(sigmaError) + unity2[-1] + "m")
+        self.__logger.print_message("PV: {0:4.3g} ".format(ptp) + unity2[-1] + "m")
+        self.__logger.print_message("SDV: {0:4.3g} ".format(sigmaError) + unity2[-1] + "m")
 
         str4title += "\n" + r"PV $= {0:.2f}$ ".format(ptp) + "$" + unity2 + "  m$, SDV $= {0:.2f}$ ".format(sigmaError) + "$" + unity2 + "  m$"
 
@@ -112,7 +116,7 @@ class PlotResidual1D(WavePyWidget):
         fig.tight_layout(rect=(0, 0, 1, .98))
 
         if saveAscii:
-            np.savetxt(common_tools.get_unique_filename(get_registered_plotter_instance().get_save_file_prefix(), "csv"),
+            np.savetxt(common_tools.get_unique_filename(self.__plotter.get_save_file_prefix(), "csv"),
                        np.transpose([xvec, data, fitted, fitted - data]),
                        delimiter=",\t",
                        header="xvec, data, fitted, residual, " + str4title,

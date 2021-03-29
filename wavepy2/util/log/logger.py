@@ -187,85 +187,99 @@ class __LoggerPool(LoggerFacade):
 
 
 class __AbstractLoggerRegistry:
-    def register_logger(self, logger_facade_instance = None): raise NotImplementedError()
-    def reset(self): NotImplementedError()
-    def get_logger_instance(self): NotImplementedError()
+    _NO_APPLICATION = "<NO APPLICATION>"
 
-from wavepy2.util.common.common_tools import AlreadyInitializedError
+    def register_logger(self, logger_facade_instance, application_name=None): raise NotImplementedError()
+    def reset(self, application_name=None): NotImplementedError()
+    def get_logger_instance(self, application_name=None): NotImplementedError()
+
+    def _get_application_name(self, application_name):
+        return self._NO_APPLICATION if application_name is None else application_name
+
+from wavepy2.util.common.common_tools import GenericRegistry
 
 @Singleton
-class __LoggerRegistry(__AbstractLoggerRegistry):
-
+class __LoggerRegistry(__AbstractLoggerRegistry, GenericRegistry):
     def __init__(self):
-        self.__logger_instance = None
+        GenericRegistry.__init__(self, registry_name="Logger")
 
     @synchronized_method
-    def register_logger(self, logger_facade_instance = None):
-        if logger_facade_instance is None: raise ValueError("Logger Instance is None")
-        if not isinstance(logger_facade_instance, LoggerFacade): raise ValueError("Logger Instance do not implement Logger Facade")
-
-        if self.__logger_instance is None: self.__logger_instance = logger_facade_instance
-        else: raise AlreadyInitializedError("Logger Instance already initialized")
+    def register_logger(self, logger_facade_instance, application_name=None):
+        super().register_instance(logger_facade_instance, application_name)
 
     @synchronized_method
-    def reset(self):
-        self.__logger_instance = None
+    def reset(self, application_name=None):
+        super().reset(application_name)
 
-    def get_logger_instance(self):
-        return self.__logger_instance
+    def get_logger_instance(self, application_name=None):
+        return super().get_instance(application_name)
+
 
 SECONDARY_LOGGER = "Secondary_Logger"
 
 @Singleton
 class __SecondaryLoggerRegistry(__AbstractLoggerRegistry):
     def __init__(self):
-        self.__logger_instances = {}
+        self.__logger_instances = {self._NO_APPLICATION: {}}
 
     @synchronized_method
-    def register_logger(self, logger_facade_instance = None, logger_name=SECONDARY_LOGGER):
+    def register_logger(self, logger_facade_instance, logger_name=SECONDARY_LOGGER, application_name=None):
         if logger_facade_instance is None: raise ValueError("Logger Instance is None")
         if not isinstance(logger_facade_instance, LoggerFacade): raise ValueError("Logger Instance do not implement Logger Facade")
 
-        if self.__logger_instances is None: self.__logger_instances = {logger_name : logger_facade_instance}
-        else: self.__logger_instances[logger_name] = logger_facade_instance
+        application_name = self._get_application_name(application_name)
+
+        if application_name in self.__logger_instances.keys():
+            if self.__logger_instances[application_name] is None: self.__logger_instances[application_name] = {logger_name : logger_facade_instance}
+            else: self.__logger_instances[application_name][logger_name] = logger_facade_instance
+        else:
+            self.__logger_instances[application_name] = {logger_name : logger_facade_instance}
 
     @synchronized_method
-    def reset(self):
-        self.__logger_instances = {}
+    def reset(self, application_name=None):
+        application_name = self._get_application_name(application_name)
 
-    def get_logger_instance(self, logger_name=SECONDARY_LOGGER):
-        return self.__logger_instances[logger_name]
+        if application_name in self.__logger_instances.keys(): self.__logger_instances[self._get_application_name(application_name)] = {}
+        else: raise ValueError("Logger Instance not existing")
 
+    def get_logger_instance(self, logger_name=SECONDARY_LOGGER, application_name=None):
+        application_name = self._get_application_name(application_name)
 
+        if application_name in self.__logger_instances.keys():
+            logger_instances = self.__logger_instances[self._get_application_name(application_name)]
+            if logger_name in logger_instances.keys(): return logger_instances[logger_name]
+            else: raise ValueError("Logger Instance not existing in the application registry")
+        else:
+            raise ValueError("Logger Instance not existing (application not registered)")
 
 # -----------------------------------------------------
 # Factory Methods
 
-def register_logger_pool_instance(stream_list=[], logger_mode=LoggerMode.FULL, reset=False):
+def register_logger_pool_instance(stream_list=[], logger_mode=LoggerMode.FULL, reset=False, application_name=None):
     if reset: __LoggerRegistry.Instance().reset()
     if logger_mode==LoggerMode.FULL:      logger_list = [__FullLogger(stream) for stream in stream_list]
     elif logger_mode==LoggerMode.NONE:    logger_list = [__NullLogger(stream) for stream in stream_list]
     elif logger_mode==LoggerMode.WARNING: logger_list = [__WarningLogger(stream) for stream in stream_list]
     elif logger_mode==LoggerMode.ERROR:   logger_list = [__ErrorLogger(stream) for stream in stream_list]
 
-    __LoggerRegistry.Instance().register_logger(__LoggerPool(logger_list=logger_list))
+    __LoggerRegistry.Instance().register_logger(__LoggerPool(logger_list=logger_list), application_name)
 
-def register_logger_single_instance(stream=DEFAULT_STREAM, logger_mode=LoggerMode.FULL, reset=False):
-    if reset: __LoggerRegistry.Instance().reset()
-    if logger_mode==LoggerMode.FULL:      __LoggerRegistry.Instance().register_logger(__FullLogger(stream))
-    elif logger_mode==LoggerMode.NONE:    __LoggerRegistry.Instance().register_logger(__NullLogger(stream))
-    elif logger_mode==LoggerMode.WARNING: __LoggerRegistry.Instance().register_logger(__WarningLogger(stream))
-    elif logger_mode==LoggerMode.ERROR:   __LoggerRegistry.Instance().register_logger(__ErrorLogger(stream))
+def register_logger_single_instance(stream=DEFAULT_STREAM, logger_mode=LoggerMode.FULL, reset=False, application_name=None):
+    if reset: __LoggerRegistry.Instance().reset(application_name)
+    if logger_mode==LoggerMode.FULL:      __LoggerRegistry.Instance().register_logger(__FullLogger(stream), application_name)
+    elif logger_mode==LoggerMode.NONE:    __LoggerRegistry.Instance().register_logger(__NullLogger(stream), application_name)
+    elif logger_mode==LoggerMode.WARNING: __LoggerRegistry.Instance().register_logger(__WarningLogger(stream), application_name)
+    elif logger_mode==LoggerMode.ERROR:   __LoggerRegistry.Instance().register_logger(__ErrorLogger(stream), application_name)
 
-def get_registered_logger_instance():
-    return __LoggerRegistry.Instance().get_logger_instance()
+def get_registered_logger_instance(application_name=None):
+    return __LoggerRegistry.Instance().get_logger_instance(application_name)
 
-def register_secondary_logger(stream=DEFAULT_STREAM, logger_mode=LoggerMode.FULL, logger_name=SECONDARY_LOGGER):
-    if logger_mode==LoggerMode.FULL:      __SecondaryLoggerRegistry.Instance().register_logger(__FullLogger(stream), logger_name)
-    elif logger_mode==LoggerMode.NONE:    __SecondaryLoggerRegistry.Instance().register_logger(__NullLogger(stream), logger_name)
-    elif logger_mode==LoggerMode.WARNING: __SecondaryLoggerRegistry.Instance().register_logger(__WarningLogger(stream), logger_name)
-    elif logger_mode==LoggerMode.ERROR:   __SecondaryLoggerRegistry.Instance().register_logger(__ErrorLogger(stream), logger_name)
+def register_secondary_logger(stream=DEFAULT_STREAM, logger_mode=LoggerMode.FULL, logger_name=SECONDARY_LOGGER, application_name=None):
+    if logger_mode==LoggerMode.FULL:      __SecondaryLoggerRegistry.Instance().register_logger(__FullLogger(stream), logger_name, application_name)
+    elif logger_mode==LoggerMode.NONE:    __SecondaryLoggerRegistry.Instance().register_logger(__NullLogger(stream), logger_name, application_name)
+    elif logger_mode==LoggerMode.WARNING: __SecondaryLoggerRegistry.Instance().register_logger(__WarningLogger(stream), logger_name, application_name)
+    elif logger_mode==LoggerMode.ERROR:   __SecondaryLoggerRegistry.Instance().register_logger(__ErrorLogger(stream), logger_name, application_name)
     
-def get_registered_secondary_logger(logger_name=SECONDARY_LOGGER):
-    return __SecondaryLoggerRegistry.Instance().get_logger_instance(logger_name)
+def get_registered_secondary_logger(logger_name=SECONDARY_LOGGER, application_name=None):
+    return __SecondaryLoggerRegistry.Instance().get_logger_instance(logger_name, application_name)
     
