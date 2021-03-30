@@ -211,6 +211,7 @@ class __LoggerRegistry(__AbstractLoggerRegistry, GenericRegistry):
     def reset(self, application_name=None):
         super().reset(application_name)
 
+    @synchronized_method
     def get_logger_instance(self, application_name=None):
         return super().get_instance(application_name)
 
@@ -242,6 +243,7 @@ class __SecondaryLoggerRegistry(__AbstractLoggerRegistry):
         if application_name in self.__logger_instances.keys(): self.__logger_instances[self._get_application_name(application_name)] = {}
         else: raise ValueError("Logger Instance not existing")
 
+    @synchronized_method
     def get_logger_instance(self, logger_name=SECONDARY_LOGGER, application_name=None):
         application_name = self._get_application_name(application_name)
 

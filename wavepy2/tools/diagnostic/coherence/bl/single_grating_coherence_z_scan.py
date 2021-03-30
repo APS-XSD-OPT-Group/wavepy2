@@ -83,7 +83,7 @@ class SingleGratingCoherenceZScanFacade:
     def fit_calculation_result(self, sort_calculation_result, initialization_parameters, plotting_properties=PlottingProperties(), **kwargs): raise NotImplementedError()
 
 def create_single_grating_coherence_z_scan_manager(mode=MULTI_THREAD, n_cpus=None):
-    return __SingleGratingCoherenceZScanMultiThread(n_cpus) if mode == MULTI_THREAD else __SingleGratingCoherenceZScanSingleThread()
+    return _SingleGratingCoherenceZScanMultiThread(n_cpus) if mode == MULTI_THREAD else _SingleGratingCoherenceZScanSingleThread()
 
 APPLICATION_NAME = "Single Grating Z Scan"
 
@@ -97,7 +97,7 @@ class __SingleGratingCoherenceZScan(SingleGratingCoherenceZScanFacade):
 
     def __init__(self):
         self.__plotter     = get_registered_plotter_instance(application_name=APPLICATION_NAME)
-        self.__main_logger = get_registered_logger_instance(application_name=APPLICATION_NAME)
+        self._main_logger = get_registered_logger_instance(application_name=APPLICATION_NAME)
         self.__ini         = get_registered_ini_instance(application_name=APPLICATION_NAME)
 
     def draw_initialization_parameters_widget(self, plotting_properties=PlottingProperties(), **kwargs):
@@ -137,7 +137,7 @@ class __SingleGratingCoherenceZScan(SingleGratingCoherenceZScanFacade):
                                                                                sourceDistanceH    = self.__ini.get_float_from_ini("Parameters", "source distance h", default=34.0),
                                                                                unFilterSize       = self.__ini.get_int_from_ini("Parameters", "size for uniform filter", default=1),
                                                                                searchRegion       = self.__ini.get_int_from_ini("Parameters", "size for region for searching", default=1),
-                                                                               logger=self.__main_logger)
+                                                                               logger=self._main_logger)
         return initialization_parameters
 
     def manager_initialization(self, initialization_parameters, script_logger_mode=LoggerMode.FULL, show_fourier=False):
@@ -248,7 +248,7 @@ class __SingleGratingCoherenceZScan(SingleGratingCoherenceZScanFacade):
         self.__plotter.push_plot_on_context(CALCULATE_HARMONIC_PERIODS_CONTEXT_KEY, ShowCroppedFigure, unique_id,
                                             img=img, pixelsize=[pixelsize, pixelsize], allows_saving=False, **kwargs)
 
-        self.__main_logger.print_message("Idx for cropping: " + str(idx4crop))
+        self._main_logger.print_message("Idx for cropping: " + str(idx4crop))
 
         # ==============================================================================
         # %% Harmonic Periods
@@ -263,23 +263,23 @@ class __SingleGratingCoherenceZScan(SingleGratingCoherenceZScanFacade):
 
         # Obtain harmonic periods from images
 
-        self.__main_logger.print_message('MESSAGE: Obtain harmonic 10 experimentally')
+        self._main_logger.print_message('MESSAGE: Obtain harmonic 10 experimentally')
 
         (period_harm_Vert, _) = grating_interferometry.exp_harm_period(img,
                                                                        [period_harm_Vert, period_harm_Horz],
                                                                        harmonic_ij=['1', '0'],
                                                                        searchRegion=40,
                                                                        isFFT=False,
-                                                                       logger=self.__main_logger)
+                                                                       logger=self._main_logger)
 
-        self.__main_logger.print_message('Obtain harmonic 01 experimentally')
+        self._main_logger.print_message('Obtain harmonic 01 experimentally')
 
         (_, period_harm_Horz) = grating_interferometry.exp_harm_period(img,
                                                                        [period_harm_Vert, period_harm_Horz],
                                                                        harmonic_ij=['0', '1'],
                                                                        searchRegion=40,
                                                                        isFFT=False,
-                                                                       logger=self.__main_logger)
+                                                                       logger=self._main_logger)
 
         dataFolder = initialization_parameters.get_parameter("dataFolder")
         startDist = initialization_parameters.get_parameter("startDist")
@@ -507,7 +507,7 @@ def _run_calculation(parameters):
         unFilterSize = parameters
 
         # python3.8 do not share the same environment, so the Singleton is not active
-        try: get_registered_logger_instance(APPLICATION_NAME).print_message("loop " + str(i) + ": " + data_file_i)
+        try: get_registered_logger_instance(application_name=APPLICATION_NAME).print_message("loop " + str(i) + ": " + data_file_i)
         except: print("loop " + str(i) + ": " + data_file_i)
 
         img = read_tiff(data_file_i)
@@ -533,7 +533,10 @@ def _run_calculation(parameters):
 # SINGLE THREAD
 #=========================================================================================
 
-class __SingleGratingCoherenceZScanSingleThread(__SingleGratingCoherenceZScan):
+class _SingleGratingCoherenceZScanSingleThread(__SingleGratingCoherenceZScan):
+    def __init__(self):
+        super(_SingleGratingCoherenceZScanSingleThread, self).__init__()
+
     def _get_calculation_result(self,
                                 period_harm_Vert,
                                 period_harm_Horz,
@@ -570,9 +573,9 @@ class __SingleGratingCoherenceZScanSingleThread(__SingleGratingCoherenceZScan):
 from multiprocessing import Pool, cpu_count
 import time
 
-class __SingleGratingCoherenceZScanMultiThread(__SingleGratingCoherenceZScan):
+class _SingleGratingCoherenceZScanMultiThread(__SingleGratingCoherenceZScan):
     def __init__(self, n_cpus=None):
-        super().__init__()
+        super(_SingleGratingCoherenceZScanMultiThread, self).__init__()
         available_cpus = cpu_count()
         if not n_cpus is None and n_cpus > 0:
             if n_cpus > available_cpus - 1: raise ValueError("Max number of CPUs available = " + str(available_cpus-1))
@@ -597,7 +600,7 @@ class __SingleGratingCoherenceZScanMultiThread(__SingleGratingCoherenceZScan):
         tzero = time.time()
         pool = Pool(self.__n_cpus)
 
-        get_registered_logger_instance(APPLICATION_NAME).print_message("%d cpu used for this calculation" % self.__n_cpus)
+        self._main_logger.print_message("%d cpu used for this calculation" % self.__n_cpus)
 
         parameters = []
         for i in range(len(listOfDataFiles)): parameters.append([i,
@@ -615,6 +618,6 @@ class __SingleGratingCoherenceZScanMultiThread(__SingleGratingCoherenceZScan):
         res = pool.map(_run_calculation, parameters)
         pool.close()
 
-        get_registered_logger_instance(APPLICATION_NAME).print_message("Time spent: {0:.3f} s".format(time.time() - tzero))
+        self._main_logger.print_message("Time spent: {0:.3f} s".format(time.time() - tzero))
 
         return res
