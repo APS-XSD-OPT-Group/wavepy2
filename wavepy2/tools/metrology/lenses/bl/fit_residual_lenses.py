@@ -105,6 +105,7 @@ class __FitResidualLenses(FitResidualLensesFacade):
 
     def draw_initialization_parameters_widget(self, plotting_properties=PlottingProperties(), **kwargs):
         if self.__plotter.is_active():
+            show_runtime_options = plotting_properties.get_parameter("show_runtime_options", True)
             add_context_label    = plotting_properties.get_parameter("add_context_label", True)
             use_unique_id        = plotting_properties.get_parameter("use_unique_id", False)
 
@@ -112,7 +113,7 @@ class __FitResidualLenses(FitResidualLensesFacade):
                                                                context_window=plotting_properties.get_context_widget(),
                                                                use_unique_id=use_unique_id)
 
-            self.__plotter.push_plot_on_context(INITIALIZATION_PARAMETERS_KEY, FRLInputParametersWidget, unique_id, **kwargs)
+            self.__plotter.push_plot_on_context(INITIALIZATION_PARAMETERS_KEY, FRLInputParametersWidget, unique_id, show_runtime_options=show_runtime_options, **kwargs)
             self.__plotter.draw_context(INITIALIZATION_PARAMETERS_KEY, add_context_label=add_context_label, unique_id=unique_id, **kwargs)
 
             return self.__plotter.get_plots_of_context(INITIALIZATION_PARAMETERS_KEY, unique_id=unique_id)
@@ -121,7 +122,10 @@ class __FitResidualLenses(FitResidualLensesFacade):
 
     def get_initialization_parameters(self, plotting_properties=PlottingProperties(), **kwargs):
         if self.__plotter.is_active():
-            initialization_parameters = self.__plotter.show_interactive_plot(FRLInputParametersDialog, container_widget=None)
+            initialization_parameters = self.__plotter.show_interactive_plot(FRLInputParametersDialog,
+                                                                             container_widget=plotting_properties.get_container_widget(),
+                                                                             show_runtime_options=plotting_properties.get_parameter("show_runtime_options", True),
+                                                                             **kwargs)
         else:
             initialization_parameters = generate_initialization_parameters_frl(thickness_file_name=self.__ini.get_string_from_ini("Files", "file with thickness"),
                                                                                str4title=self.__ini.get_string_from_ini("Parameters", "String for Titles", default="Be Lens"),

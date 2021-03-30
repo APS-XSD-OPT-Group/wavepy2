@@ -146,13 +146,13 @@ class AbstractFRLInputParametersWidget():
         if show_runtime_options: tabs = plot_tools.tabWidget(self.get_central_widget())
 
         ini_widget = QWidget()
-        ini_widget.setFixedHeight(self.HEIGHT-10)
-        ini_widget.setFixedWidth(self.WIDTH-10)
+        ini_widget.setFixedHeight(widget_height-10)
+        ini_widget.setFixedWidth(widget_width-10)
 
         if show_runtime_options: plot_tools.createTabPage(tabs, "Initialization Parameter", widgetToAdd=ini_widget)
         else: self.get_central_widget().layout().addWidget(ini_widget)
 
-        main_box = plot_tools.widgetBox(ini_widget, "", width=self.WIDTH-70, height=self.HEIGHT-50)
+        main_box = plot_tools.widgetBox(ini_widget, "", width=widget_width-70, height=widget_height-50)
 
         select_file_thickness_box = plot_tools.widgetBox(main_box, orientation="horizontal")
         self.le_thickness = plot_tools.lineEdit(select_file_thickness_box, self, "thickness_file_name", label="Thickness File to Plot\n(Pickle or sdf)", labelWidth=150, valueType=str, orientation="horizontal")
@@ -171,7 +171,7 @@ class AbstractFRLInputParametersWidget():
 
             plot_tools.createTabPage(tabs, "Runtime Parameter", widgetToAdd=runtime_widget)
 
-            main_box = plot_tools.widgetBox(runtime_widget, "", width=self.WIDTH-70, height=self.HEIGHT-50)
+            main_box = plot_tools.widgetBox(runtime_widget, "", width=widget_width-70, height=widget_height-50)
 
             plot_tools.checkBox(main_box, self, "crop_image", "Crop Thickness Image")
             plot_tools.checkBox(main_box, self, "fit_radius_dpc", "Fit Radius DPC")

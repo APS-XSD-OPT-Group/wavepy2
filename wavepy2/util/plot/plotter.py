@@ -308,6 +308,11 @@ class _AbstractActivePlotter(_AbstractPlotter):
         try:    tab_widget_height = kwargs["tab_widget_height"]
         except: tab_widget_height = max(heights) + 35
 
+        try:    main_box_width  = kwargs["main_box_width"]
+        except: main_box_width  = tab_widget_width + 5
+        try:    main_box_height = kwargs["main_box_height"]
+        except: main_box_height = tab_widget_height + 5
+
         try:    container_widget_width  = kwargs["container_widget_width"]
         except: container_widget_width  = tab_widget_width + 25
         try:    container_widget_height = kwargs["container_widget_height"]
@@ -315,6 +320,8 @@ class _AbstractActivePlotter(_AbstractPlotter):
 
         tab_widget.setFixedWidth(tab_widget_width)
         tab_widget.setFixedHeight(tab_widget_height)
+        main_box.setFixedHeight(main_box_height)
+        main_box.setFixedWidth(main_box_width)
         container_widget.setFixedWidth(container_widget_width)
         container_widget.setFixedHeight(container_widget_height)
 
