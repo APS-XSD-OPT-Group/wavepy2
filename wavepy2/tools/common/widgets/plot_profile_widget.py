@@ -394,7 +394,7 @@ class PlotProfileWidget(QWidget):
             side_subplot.set_ylim(main_subplot_y_min, main_subplot_y_max)
 
             fig.texts = []
-            fig.text(.8, .75, message, fontsize=14, va='bottom', bbox=dict(facecolor=last_color, alpha=0.5))
+            fig.text(.76, .75, message, fontsize=14, va='bottom', bbox=dict(facecolor=last_color, alpha=0.5))
             fig.canvas.draw_idle()
 
             return [_delta_x, _delta_y]

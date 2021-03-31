@@ -161,7 +161,7 @@ class NProfilesHV(WavePyWidget):
         output_data.set_parameter("labels_V", labels_V)
         output_data.set_parameter("fit_coefs", fit_coefs)
 
-        self.setFixedWidth(tabs.width())
+        self.setFixedWidth(tabs.width()+10)
         self.setFixedHeight(700)
 
     def __get_empty_figure(self):

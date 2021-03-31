@@ -1180,8 +1180,7 @@ class __SingleGratingTalbot(SingleGratingTalbotFacade):
         grad_x, grad_y, error_x, error_y = surface_from_grad.error_integration(delx_f=delx_f,
                                                                                dely_f=dely_f,
                                                                                func=phase,
-                                                                               shifthalfpixel=False,
-                                                                               **kwargs)
+                                                                               shifthalfpixel=False)
 
         self.__plotter.push_plot_on_context(context_key, ErrorIntegration, unique_id,
                                             delx_f=delx_f, dely_f=dely_f, func=phase, grad_x=grad_x, grad_y=grad_y, error_x=error_x, error_y=error_y, pixelsize=pixelsize, **kwargs)

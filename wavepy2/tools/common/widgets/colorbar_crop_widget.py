@@ -65,7 +65,6 @@ class AbstractColorbarCropWidget():
         img         = kwargs["img"]
         pixelsize   = kwargs["pixelsize"]
 
-
         try: self.setWindowTitle(kwargs["message"])
         except: pass
 
@@ -157,7 +156,7 @@ class ColorbarCropWidgetPlot(AbstractColorbarCropWidget, WavePyWidget):
     def get_plot_tab_name(self):
         return "Crop Image"
 
-    def allows_saving(self):
+    def _allows_saving(self):
         return False
 
 class ColorbarCropDialogPlot(AbstractColorbarCropWidget, WavePyInteractiveWidget):
