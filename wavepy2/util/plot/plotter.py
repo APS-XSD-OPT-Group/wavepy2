@@ -50,6 +50,9 @@ from PyQt5.QtWidgets import QWidget, QDialog, QVBoxLayout, QHBoxLayout, QDialogB
 from PyQt5.QtCore import Qt
 
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
+from matplotlib.pyplot import rcParams
+
+pixels_to_inches = 1/rcParams['figure.dpi']
 
 class WavePyGenericWidget(object):
     def __init__(self, application_name=None): self._application_name = application_name
@@ -80,7 +83,17 @@ class WavePyWidget(QWidget, WavePyGenericWidget):
         try: self.__allows_saving = kwargs["allows_saving"]
         except: pass
 
-        canvas = FigureCanvas(self.build_mpl_figure(**kwargs))
+        figure = self.build_mpl_figure(**kwargs)
+
+        try:    figure_width = kwargs["figure_width"]*pixels_to_inches
+        except: figure_width = figure.get_figwidth()
+        try:    figure_height = kwargs["figure_height"]*pixels_to_inches
+        except: figure_height = figure.get_figheight()
+
+        figure.set_figwidth(figure_width)
+        figure.set_figheight(figure_height)
+
+        canvas = FigureCanvas(figure)
         canvas.setParent(self)
 
         self.append_mpl_figure_to_save(canvas.figure)
@@ -309,9 +322,9 @@ class _AbstractActivePlotter(_AbstractPlotter):
         except: tab_widget_height = max(heights) + 35
 
         try:    main_box_width  = kwargs["main_box_width"]
-        except: main_box_width  = tab_widget_width + 5
+        except: main_box_width  = tab_widget_width + 20
         try:    main_box_height = kwargs["main_box_height"]
-        except: main_box_height = tab_widget_height + 5
+        except: main_box_height = tab_widget_height + 40
 
         try:    container_widget_width  = kwargs["container_widget_width"]
         except: container_widget_width  = tab_widget_width + 25

@@ -51,17 +51,17 @@ from matplotlib.widgets import RectangleSelector
 
 from wavepy2.util.log.logger import get_registered_logger_instance
 from wavepy2.tools.common.widgets.image_to_change import ImageToChange
-
+from wavepy2.util.plot.plotter import pixels_to_inches
 
 class GraphicalRoiIdx(QWidget):
-    def __init__(self, parent, image, set_crop_output_listener, kwargs4graph={'cmap': 'viridis'}, application_name=None, **kwargs):
+    def __init__(self, parent, image, set_crop_output_listener, kwargs4graph={'cmap': 'viridis'}, application_name=None, figure_width=10, figure_height=7.5, **kwargs):
         super(GraphicalRoiIdx, self).__init__(parent)
 
         logger = get_registered_logger_instance(application_name=application_name)
 
         layout = QHBoxLayout()
 
-        figure_canvas = FigureCanvas(Figure(facecolor="white", figsize=(10, 8)))
+        figure_canvas = FigureCanvas(Figure(facecolor="white", figsize=(figure_width, figure_height)))
         figure = figure_canvas.figure
 
         ax = figure.subplots()

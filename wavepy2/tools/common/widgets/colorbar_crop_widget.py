@@ -65,7 +65,6 @@ class AbstractColorbarCropWidget():
         img         = kwargs["img"]
         pixelsize   = kwargs["pixelsize"]
 
-        self.setFixedHeight(650)
 
         try: self.setWindowTitle(kwargs["message"])
         except: pass
@@ -103,6 +102,7 @@ class AbstractColorbarCropWidget():
         plot_tools.createTabPage(tab_widget, "Crop Image", self.crop_image)
 
         self.setFixedWidth(max(original_cropped_image.width(), figure_slide_colorbar.width(), self.crop_image.width())*1.1)
+        self.setFixedHeight(740)
 
         self.update()
 

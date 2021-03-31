@@ -202,9 +202,9 @@ class FigureSlideColorbar(QWidget):
         button(button_box, self, "Reset", callback=reset, width=100, height=35)
 
         radio_button_box_container = QWidget()
-        radio_button_box_container.setFixedWidth(120)
-        radio_button_box_container.setFixedHeight(figure_canvas.get_width_height()[1] + button_box_container.height())
-        radio_button_box = widgetBox(radio_button_box_container, "Options", orientation="vertical", width=button_box_container.width())
+        radio_button_box_container.setFixedWidth(140)
+        radio_button_box_container.setFixedHeight(figure_canvas.get_width_height()[1] + button_box_container.height() + 70)
+        radio_button_box = widgetBox(radio_button_box_container, "Options", orientation="vertical", width=120)
 
         self.radio1 = 2
         self.radio2 = 0

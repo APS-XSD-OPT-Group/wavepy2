@@ -259,12 +259,12 @@ class PlotProfileWidget(QWidget):
     def __init__(self, parent, xmatrix, ymatrix, zmatrix,
                  xlabel='x', ylabel='y', zlabel='z', title='Title',
                  xo=None, yo=None, xunit='', yunit='', do_fwhm=True,
-                 arg4main={'cmap': 'viridis'}, arg4top={}, arg4side={}):
+                 arg4main={'cmap': 'viridis'}, arg4top={}, arg4side={}, figure_width=11, figure_height=8.5):
         super(PlotProfileWidget, self).__init__(parent)
 
         layout = QHBoxLayout()
 
-        figure_canvas = FigureCanvas(Figure(facecolor="white", figsize=(11., 8.5)))
+        figure_canvas = FigureCanvas(Figure(facecolor="white", figsize=(figure_width, figure_height)))
         fig = figure_canvas.figure
 
         z_min, z_max = float(np.nanmin(zmatrix)), float(np.nanmax(zmatrix))

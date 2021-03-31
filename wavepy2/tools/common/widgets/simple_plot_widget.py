@@ -86,10 +86,10 @@ class SimplePlot(WavePyWidget):
         self.append_mpl_figure_to_save(widget.get_image_to_change().get_mpl_figure())
 
 class SimplePlotWidget(QWidget):
-    def __init__(self, parent, image, title='', xlabel='', ylabel='', **kwargs4imshow):
+    def __init__(self, parent, image, title='', xlabel='', ylabel='', fig_width=8, fig_height=7, **kwargs4imshow):
         super(SimplePlotWidget, self).__init__(parent)
 
-        figure_canvas = FigureCanvas(Figure())
+        figure_canvas = FigureCanvas(Figure((fig_width, fig_height)))
         mpl_figure = figure_canvas.figure
 
         ax = mpl_figure.subplots(1, 1)

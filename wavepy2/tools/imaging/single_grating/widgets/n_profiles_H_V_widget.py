@@ -56,7 +56,7 @@ from scipy.ndimage.filters import uniform_filter1d
 
 from wavepy2.util.common import common_tools
 from wavepy2.util.plot import plot_tools
-from wavepy2.util.plot.plotter import WavePyWidget, get_registered_plotter_instance
+from wavepy2.util.plot.plotter import WavePyWidget, get_registered_plotter_instance, pixels_to_inches
 
 
 from warnings import filterwarnings
@@ -82,6 +82,9 @@ class NProfilesHV(WavePyWidget):
         remove1stOrderDPC = kwargs["remove1stOrderDPC"]
         filter_width      = kwargs["filter_width"]
         output_data       = kwargs["output_data"]
+
+        try:    figure_width = kwargs["figure_width"]*pixels_to_inches
+        except: figure_width = 11
 
         layout = QHBoxLayout()
         layout.setAlignment(Qt.AlignCenter)
@@ -110,7 +113,8 @@ class NProfilesHV(WavePyWidget):
                                                                               remove1stOrderDPC,
                                                                               filter_width,
                                                                               fit_coefs,
-                                                                              xxGrid)
+                                                                              xxGrid,
+                                                                              fig_width=figure_width)
             tab_index = 0
         else:
             figure1_h = self.__get_empty_figure()
@@ -128,7 +132,8 @@ class NProfilesHV(WavePyWidget):
                                                                               remove1stOrderDPC,
                                                                               filter_width,
                                                                               fit_coefs,
-                                                                              yyGrid)
+                                                                              yyGrid,
+                                                                              fig_width=figure_width)
         else:
             figure1_v = self.__get_empty_figure()
             figure2_v = self.__get_empty_figure()
@@ -165,8 +170,8 @@ class NProfilesHV(WavePyWidget):
 
         return figure
 
-    def __create_H_plot(self, arrayH, arrayV, zlabel, titleH, saveFileSuf, nprofiles, remove1stOrderDPC, filter_width, fit_coefs, xxGrid):
-        figure1 = Figure(figsize=(12, 12 * 9 / 16))
+    def __create_H_plot(self, arrayH, arrayV, zlabel, titleH, saveFileSuf, nprofiles, remove1stOrderDPC, filter_width, fit_coefs, xxGrid, fig_width=12):
+        figure1 = Figure(figsize=(fig_width, fig_width * 9 / 16))
 
         xvec       = xxGrid[0, :]
         data2saveH = np.c_[xvec]
@@ -230,8 +235,8 @@ class NProfilesHV(WavePyWidget):
         return figure1, figure2, data2saveH, labels_H
 
 
-    def __create_V_plot(self, arrayH, arrayV, zlabel, titleV, saveFileSuf, nprofiles, remove1stOrderDPC, filter_width, fit_coefs, yyGrid):
-        figure1 = Figure(figsize=(12, 12 * 9 / 16))
+    def __create_V_plot(self, arrayH, arrayV, zlabel, titleV, saveFileSuf, nprofiles, remove1stOrderDPC, filter_width, fit_coefs, yyGrid, fig_width=12):
+        figure1 = Figure(figsize=(fig_width, fig_width * 9 / 16))
 
         xvec = yyGrid[:, 0]
         data2saveV = np.c_[xvec]

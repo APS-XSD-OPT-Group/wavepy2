@@ -46,7 +46,7 @@ import numpy as np
 from wavepy2.util.common import common_tools
 from wavepy2.util.log.logger import get_registered_logger_instance
 from wavepy2.util.plot import plot_tools
-from wavepy2.util.plot.plotter import WavePyInteractiveWidget, WavePyWidget
+from wavepy2.util.plot.plotter import WavePyInteractiveWidget, WavePyWidget, pixels_to_inches
 from wavepy2.tools.common.widgets.graphical_roi_idx import GraphicalRoiIdx
 
 FIXED_WIDTH=800
@@ -61,6 +61,11 @@ class AbstractCropWidget():
     def build_widget(self, **kwargs):
         img = kwargs["img"]
 
+        try:    figure_width = kwargs["figure_width"]*pixels_to_inches
+        except: figure_width = 10
+        try:    figure_height = kwargs["figure_height"]*pixels_to_inches
+        except: figure_height = 7.5
+
         try: self.setWindowTitle(kwargs["message"])
         except: pass
 
@@ -69,8 +74,12 @@ class AbstractCropWidget():
 
         self.__initialize(img, default_idx4crop)
 
-        try:    crop_image = GraphicalRoiIdx(self, application_name=self.__application_name, image=img, set_crop_output_listener=self.create_cropped_output, kwargs4graph=kwargs["kwargs4graph"])
-        except: crop_image = GraphicalRoiIdx(self, application_name=self.__application_name, image=img, set_crop_output_listener=self.create_cropped_output)
+        try:    crop_image = GraphicalRoiIdx(self,
+                                             application_name=self.__application_name, image=img, set_crop_output_listener=self.create_cropped_output,
+                                             figure_width=figure_width, figure_height=figure_height, kwargs4graph=kwargs["kwargs4graph"])
+        except: crop_image = GraphicalRoiIdx(self,
+                                             application_name=self.__application_name, image=img, set_crop_output_listener=self.create_cropped_output,
+                                             figure_width=figure_width, figure_height=figure_height)
 
         tab_widget = plot_tools.tabWidget(self.get_central_widget())
 

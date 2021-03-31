@@ -14,7 +14,7 @@ from PyQt5.QtCore import Qt
 
 from wavepy2.util.common import common_tools
 from wavepy2.util.plot import plot_tools
-from wavepy2.util.plot.plotter import WavePyWidget
+from wavepy2.util.plot.plotter import WavePyWidget, pixels_to_inches
 from wavepy2.tools.common.widgets.plot_profile_widget import PlotProfileWidget
 
 from warnings import filterwarnings
@@ -37,6 +37,11 @@ class PlotIntegration(WavePyWidget):
         max3d_grid_points = kwargs["max3d_grid_points"]
         kwarg4surf        = kwargs["kwarg4surf"]
 
+        try:    figure_width = kwargs["figure_width"]*pixels_to_inches
+        except: figure_width = 9
+        try:    figure_height = kwargs["figure_height"]*pixels_to_inches
+        except: figure_height = 7
+
         layout = QHBoxLayout()
         layout.setAlignment(Qt.AlignCenter)
 
@@ -49,7 +54,7 @@ class PlotIntegration(WavePyWidget):
 
         # Plot Integration 2
 
-        fig = Figure(figsize=(10, 8))
+        fig = Figure(figsize=(figure_width, figure_height))
         ax = fig.add_subplot(111, projection='3d')
 
         rstride = data.shape[0] // max3d_grid_points + 1
@@ -77,6 +82,9 @@ class PlotIntegration(WavePyWidget):
         ax.view_init(elev=30, azim=-120)
         figure3 = pickle.loads(pickle.dumps(fig))
 
+        figure1.set_figwidth(figure_width)
+        figure1.set_figheight(figure_height)
+
         figure_1_widget = FigureCanvas(figure1)
 
         self.append_mpl_figure_to_save(figure2)
@@ -91,9 +99,11 @@ class PlotIntegration(WavePyWidget):
                                                 title=titleStr,
                                                 xunit='\mu m',
                                                 yunit='\mu m',
-                                                arg4main={'cmap': 'viridis', 'lw': 3})
+                                                arg4main={'cmap': 'viridis', 'lw': 3},
+                                                figure_width=figure_width,
+                                                figure_height=figure_height)
 
-        figure4 = Figure(figsize=(10, 8))
+        figure4 = Figure(figsize=(figure_width, figure_height))
         im = figure4.gca().imshow(data[::-1, :], cmap='viridis', extent=common_tools.extent_func(data, pixelsize) * factor_x, **kwarg4surf)
         figure4.gca().set_xlabel(r'$x [' + unit_x + ' m]$', fontsize=24)
         figure4.gca().set_ylabel(r'$y [' + unit_x + ' m]$', fontsize=24)
