@@ -48,11 +48,10 @@ from PyQt5.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.figure import Figure
 
-from wavepy2.util.plot.plot_tools import WIDGET_FIXED_WIDTH
 from wavepy2.tools.common.widgets.image_to_change import ImageToChange
 
 from wavepy2.util.common import common_tools
-from wavepy2.util.plot.plotter import WavePyWidget
+from wavepy2.util.plot.plotter import WavePyWidget, pixels_to_inches
 
 class SimplePlot(WavePyWidget):
     def __init__(self, parent=None, application_name=None, **kwargs):
@@ -86,10 +85,10 @@ class SimplePlot(WavePyWidget):
         self.append_mpl_figure_to_save(widget.get_image_to_change().get_mpl_figure())
 
 class SimplePlotWidget(QWidget):
-    def __init__(self, parent, image, title='', xlabel='', ylabel='', fig_width=8, fig_height=7, **kwargs4imshow):
+    def __init__(self, parent, image, title='', xlabel='', ylabel='', figure_width=8, figure_height=7, **kwargs4imshow):
         super(SimplePlotWidget, self).__init__(parent)
 
-        figure_canvas = FigureCanvas(Figure((fig_width, fig_height)))
+        figure_canvas = FigureCanvas(Figure((figure_width, figure_height)))
         mpl_figure = figure_canvas.figure
 
         ax = mpl_figure.subplots(1, 1)

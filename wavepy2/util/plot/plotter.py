@@ -73,6 +73,7 @@ class WavePyWidget(QWidget, WavePyGenericWidget):
         WavePyGenericWidget.__init__(self, application_name=application_name)
 
         self.__allows_saving = True
+        self.__ignores_figure_dimensions = False
 
     def get_plot_tab_name(self): raise NotImplementedError()
 
@@ -81,17 +82,21 @@ class WavePyWidget(QWidget, WavePyGenericWidget):
         layout.setAlignment(Qt.AlignCenter)
 
         try: self.__allows_saving = kwargs["allows_saving"]
-        except: pass
+        except: self.__allows_saving = True
+
+        try: self.__ignores_figure_dimensions = kwargs["ignores_figure_dimensions"]
+        except: self.__ignores_figure_dimensions = False
 
         figure = self.build_mpl_figure(**kwargs)
 
-        try:    figure_width = kwargs["figure_width"]*pixels_to_inches
-        except: figure_width = figure.get_figwidth()
-        try:    figure_height = kwargs["figure_height"]*pixels_to_inches
-        except: figure_height = figure.get_figheight()
+        if not self._ignores_figure_dimensions():
+            try:    figure_width = kwargs["figure_width"]*pixels_to_inches
+            except: figure_width = figure.get_figwidth()
+            try:    figure_height = kwargs["figure_height"]*pixels_to_inches
+            except: figure_height = figure.get_figheight()
 
-        figure.set_figwidth(figure_width)
-        figure.set_figheight(figure_height)
+            figure.set_figwidth(figure_width)
+            figure.set_figheight(figure_height)
 
         canvas = FigureCanvas(figure)
         canvas.setParent(self)
@@ -119,10 +124,11 @@ class WavePyWidget(QWidget, WavePyGenericWidget):
 
     def build_mpl_figure(self, **kwargs): raise NotImplementedError()
 
-    def allows_saving(self): return self.__allows_saving
+    def _allows_saving(self): return self.__allows_saving
+    def _ignores_figure_dimensions(self): return self.__ignores_figure_dimensions
 
     def get_figures_to_save(self):
-        if self.allows_saving(): return self.__figures_to_save
+        if self._allows_saving(): return self.__figures_to_save
         else: return None
 
 

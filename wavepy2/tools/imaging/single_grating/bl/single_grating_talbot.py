@@ -482,7 +482,7 @@ class __SingleGratingTalbot(SingleGratingTalbotFacade):
         self.__script_logger.print('Initial Vt Mean angle/pi : {:} pi'.format(np.mean(angle[1]/np.pi)))
 
         self.__plotter.push_plot_on_context(CORRECT_ZERO_DPC_CONTEXT_KEY, CorrectDPC, unique_id,
-                                            angle=angle, pi_jump=pi_jump, **kwargs)
+                                            angle=angle, pi_jump=pi_jump, ignores_figure_dimensions=True, **kwargs)
 
         def __get_dpc(angle_i, pixelsize_i):
             return angle_i * pixelsize_i / factor
@@ -513,18 +513,18 @@ class __SingleGratingTalbot(SingleGratingTalbotFacade):
             differential_phase_10 = __get_dpc(angle[1], pixelsize[1])
 
             self.__plotter.push_plot_on_context(CORRECT_ZERO_DPC_CONTEXT_KEY, CorrectDPCHistos, unique_id,
-                                                angle=angle, title="Remove mean", **kwargs)
+                                                angle=angle, title="Remove mean", ignores_figure_dimensions=True, **kwargs)
             self.__plotter.push_plot_on_context(CORRECT_ZERO_DPC_CONTEXT_KEY, PlotDPC, unique_id,
                                                 differential_phase_01=differential_phase_01, differential_phase_10=differential_phase_10, pixelsize=virtual_pixelsize, titleStr="Remove Mean", **kwargs)
 
         if correct_dpc_center and self.__plotter.is_active():
-            angle = self.__plotter.show_interactive_plot(CorrectDPCCenter, container_widget=None, angle=angle)
+            angle = self.__plotter.show_interactive_plot(CorrectDPCCenter, container_widget=None, angle=angle, ignores_figure_dimensions=True, **kwargs)
 
             differential_phase_01 = __get_dpc(angle[0], pixelsize[0])
             differential_phase_10 = __get_dpc(angle[1], pixelsize[1])
 
             self.__plotter.push_plot_on_context(CORRECT_ZERO_DPC_CONTEXT_KEY, CorrectDPCHistos, unique_id,
-                                                angle=angle, title="Correct DPC Center", **kwargs)
+                                                angle=angle, title="Correct DPC Center", ignores_figure_dimensions=True, **kwargs)
             self.__plotter.push_plot_on_context(CORRECT_ZERO_DPC_CONTEXT_KEY, PlotDPC, unique_id,
                                                 differential_phase_01=differential_phase_01, differential_phase_10=differential_phase_10, pixelsize=virtual_pixelsize, titleStr="Correct DPC Center", **kwargs)
 

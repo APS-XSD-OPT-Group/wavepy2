@@ -59,7 +59,7 @@ from warnings import filterwarnings
 filterwarnings("ignore")
 
 class PlotProfile(WavePyWidget):
-    def allows_saving(self): return False
+    def _allows_saving(self): return False
 
     def get_plot_tab_name(self):
         return self.__title

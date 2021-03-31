@@ -329,7 +329,7 @@ class SGTInputParametersWidget(AbstractSGTInputParametersWidget, WavePyWidget):
     def get_plot_tab_name(self):
         return "Single Grating Talbot Initialization Parameters"
 
-    def allows_saving(self):
+    def _allows_saving(self):
         return False
 
 class SGTInputParametersDialog(AbstractSGTInputParametersWidget, WavePyInteractiveWidget):

@@ -131,7 +131,7 @@ class CropWidgetPlot(AbstractCropWidget, WavePyWidget):
     def get_plot_tab_name(self):
         return "Crop Image"
 
-    def allows_saving(self):
+    def _allows_saving(self):
         return False
 
 class CropDialogPlot(AbstractCropWidget, WavePyInteractiveWidget):

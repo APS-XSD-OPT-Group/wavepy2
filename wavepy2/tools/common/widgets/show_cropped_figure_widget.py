@@ -47,7 +47,7 @@ from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QHBoxLayout
 
 from wavepy2.util.common import common_tools
-from wavepy2.util.plot.plotter import WavePyWidget
+from wavepy2.util.plot.plotter import WavePyWidget, pixels_to_inches
 from wavepy2.tools.common.widgets.simple_plot_widget import SimplePlotWidget
 
 class ShowCroppedFigure(WavePyWidget):
@@ -66,6 +66,11 @@ class ShowCroppedFigure(WavePyWidget):
         try: ylabel = kwargs["ylabel"]
         except: ylabel = r'y [$\mu m$ ]'
 
+        try:    figure_width = kwargs["figure_width"]*pixels_to_inches
+        except: figure_width = 8
+        try:    figure_height = kwargs["figure_height"]*pixels_to_inches
+        except: figure_height = 7
+
         layout = QHBoxLayout()
         layout.setAlignment(Qt.AlignCenter)
 
@@ -74,7 +79,10 @@ class ShowCroppedFigure(WavePyWidget):
                                   title="Cropped Raw Image",
                                   xlabel=xlabel,
                                   ylabel=ylabel,
-                                  extent=common_tools.extent_func(img, pixelsize)*1e6)
+                                  extent=common_tools.extent_func(img, pixelsize)*1e6,
+                                  figure_width=figure_width,
+                                  figure_height=figure_height)
+
         layout.addWidget(widget)
 
         self.setLayout(layout)

@@ -229,7 +229,7 @@ class FRLInputParametersWidget(AbstractFRLInputParametersWidget, WavePyWidget):
     def get_plot_tab_name(self):
         return "Fit Residual Lenses Initialization Parameters"
 
-    def allows_saving(self):
+    def _allows_saving(self):
         return False
 
 class FRLInputParametersDialog(AbstractFRLInputParametersWidget, WavePyInteractiveWidget):

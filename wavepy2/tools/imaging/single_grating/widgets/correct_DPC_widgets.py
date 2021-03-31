@@ -48,7 +48,7 @@ from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 
 from wavepy2.util.common import common_tools
 from wavepy2.util.plot import plot_tools
-from wavepy2.util.plot.plotter import WavePyWidget, WavePyInteractiveWidget
+from wavepy2.util.plot.plotter import WavePyWidget, WavePyInteractiveWidget, pixels_to_inches
 
 
 class CorrectDPC(WavePyWidget):
@@ -128,7 +128,7 @@ class CorrectDPCCenter(WavePyInteractiveWidget):
             plot_tools.createTabPage(self.__tab_widget[index], "Angle Displacement of Fringes", self.__result_canvas_histo[index])
             plot_tools.createTabPage(self.__tab_widget[index], "DPC Center",                    self.__result_canvas[index])
 
-            harm_box[index].setFixedHeight(max(self.__result_canvas_histo[index].get_width_height()[1], self.__result_canvas[index].get_width_height()[1])+150)
+            harm_box[index].setFixedHeight(max(self.__result_canvas_histo[index].get_width_height()[1], self.__result_canvas[index].get_width_height()[1])+220)
 
         self.setFixedWidth(WIDGET_FIXED_WIDTH*2.1)
 

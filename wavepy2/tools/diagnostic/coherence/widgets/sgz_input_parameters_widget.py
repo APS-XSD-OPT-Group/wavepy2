@@ -289,7 +289,7 @@ class SGZInputParametersWidget(AbstractSGZInputParametersWidget, WavePyWidget):
     def get_plot_tab_name(self):
         return "Single Grating Z Scan Initialization Parameters"
 
-    def allows_saving(self):
+    def _allows_saving(self):
         return False
 
 class SGZInputParametersDialog(AbstractSGZInputParametersWidget, WavePyInteractiveWidget):
