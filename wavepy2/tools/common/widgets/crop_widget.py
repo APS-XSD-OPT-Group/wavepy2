@@ -72,14 +72,14 @@ class AbstractCropWidget():
         try:    default_idx4crop = kwargs["default_idx4crop"]
         except: default_idx4crop = [0, -1, 0, -1]
 
+        try: kwargs4graph = kwargs["kwargs4graph"]
+        except: kwargs4graph = {}
+
         self.__initialize(img, default_idx4crop)
 
-        try:    crop_image = GraphicalRoiIdx(self,
-                                             application_name=self.__application_name, image=img, set_crop_output_listener=self.create_cropped_output,
-                                             figure_width=figure_width, figure_height=figure_height, kwargs4graph=kwargs["kwargs4graph"])
-        except: crop_image = GraphicalRoiIdx(self,
-                                             application_name=self.__application_name, image=img, set_crop_output_listener=self.create_cropped_output,
-                                             figure_width=figure_width, figure_height=figure_height)
+        crop_image = GraphicalRoiIdx(self,
+                                     application_name=self.__application_name, image=img, set_crop_output_listener=self.create_cropped_output,
+                                     figure_width=figure_width, figure_height=figure_height, kwargs4graph=kwargs4graph)
 
         tab_widget = plot_tools.tabWidget(self.get_central_widget())
 

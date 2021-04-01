@@ -1145,17 +1145,17 @@ class __SingleGratingTalbot(SingleGratingTalbotFacade):
         if calc_minmax:
             vmin = grating_interferometry.mean_plus_n_sigma(image_to_crop, -3)
             vmax = grating_interferometry.mean_plus_n_sigma(image_to_crop, 3)
-            kargs4graph = {'cmap': 'viridis', 'vmin': vmin, 'vmax': vmax}
+
+            kwargs4graph = {'cmap': 'viridis', 'vmin': vmin, 'vmax': vmax}
         else:
-            kargs4graph = {}
+            kwargs4graph = {}
 
         plotter = get_registered_plotter_instance(application_name=APPLICATION_NAME)
 
         if plotter.is_active():
             _, idx4crop, _ = crop_image.crop_image(img=image_to_crop,
                                                    message=message,
-                                                   pixelsize=pixelsize,
-                                                   kargs4graph=kargs4graph,
+                                                   kwargs4graph=kwargs4graph,
                                                    plotting_properties=plotting_properties,
                                                    application_name=APPLICATION_NAME,
                                                    **kwargs)
