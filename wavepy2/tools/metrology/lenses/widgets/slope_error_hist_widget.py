@@ -45,9 +45,8 @@
 import numpy as np
 from matplotlib.figure import Figure
 from wavepy2.util.common import common_tools
-from wavepy2.util.plot.plotter import WavePyWidget
-from wavepy2.util.log.logger import get_registered_logger_instance, get_registered_secondary_logger
-from wavepy2.util.plot.plotter import get_registered_plotter_instance
+from wavepy2.util.plot.plotter import WavePyWidget, pixels_to_inches
+from wavepy2.util.log.logger import get_registered_secondary_logger
 
 from warnings import filterwarnings
 filterwarnings("ignore")
@@ -69,7 +68,7 @@ class SlopeErrorHist(WavePyWidget):
         try: str4title    = kwargs["str4title"]
         except: str4title = ""
         output_data = kwargs["output_data"]
-        
+
         errorThickness = thickness - fitted
 
         fig = Figure(figsize=(15, 8))

@@ -53,7 +53,7 @@ from matplotlib.widgets import Cursor
 from matplotlib.pyplot import subplot2grid#, silent_list
 
 from wavepy2.util.plot import plot_tools
-from wavepy2.util.plot.plotter import WavePyWidget, WavePyInteractiveWidget
+from wavepy2.util.plot.plotter import WavePyWidget, WavePyInteractiveWidget, pixels_to_inches
 
 from warnings import filterwarnings
 filterwarnings("ignore")
@@ -96,6 +96,11 @@ class PlotProfile(WavePyWidget):
         try:    arg4side = kwargs["arg4side"]
         except: arg4side = {}
 
+        try:    figure_width = kwargs["figure_width"]*pixels_to_inches
+        except: figure_width = 10
+        try:    figure_height = kwargs["figure_height"]*pixels_to_inches
+        except: figure_height = 7.5
+
         layout = QHBoxLayout()
         layout.setAlignment(Qt.AlignCenter)
 
@@ -116,7 +121,9 @@ class PlotProfile(WavePyWidget):
                                                 do_fwhm=do_fwhm,
                                                 arg4main=arg4main,
                                                 arg4top=arg4top,
-                                                arg4side=arg4side)
+                                                arg4side=arg4side,
+                                                figure_width=figure_width,
+                                                figure_height=figure_height)
 
         self.setFixedWidth(plot_profile_widget.width())
         self.setFixedHeight(plot_profile_widget.height())
@@ -160,6 +167,11 @@ class PlotProfileInteractive(WavePyInteractiveWidget):
         try: arg4side = kwargs["arg4side"]
         except: arg4side = {}
 
+        try:    figure_width = kwargs["figure_width"]*pixels_to_inches
+        except: figure_width = 10
+        try:    figure_height = kwargs["figure_height"]*pixels_to_inches
+        except: figure_height = 7.5
+
         layout = QHBoxLayout()
         layout.setAlignment(Qt.AlignCenter)
 
@@ -180,7 +192,9 @@ class PlotProfileInteractive(WavePyInteractiveWidget):
                                                        do_fwhm=do_fwhm,
                                                        arg4main=arg4main,
                                                        arg4top=arg4top,
-                                                       arg4side=arg4side)
+                                                       arg4side=arg4side,
+                                                       figure_width=figure_width,
+                                                       figure_height=figure_height)
 
         self.setFixedWidth(self.__plot_profile_widget.width())
         self.setFixedHeight(self.__plot_profile_widget.height())

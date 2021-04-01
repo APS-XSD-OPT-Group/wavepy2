@@ -47,7 +47,7 @@ from matplotlib.figure import Figure
 from matplotlib.pyplot import cm
 
 from wavepy2.util.common import common_tools
-from wavepy2.util.plot.plotter import WavePyWidget
+from wavepy2.util.plot.plotter import WavePyWidget, pixels_to_inches
 from wavepy2.util.log.logger import get_registered_logger_instance
 from wavepy2.util.plot.plotter import get_registered_plotter_instance
 from wavepy2.tools.common.widgets.plot_profile_widget import PlotProfile
@@ -82,6 +82,17 @@ class PlotResidualParabolicLens2D(WavePyWidget):
         except: unique_id = None
         output_data = kwargs["output_data"]
 
+        kwargs4plots = {}
+
+        try:
+            figure_width = kwargs["figure_width"]*pixels_to_inches
+            kwargs4plots["figure_width"] = kwargs["figure_width"]
+        except: figure_width = 7
+        try:
+            figure_height = kwargs["figure_height"]*pixels_to_inches
+            kwargs4plots["figure_height"] = kwargs["figure_height"]
+        except: figure_height = 8
+
         xmatrix, ymatrix = common_tools.grid_coord(thickness, pixelsize)
 
         errorThickness = thickness - fitted
@@ -102,7 +113,7 @@ class PlotResidualParabolicLens2D(WavePyWidget):
 
         # Plot Histogram
 
-        fig = Figure(figsize=(7, 8))
+        fig = Figure(figsize=(figure_width, figure_height))
         fig.gca().hist(errorThickness[argNotNAN] * factorz, 100, color="r", histtype="step")
         fig.gca().set_xlabel(r"Residual [$" + unitz + "  m$ ]")
         fig.gca().set_title(str4title)
@@ -126,7 +137,8 @@ class PlotResidualParabolicLens2D(WavePyWidget):
                                             arg4main={"cmap": "Spectral_r",
                                                       "vmin": -vlimErr,
                                                       "vmax": vlimErr,
-                                                      "extend": "both"})
+                                                      "extend": "both"},
+                                            **kwargs4plots)
 
         self.__plotter.push_plot_on_context(context_key, CountourPlot, unique_id,
                                             xmatrix=xmatrix * factorx,
@@ -137,7 +149,8 @@ class PlotResidualParabolicLens2D(WavePyWidget):
                                             unity=unity,
                                             unitz=unitz,
                                             vlimErr=vlimErr,
-                                            cmap4graph=cmap4graph)
+                                            cmap4graph=cmap4graph,
+                                            **kwargs4plots)
 
         # Plot 3D
 
@@ -151,7 +164,8 @@ class PlotResidualParabolicLens2D(WavePyWidget):
                                                 unity=unity,
                                                 unitz=unitz,
                                                 vlimErr=vlimErr,
-                                                cmap4graph=cmap4graph)
+                                                cmap4graph=cmap4graph,
+                                                **kwargs4plots)
 
         if saveSdfData:
             mask_for_sdf = errorThickness * 0.0
@@ -184,7 +198,12 @@ class CountourPlot(WavePyWidget):
         vlimErr    = kwargs["vlimErr"]
         cmap4graph = kwargs["cmap4graph"]
 
-        fig = Figure(figsize=(10, 7))
+        try:    figure_width = kwargs["figure_width"]*pixels_to_inches
+        except: figure_width = 10
+        try:    figure_height = kwargs["figure_height"]*pixels_to_inches
+        except: figure_height = 7
+
+        fig = Figure(figsize=(figure_width, figure_height))
 
         cf = fig.gca().contourf(xmatrix,
                                 ymatrix ,
@@ -226,9 +245,14 @@ class Plot3D(WavePyWidget):
         vlimErr    = kwargs["vlimErr"]
         cmap4graph = kwargs["cmap4graph"]
 
+        try:    figure_width = kwargs["figure_width"]*pixels_to_inches
+        except: figure_width = 10
+        try:    figure_height = kwargs["figure_width"]*pixels_to_inches
+        except: figure_height = 7
+
         self.__logger.print_message("Plotting 3d in the background")
 
-        fig = Figure(figsize=(10, 7), facecolor="white")
+        fig = Figure(figsize=(figure_width, figure_height), facecolor="white")
         ax = fig.gca(projection="3d")
         fig.tight_layout(pad=2.5)
 
