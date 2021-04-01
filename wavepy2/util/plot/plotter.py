@@ -297,10 +297,11 @@ class _AbstractActivePlotter(_AbstractPlotter):
         else: return None
 
     def draw_context_on_widget(self, context_key, container_widget, add_context_label=True, unique_id=None, **kwargs):
+        context_label = context_key
         if not unique_id is None: context_key += "_" + unique_id
         container_widget.setStyleSheet(plot_tools.stylesheet_string)
 
-        main_box = plot_tools.widgetBox(container_widget, context_key if add_context_label else "", orientation="horizontal")
+        main_box = plot_tools.widgetBox(container_widget, context_label if add_context_label else "", orientation="horizontal")
         main_box.layout().setAlignment(Qt.AlignCenter)
         tab_widget = plot_tools.tabWidget(main_box)
 
@@ -317,8 +318,11 @@ class _AbstractActivePlotter(_AbstractPlotter):
                 widths.append(plot_widget_instance.width())
                 heights.append(plot_widget_instance.height())
         else:
-            label = plot_tools.widgetLabel(tab_widget, "\n\n\n\n\n        Nothing to Display")
+            tab = plot_tools.createTabPage(tab_widget, context_label)
+
+            label = plot_tools.widgetLabel(tab, "\n\n\n\n\n        Nothing to Display")
             label.setStyleSheet("font: 24pt")
+
             widths.append(500)
             heights.append(370)
 

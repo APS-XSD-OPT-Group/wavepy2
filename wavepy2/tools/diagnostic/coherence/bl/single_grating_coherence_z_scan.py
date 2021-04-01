@@ -596,7 +596,6 @@ class _SingleGratingCoherenceZScanMultiThread(__SingleGratingCoherenceZScan):
                                 unFilterSize,
                                 searchRegion,
                                 min_zvec):
-
         tzero = time.time()
         pool = Pool(self.__n_cpus)
 

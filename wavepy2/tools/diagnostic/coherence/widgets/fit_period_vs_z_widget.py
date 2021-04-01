@@ -7,7 +7,7 @@ from PyQt5.QtWidgets import QHBoxLayout
 from PyQt5.QtCore import Qt
 
 from wavepy2.util.plot import plot_tools
-from wavepy2.util.plot.plotter import WavePyWidget
+from wavepy2.util.plot.plotter import WavePyWidget, pixels_to_inches
 
 from warnings import filterwarnings
 filterwarnings("ignore")
@@ -28,6 +28,11 @@ class FitPeriodVsZPlot(WavePyWidget):
         lc2              = kwargs["lc2"]
         direction        = kwargs["direction"]
 
+        try: figure_width = kwargs["figure_width"] * pixels_to_inches
+        except: figure_width = 10
+        try: figure_height = kwargs["figure_height"] * pixels_to_inches
+        except: figure_height = 7
+
         output_data       = kwargs["output_data"]
 
         self.__direction = direction
@@ -37,7 +42,7 @@ class FitPeriodVsZPlot(WavePyWidget):
 
         self.setLayout(layout)
 
-        figure = Figure(figsize=(10, 7))
+        figure = Figure(figsize=(figure_width, figure_height))
         figure.gca().plot(zvec[args_for_NOfit]*1e3, pattern_period_z[args_for_NOfit]*1e6, 'o', mec=lx, mfc='none', ms=8, label='not used for fit')
         figure.gca().plot(zvec[args_for_fit]*1e3, pattern_period_z[args_for_fit]*1e6, ls1, label=direction)
 
@@ -62,5 +67,5 @@ class FitPeriodVsZPlot(WavePyWidget):
 
         layout.addWidget(FigureCanvas(figure))
 
-        self.setFixedWidth(plot_tools.WIDGET_FIXED_WIDTH * 1.4)
-        self.setFixedHeight(700)
+        self.setFixedWidth(figure_width/pixels_to_inches)
+        self.setFixedHeight(figure_height/pixels_to_inches)
