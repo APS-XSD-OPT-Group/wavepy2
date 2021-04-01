@@ -696,7 +696,6 @@ class __SingleGratingTalbot(SingleGratingTalbotFacade):
     def crop_for_integration(self, dpc_result, initialization_parameters, plotting_properties=PlottingProperties(), **kwargs):
         differential_phase_01 = dpc_result.get_parameter("differential_phase_01")
         differential_phase_10 = dpc_result.get_parameter("differential_phase_10")
-        virtual_pixelsize     = dpc_result.get_parameter("virtual_pixelsize")
 
         do_integration   = initialization_parameters.get_parameter("do_integration")
 
@@ -704,7 +703,6 @@ class __SingleGratingTalbot(SingleGratingTalbotFacade):
             differential_phase_01, differential_phase_10 = self.__crop_for_integration(plotting_properties,
                                                                                        differential_phase_01=differential_phase_01,
                                                                                        differential_phase_10=differential_phase_10,
-                                                                                       pixelsize=virtual_pixelsize,
                                                                                        message="Crop Differential Phase for Integration", **kwargs)
             dpc_result.set_parameter("differential_phase_01", differential_phase_01)
             dpc_result.set_parameter("differential_phase_10", differential_phase_10)
@@ -859,7 +857,6 @@ class __SingleGratingTalbot(SingleGratingTalbotFacade):
     def crop_2nd_order_component_of_the_phase_1(self, integration_result, initialization_parameters, plotting_properties=PlottingProperties(), **kwargs):
         differential_phase_01   = integration_result.get_parameter("differential_phase_01")
         differential_phase_10   = integration_result.get_parameter("differential_phase_10")
-        virtual_pixelsize       = integration_result.get_parameter("virtual_pixelsize")
         linear_fit_dpc_01       = integration_result.get_parameter("linear_fit_dpc_01")
         linear_fit_dpc_10       = integration_result.get_parameter("linear_fit_dpc_10")
 
@@ -872,7 +869,6 @@ class __SingleGratingTalbot(SingleGratingTalbotFacade):
             differential_phase_01_crop_1, differential_phase_10_crop_1 = self.__crop_for_integration(plotting_properties,
                                                                                                      differential_phase_01=linear_fit_dpc_01,
                                                                                                      differential_phase_10=linear_fit_dpc_10,
-                                                                                                     pixelsize=virtual_pixelsize,
                                                                                                      message="New Crop for 2nd order component of the phase?", **kwargs)
         else:
             differential_phase_01_crop_1 = differential_phase_01
@@ -974,7 +970,6 @@ class __SingleGratingTalbot(SingleGratingTalbotFacade):
         differential_phase_01        = integration_result.get_parameter("differential_phase_01")
         differential_phase_10        = integration_result.get_parameter("differential_phase_10")
 
-        virtual_pixelsize       = integration_result.get_parameter("virtual_pixelsize")
         linear_fit_dpc_01       = integration_result.get_parameter("linear_fit_dpc_01")
         linear_fit_dpc_10       = integration_result.get_parameter("linear_fit_dpc_10")
 
@@ -987,7 +982,6 @@ class __SingleGratingTalbot(SingleGratingTalbotFacade):
             differential_phase_01_crop_2, differential_phase_10_crop_2 = self.__crop_for_integration(plotting_properties,
                                                                                                      differential_phase_01=differential_phase_01 - linear_fit_dpc_01,
                                                                                                      differential_phase_10=differential_phase_10 - linear_fit_dpc_10,
-                                                                                                     pixelsize=virtual_pixelsize,
                                                                                                      message="New Crop for 2nd order component of the phase?", **kwargs)
         else:
             differential_phase_01_crop_2 = differential_phase_01
@@ -1124,7 +1118,7 @@ class __SingleGratingTalbot(SingleGratingTalbotFacade):
     # PRIVATE METHODS
 
     @classmethod
-    def __draw_crop_for_integration(cls, plotting_properties, differential_phase_01, differential_phase_10, pixelsize, message="New Crop for Integration?", **kwargs):
+    def __draw_crop_for_integration(cls, plotting_properties, differential_phase_01, differential_phase_10, message="New Crop for Integration?", **kwargs):
         img_to_crop = differential_phase_01 ** 2 + differential_phase_10 ** 2
 
         vmin = grating_interferometry.mean_plus_n_sigma(img_to_crop, -3)
@@ -1132,30 +1126,24 @@ class __SingleGratingTalbot(SingleGratingTalbotFacade):
 
         return crop_image.draw_crop_image(img=img_to_crop,
                                           message=message,
-                                          pixelsize=pixelsize,
-                                          kargs4graph={'cmap': 'viridis', 'vmin': vmin, 'vmax': vmax},
+                                          kwargs4graph={'cmap': 'viridis', 'vmin': vmin, 'vmax': vmax},
                                           plotting_properties=plotting_properties,
                                           application_name=APPLICATION_NAME,
                                           **kwargs)
 
     @classmethod
-    def __crop_for_integration(cls, plotting_properties, differential_phase_01, differential_phase_10, pixelsize, calc_minmax=True, message="New Crop for Integration?", **kwargs):
+    def __crop_for_integration(cls, plotting_properties, differential_phase_01, differential_phase_10, message="New Crop for Integration?", **kwargs):
         image_to_crop = differential_phase_01 ** 2 + differential_phase_10 ** 2
-
-        if calc_minmax:
-            vmin = grating_interferometry.mean_plus_n_sigma(image_to_crop, -3)
-            vmax = grating_interferometry.mean_plus_n_sigma(image_to_crop, 3)
-
-            kwargs4graph = {'cmap': 'viridis', 'vmin': vmin, 'vmax': vmax}
-        else:
-            kwargs4graph = {}
 
         plotter = get_registered_plotter_instance(application_name=APPLICATION_NAME)
 
         if plotter.is_active():
+            vmin = grating_interferometry.mean_plus_n_sigma(image_to_crop, -3)
+            vmax = grating_interferometry.mean_plus_n_sigma(image_to_crop, 3)
+
             _, idx4crop, _ = crop_image.crop_image(img=image_to_crop,
                                                    message=message,
-                                                   kwargs4graph=kwargs4graph,
+                                                   kwargs4graph={'cmap': 'viridis', 'vmin': vmin, 'vmax': vmax},
                                                    plotting_properties=plotting_properties,
                                                    application_name=APPLICATION_NAME,
                                                    **kwargs)
