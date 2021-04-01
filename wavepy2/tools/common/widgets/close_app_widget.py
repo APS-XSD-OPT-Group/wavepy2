@@ -57,11 +57,11 @@ class CloseApp(QMainWindow):
         container_widget.setLayout(QHBoxLayout())
 
         box = widgetBox(container_widget)
-        button(box, container_widget, "Close Application", callback=self.close_all, height=50, width=150)
+        button(box, container_widget, "Exit", callback=self.close_all, height=50, width=200)
 
         self.setCentralWidget(container_widget)
-        self.setFixedHeight(67)
-        self.setFixedWidth(167)
+        self.setFixedHeight(75)
+        self.setFixedWidth(220)
 
     def close_all(self):
         if plot_tools.ConfirmDialog.confirmed(self, "Confirm Close?"): sys.exit(0)
