@@ -1,6 +1,6 @@
 # WavePy 2.0
 
-Wavepy2 is a refactored version of [wavepy](https://github.com/APS-XSD-OPT-Group/wavepy) and [wavepytools](https://github.com/APS-XSD-OPT-Group/wavepytools), by Walan Grizolli, Xianbo Shi, Lahsen Assoufid and Leslie G. Butler.
+Wavepy2 is a refactored and enhanced version of [wavepy](https://github.com/APS-XSD-OPT-Group/wavepy) and [wavepytools](https://github.com/APS-XSD-OPT-Group/wavepytools), by Walan Grizolli, Xianbo Shi, Lahsen Assoufid and Leslie G. Butler.
 
 Authors
 -------------
