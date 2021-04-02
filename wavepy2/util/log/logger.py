@@ -149,17 +149,20 @@ class __NullLogger(LoggerFacade):
     def print_message(self, message): pass
     def print_warning(self, message): pass
     def print_error(self, message): pass
+    def print_other(self, message, prefix, color): pass
 
 class __ErrorLogger(__FullLogger):
     def __init__(self, stream=DEFAULT_STREAM): super().__init__(stream)
     def print(self, message): pass
     def print_message(self, message): pass
     def print_warning(self, message): pass
+    def print_other(self, message, prefix, color): pass
 
 class __WarningLogger(__FullLogger):
     def __init__(self, stream=DEFAULT_STREAM): super().__init__(stream)
     def print(self, message): pass
     def print_message(self, message): pass
+    def print_other(self, message, prefix, color): pass
 
 class __LoggerPool(LoggerFacade):
     def __init__(self, logger_list):
@@ -204,8 +207,8 @@ class __LoggerRegistry(__AbstractLoggerRegistry, GenericRegistry):
         GenericRegistry.__init__(self, registry_name="Logger")
 
     @synchronized_method
-    def register_logger(self, logger_facade_instance, application_name=None):
-        super().register_instance(logger_facade_instance, application_name)
+    def register_logger(self, logger_facade_instance, application_name=None, replace=False):
+        super().register_instance(logger_facade_instance, application_name, replace)
 
     @synchronized_method
     def reset(self, application_name=None):
@@ -257,21 +260,21 @@ class __SecondaryLoggerRegistry(__AbstractLoggerRegistry):
 # -----------------------------------------------------
 # Factory Methods
 
-def register_logger_pool_instance(stream_list=[], logger_mode=LoggerMode.FULL, reset=False, application_name=None):
+def register_logger_pool_instance(stream_list=[], logger_mode=LoggerMode.FULL, reset=False, application_name=None, replace=False):
     if reset: __LoggerRegistry.Instance().reset()
     if logger_mode==LoggerMode.FULL:      logger_list = [__FullLogger(stream) for stream in stream_list]
     elif logger_mode==LoggerMode.NONE:    logger_list = [__NullLogger(stream) for stream in stream_list]
     elif logger_mode==LoggerMode.WARNING: logger_list = [__WarningLogger(stream) for stream in stream_list]
     elif logger_mode==LoggerMode.ERROR:   logger_list = [__ErrorLogger(stream) for stream in stream_list]
 
-    __LoggerRegistry.Instance().register_logger(__LoggerPool(logger_list=logger_list), application_name)
+    __LoggerRegistry.Instance().register_logger(__LoggerPool(logger_list=logger_list), application_name, replace)
 
-def register_logger_single_instance(stream=DEFAULT_STREAM, logger_mode=LoggerMode.FULL, reset=False, application_name=None):
+def register_logger_single_instance(stream=DEFAULT_STREAM, logger_mode=LoggerMode.FULL, reset=False, application_name=None, replace=False):
     if reset: __LoggerRegistry.Instance().reset(application_name)
-    if logger_mode==LoggerMode.FULL:      __LoggerRegistry.Instance().register_logger(__FullLogger(stream), application_name)
-    elif logger_mode==LoggerMode.NONE:    __LoggerRegistry.Instance().register_logger(__NullLogger(stream), application_name)
-    elif logger_mode==LoggerMode.WARNING: __LoggerRegistry.Instance().register_logger(__WarningLogger(stream), application_name)
-    elif logger_mode==LoggerMode.ERROR:   __LoggerRegistry.Instance().register_logger(__ErrorLogger(stream), application_name)
+    if logger_mode==LoggerMode.FULL:      __LoggerRegistry.Instance().register_logger(__FullLogger(stream), application_name, replace)
+    elif logger_mode==LoggerMode.NONE:    __LoggerRegistry.Instance().register_logger(__NullLogger(stream), application_name, replace)
+    elif logger_mode==LoggerMode.WARNING: __LoggerRegistry.Instance().register_logger(__WarningLogger(stream), application_name, replace)
+    elif logger_mode==LoggerMode.ERROR:   __LoggerRegistry.Instance().register_logger(__ErrorLogger(stream), application_name, replace)
 
 def get_registered_logger_instance(application_name=None):
     return __LoggerRegistry.Instance().get_logger_instance(application_name)

@@ -55,6 +55,7 @@ from wavepy2.util.ini.initializer import get_registered_ini_instance
 from wavepy2.tools.common.wavepy_data import WavePyData
 
 from wavepy2.tools.common.bl import grating_interferometry, surface_from_grad, crop_image
+from wavepy2.tools.common.bl.generic_process_manager import GenericProcessManager
 from wavepy2.tools.common.widgets.plot_intensities_harms_widget import PlotIntensitiesHarms
 from wavepy2.tools.common.widgets.plot_dark_field_widget import PlotDarkField
 from wavepy2.tools.common.widgets.plot_integration_widget import PlotIntegration
@@ -83,7 +84,7 @@ CALCULATE_THICKNESS_CONTEXT_KEY            = "Calculate Thickness"
 CALCULATE_2ND_ORDER_COMPONENT_OF_THE_PHASE = "Calculate 2nd order component of the phase"
 REMOVE_2ND_ORDER                           = "Remove 2nd order"
 
-class SingleGratingTalbotFacade:
+class SingleGratingTalbotFacade(GenericProcessManager):
     def draw_initialization_parameters_widget(self, plotting_properties=PlottingProperties(), **kwargs): raise NotImplementedError()
     def get_initialization_parameters(self, plotting_properties=PlottingProperties(), **kwargs): raise NotImplementedError()
     def manager_initialization(self, initialization_parameters, script_logger_mode): raise NotImplementedError()
@@ -128,6 +129,9 @@ def create_single_grating_talbot_manager():
 class __SingleGratingTalbot(SingleGratingTalbotFacade):
 
     def __init__(self):
+        self.reload_utils()
+
+    def reload_utils(self):
         self.__plotter     = get_registered_plotter_instance(application_name=APPLICATION_NAME)
         self.__main_logger = get_registered_logger_instance(application_name=APPLICATION_NAME)
         self.__ini         = get_registered_ini_instance(application_name=APPLICATION_NAME)

@@ -162,7 +162,7 @@ class __IniRegistry(GenericRegistry):
 
     @synchronized_method
     def register_ini(self, ini_facade_instance, application_name=None):
-        super().register_instance(ini_facade_instance, application_name)
+        super().register_instance(ini_facade_instance, application_name, False)
 
     @synchronized_method
     def reset(self, application_name=None):

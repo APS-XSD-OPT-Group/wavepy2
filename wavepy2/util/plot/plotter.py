@@ -416,8 +416,8 @@ class __PlotterRegistry(GenericRegistry):
         GenericRegistry.__init__(self, registry_name="Plotter")
 
     @synchronized_method
-    def register_plotter(self, plotter_facade_instance, application_name=None):
-        super().register_instance(plotter_facade_instance, application_name)
+    def register_plotter(self, plotter_facade_instance, application_name=None, replace=False):
+        super().register_instance(plotter_facade_instance, application_name, replace)
 
     @synchronized_method
     def reset(self, application_name=None):
@@ -429,13 +429,13 @@ class __PlotterRegistry(GenericRegistry):
 # -----------------------------------------------------
 # Factory Methods
 
-def register_plotter_instance(plotter_mode=PlotterMode.FULL, reset=False, application_name=None):
+def register_plotter_instance(plotter_mode=PlotterMode.FULL, reset=False, application_name=None, replace=False):
     if reset: __PlotterRegistry.Instance().reset()
 
-    if plotter_mode   == PlotterMode.FULL:         __PlotterRegistry.Instance().register_plotter(__FullPlotter(application_name), application_name)
-    elif plotter_mode == PlotterMode.DISPLAY_ONLY: __PlotterRegistry.Instance().register_plotter(__DisplayOnlyPlotter(application_name), application_name)
-    elif plotter_mode == PlotterMode.SAVE_ONLY:    __PlotterRegistry.Instance().register_plotter(__SaveOnlyPlotter(application_name), application_name)
-    elif plotter_mode == PlotterMode.NONE:         __PlotterRegistry.Instance().register_plotter(__NullPlotter(application_name), application_name)
+    if plotter_mode   == PlotterMode.FULL:         __PlotterRegistry.Instance().register_plotter(__FullPlotter(application_name), application_name, replace)
+    elif plotter_mode == PlotterMode.DISPLAY_ONLY: __PlotterRegistry.Instance().register_plotter(__DisplayOnlyPlotter(application_name), application_name, replace)
+    elif plotter_mode == PlotterMode.SAVE_ONLY:    __PlotterRegistry.Instance().register_plotter(__SaveOnlyPlotter(application_name), application_name, replace)
+    elif plotter_mode == PlotterMode.NONE:         __PlotterRegistry.Instance().register_plotter(__NullPlotter(application_name), application_name, replace)
 
 def get_registered_plotter_instance(application_name=None):
     return __PlotterRegistry.Instance().get_plotter_instance(application_name)

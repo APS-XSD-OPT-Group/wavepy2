@@ -55,6 +55,7 @@ from wavepy2.util.io.read_write_file import read_tiff
 from wavepy2.tools.common.wavepy_data import WavePyData
 
 from wavepy2.tools.common.bl import grating_interferometry, crop_image
+from wavepy2.tools.common.bl.generic_process_manager import GenericProcessManager
 
 from wavepy2.tools.common.widgets.harmonic_grid_plot_widget import HarmonicGridPlot
 from wavepy2.tools.common.widgets.harmonic_peak_plot_widget import HarmonicPeakPlot
@@ -67,7 +68,7 @@ from wavepy2.tools.diagnostic.coherence.widgets.fit_period_vs_z_widget import Fi
 SINGLE_THREAD = 0
 MULTI_THREAD = 1
 
-class SingleGratingCoherenceZScanFacade:
+class SingleGratingCoherenceZScanFacade(GenericProcessManager):
     def draw_initialization_parameters_widget(self, plotting_properties=PlottingProperties(), **kwargs): raise NotImplementedError()
     def get_initialization_parameters(self, plotting_properties=PlottingProperties(), **kwargs): raise NotImplementedError()
     def manager_initialization(self, initialization_parameters, script_logger_mode=LoggerMode.FULL, show_fourier=False): raise NotImplementedError()
@@ -96,9 +97,12 @@ FIT_CALCULATION_RESULT_CONTEXT_KEY     = "Fit Calculation Result"
 class __SingleGratingCoherenceZScan(SingleGratingCoherenceZScanFacade):
 
     def __init__(self):
-        self.__plotter     = get_registered_plotter_instance(application_name=APPLICATION_NAME)
+        self.reload_utils()
+
+    def reload_utils(self):
+        self.__plotter    = get_registered_plotter_instance(application_name=APPLICATION_NAME)
         self._main_logger = get_registered_logger_instance(application_name=APPLICATION_NAME)
-        self.__ini         = get_registered_ini_instance(application_name=APPLICATION_NAME)
+        self.__ini        = get_registered_ini_instance(application_name=APPLICATION_NAME)
 
     def draw_initialization_parameters_widget(self, plotting_properties=PlottingProperties(), **kwargs):
         if self.__plotter.is_active():

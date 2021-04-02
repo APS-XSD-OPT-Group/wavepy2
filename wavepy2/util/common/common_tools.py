@@ -56,13 +56,13 @@ class GenericRegistry(object):
         self.__registry_name = registry_name
         self.__registry = {self._NO_APPLICATION: None}
 
-    def register_instance(self, instance, application_name=None):
+    def register_instance(self, instance, application_name=None, replace=False):
         if instance is None: raise ValueError(self.__registry_name + " Instance is None")
 
         application_name = self.__get_application_name(application_name)
 
         if application_name in self.__registry.keys():
-            if self.__registry[application_name] is None:
+            if self.__registry[application_name] is None or replace==True:
                 self.__registry[application_name] = instance
             else:
                 raise AlreadyInitializedError(self.__registry_name + " Instance already initialized")
