@@ -63,12 +63,9 @@ class DPCProfileAnalysisFacade():
 
 APPLICATION_NAME = "DPC Profile Analysis"
 
-def create_dpc_profile_analsysis_manager(application_name=None):
-    return __DPCProfileAnalysis(APPLICATION_NAME if application_name is None else application_name)
-
 DPC_PROFILE_ANALYSYS_CONTEXT_KEY = "DPC Profile Analysis"
 
-class __DPCProfileAnalysis(DPCProfileAnalysisFacade):
+class __DPCProfileAnalysis2D(DPCProfileAnalysisFacade):
     def __init__(self, application_name):
         self.__main_logger   = get_registered_logger_instance(application_name=application_name)
         self.__script_logger = get_registered_secondary_logger(application_name=application_name)
@@ -217,3 +214,16 @@ class __DPCProfileAnalysis(DPCProfileAnalysisFacade):
                                                 **kwargs)
 
         self.__plotter.draw_context(DPC_PROFILE_ANALYSYS_CONTEXT_KEY, add_context_label=add_context_label, unique_id=unique_id, **kwargs)
+
+class __DPCProfileAnalysis1D(DPCProfileAnalysisFacade):
+    def __init__(self, application_name):
+        self.__main_logger   = get_registered_logger_instance(application_name=application_name)
+        self.__script_logger = get_registered_secondary_logger(application_name=application_name)
+        self.__plotter       = get_registered_plotter_instance(application_name=application_name)
+
+
+def create_dpc_profile_analsysis_manager_2D(application_name=None):
+    return __DPCProfileAnalysis2D(APPLICATION_NAME if application_name is None else application_name)
+
+def create_dpc_profile_analsysis_manager_1D(application_name=None):
+    return __DPCProfileAnalysis1D(APPLICATION_NAME if application_name is None else application_name)
