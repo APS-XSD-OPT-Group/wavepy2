@@ -60,9 +60,14 @@ from PyQt5.QtWidgets import QWidget
 MODES    = ["Relative", "Absolute"]
 PATTERNS = ["Diagonal half pi", "Edge pi"]
 
+DIMENSIONS = ["1D", "2D"]
+DIRECTIONS = ["Horizontal", "Vertical"]
+
 def generate_initialization_parameters_sgt(img_file_name,
                                            imgRef_file_name,
                                            imgBlank_file_name,
+                                           dimension,
+                                           direction,
                                            mode,
                                            pixel,
                                            gratingPeriod,
@@ -82,6 +87,9 @@ def generate_initialization_parameters_sgt(img_file_name,
     img = read_tiff(img_file_name)
     imgRef = None if (mode == MODES[1] or common_tools.is_empty_file_name(imgRef_file_name)) else read_tiff(imgRef_file_name)
     imgBlank = None if common_tools.is_empty_file_name(imgBlank_file_name) else read_tiff(imgBlank_file_name)
+
+    dimension = DIMENSIONS[1] if dimension is None else dimension
+    direction = None if (dimension == DIMENSIONS[1] or direction is None) else direction
 
     pixelsize = [pixel, pixel]
 
@@ -130,6 +138,8 @@ def generate_initialization_parameters_sgt(img_file_name,
     return WavePyData(img=img,
                       imgRef=imgRef,
                       imgBlank=imgBlank,
+                      dimension=dimension,
+                      direction=direction,
                       mode=mode,
                       pixelsize=pixelsize,
                       gratingPeriod=gratingPeriod,
@@ -152,7 +162,7 @@ def generate_initialization_parameters_sgt(img_file_name,
 
 class AbstractSGTInputParametersWidget():
     WIDTH  = 800
-    HEIGHT = 430
+    HEIGHT = 470
 
     def __init__(self, application_name=None):
         self.__ini     = get_registered_ini_instance(application_name=application_name)
@@ -161,6 +171,8 @@ class AbstractSGTInputParametersWidget():
         self.img                = self.__ini.get_string_from_ini("Files", "sample")
         self.imgRef             = self.__ini.get_string_from_ini("Files", "reference")
         self.imgBlank           = self.__ini.get_string_from_ini("Files", "blank")
+        self.dimension          = DIMENSIONS.index(self.__ini.get_string_from_ini("Parameters", "dimension", default=DIMENSIONS[1]))
+        self.direction          = DIRECTIONS.index(self.__ini.get_string_from_ini("Parameters", "direction", default=DIRECTIONS[0]))
         self.mode               = MODES.index(self.__ini.get_string_from_ini("Parameters", "Mode", default=MODES[0]))
         self.pixel              = self.__ini.get_float_from_ini("Parameters", "pixel size", default=6.5e-07)
         self.gratingPeriod      = self.__ini.get_float_from_ini("Parameters", "checkerboard grating period", default=4.8e-06)
@@ -200,7 +212,7 @@ class AbstractSGTInputParametersWidget():
         else: self.get_central_widget().layout().addWidget(ini_widget)
 
         main_box = plot_tools.widgetBox(ini_widget, "", width=widget_width-70, height=widget_height-50)
-
+        plot_tools.separator(main_box)
         plot_tools.comboBox(main_box, self, "mode", label="Mode", items=MODES, callback=self.set_mode, orientation="horizontal")
 
         select_file_img_box = plot_tools.widgetBox(main_box, orientation="horizontal")
@@ -216,6 +228,11 @@ class AbstractSGTInputParametersWidget():
         plot_tools.button(self.select_file_imgBlank_box, self, "...", callback=self.selectImgBlankFile)
 
         self.set_mode()
+
+        plot_tools.comboBox(main_box, self, "dimension", label="Dimension", items=DIMENSIONS, callback=self.set_dimension, orientation="horizontal")
+        self.__cb_directions = plot_tools.comboBox(main_box, self, "direction", label="Direction", items=DIRECTIONS, orientation="horizontal")
+
+        self.set_dimension()
 
         plot_tools.lineEdit(main_box, self, "pixel", label="Pixel Size", labelWidth=250, valueType=float, orientation="horizontal")
         plot_tools.lineEdit(main_box, self, "gratingPeriod", label="Grating Period", labelWidth=250, valueType=float, orientation="horizontal")
@@ -237,6 +254,7 @@ class AbstractSGTInputParametersWidget():
 
             main_box = plot_tools.widgetBox(runtime_widget, "", width=widget_width-70, height=widget_height-50)
 
+            plot_tools.separator(main_box)
             plot_tools.checkBox(main_box, self, "correct_pi_jump", "Correct pi jump in DPC signal")
             plot_tools.checkBox(main_box, self, "remove_mean", "Remove mean DPC")
             plot_tools.checkBox(main_box, self, "correct_dpc_center", "Correct DPC center")
@@ -251,6 +269,9 @@ class AbstractSGTInputParametersWidget():
     def set_mode(self):
         self.select_file_imgRef_box.setEnabled(self.mode == 0)
 
+    def set_dimension(self):
+        self.__cb_directions.setEnabled(self.dimension == 0)
+
     def selectImgFile(self):
         self.le_img.setText(plot_tools.selectFileFromDialog(self, self.img, "Open Image File"))
 
@@ -264,13 +285,15 @@ class AbstractSGTInputParametersWidget():
         self.__ini.set_value_at_ini('Files', 'sample', self.img)
         self.__ini.set_value_at_ini('Files', 'reference', self.imgRef)
         self.__ini.set_value_at_ini('Files', 'blank', self.imgBlank)
-        self.__ini.set_value_at_ini('Parameters', 'Mode', MODES[self.mode])
-        self.__ini.set_value_at_ini('Parameters', 'Pixel Size', self.pixel)
-        self.__ini.set_value_at_ini('Parameters', 'Checkerboard Grating Period', self.gratingPeriod)
-        self.__ini.set_value_at_ini('Parameters', 'Pattern', PATTERNS[self.pattern])
-        self.__ini.set_value_at_ini('Parameters', 'Distance Detector to Gr', self.distDet2sample)
-        self.__ini.set_value_at_ini('Parameters', 'Photon Energy', self.phenergy)
-        self.__ini.set_value_at_ini('Parameters', 'Source Distance', self.sourceDistance)
+        self.__ini.set_value_at_ini('Parameters', 'dimension', DIMENSIONS[self.dimension])
+        self.__ini.set_value_at_ini('Parameters', 'direction', DIRECTIONS[self.direction])
+        self.__ini.set_value_at_ini('Parameters', 'mode', MODES[self.mode])
+        self.__ini.set_value_at_ini('Parameters', 'pixel size', self.pixel)
+        self.__ini.set_value_at_ini('Parameters', 'checkerboard grating period', self.gratingPeriod)
+        self.__ini.set_value_at_ini('Parameters', 'pattern', PATTERNS[self.pattern])
+        self.__ini.set_value_at_ini('Parameters', 'distance detector to gr', self.distDet2sample)
+        self.__ini.set_value_at_ini('Parameters', 'photon energy', self.phenergy)
+        self.__ini.set_value_at_ini('Parameters', 'source distance', self.sourceDistance)
         self.__ini.set_value_at_ini("Runtime", "correct pi jump", self.correct_pi_jump)
         self.__ini.set_value_at_ini("Runtime", "remove mean", self.remove_mean)
         self.__ini.set_value_at_ini("Runtime", "correct dpc center", self.correct_dpc_center)
@@ -285,6 +308,8 @@ class AbstractSGTInputParametersWidget():
         return generate_initialization_parameters_sgt(self.img,
                                                       self.imgRef,
                                                       self.imgBlank,
+                                                      DIMENSIONS[self.dimension],
+                                                      DIRECTIONS[self.direction],
                                                       MODES[self.mode],
                                                       self.pixel,
                                                       self.gratingPeriod,
