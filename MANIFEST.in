@@ -1,2 +1,5 @@
 include README.md
 include LICENSE.pdf
+
+recursive-include wavepy2 *.py
+recursive-exclude examples *.*
