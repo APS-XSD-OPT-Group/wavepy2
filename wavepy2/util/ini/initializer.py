@@ -47,9 +47,6 @@ from wavepy2.util import Singleton, synchronized_method
 import os
 from configparser import ConfigParser
 
-from wavepy2.util.log.logger import get_registered_logger_instance
-
-
 class IniMode:
     LOCAL_FILE = 0
     REMOTE_FILE = 1
@@ -84,7 +81,7 @@ class __LocalIniFile(IniFacade):
 
         if not os.path.isfile(self.__ini_file_name):
             with open(self.__ini_file_name, "w") as ini_file: ini_file.write('[Files]\n\n\n[Parameters]\n')
-            get_registered_logger_instance().print_warning("File " + self.__ini_file_name + " doesn't exist: created empty ini file.")
+            print("File " + self.__ini_file_name + " doesn't exist: created empty ini file.")
 
         self.__config_parser = ConfigParser()
         self.__config_parser.read(self.__ini_file_name)
