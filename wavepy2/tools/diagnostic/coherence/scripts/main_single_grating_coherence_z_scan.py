@@ -46,7 +46,7 @@
 from wavepy2.tools.diagnostic.coherence.bl.single_grating_coherence_z_scan import create_single_grating_coherence_z_scan_manager, APPLICATION_NAME, \
     SINGLE_THREAD, MULTI_THREAD
 from wavepy2.tools.diagnostic.coherence.bl.single_grating_coherence_z_scan import \
-    CALCULATE_HARMONIC_PERIODS_CONTEXT_KEY, RUN_CALCULATION_CONTEXT_KEY, SORT_CALCULATION_RESULT_CONTEXT_KEY, FIT_CALCULATION_RESULT_CONTEXT_KEY
+    CALCULATE_HARMONIC_PERIODS_CONTEXT_KEY, RUN_CALCULATION_CONTEXT_KEY, FIT_PERIOD_CONTEXT_KEY, FIT_VISIBILITY_CONTEXT_KEY
 
 from wavepy2.util.ini.initializer import get_registered_ini_instance
 from wavepy2.util.log.logger import LoggerMode
@@ -137,13 +137,13 @@ class MainSingleGratingCoherenceZScan(WavePyScript):
 
             # ==========================================================================
 
-            sort_calculation_result = single_grating_coherence_z_scan_manager.sort_calculation_result(run_calculation_result, initialization_parameters)
-            plotter.show_context_window(SORT_CALCULATION_RESULT_CONTEXT_KEY)
+            fit_period_result = single_grating_coherence_z_scan_manager.fit_period(run_calculation_result, initialization_parameters)
+            plotter.show_context_window(FIT_PERIOD_CONTEXT_KEY)
 
             # ==========================================================================
 
-            fit_calculation_result = single_grating_coherence_z_scan_manager.fit_calculation_result(sort_calculation_result, initialization_parameters)
-            plotter.show_context_window(FIT_CALCULATION_RESULT_CONTEXT_KEY)
+            single_grating_coherence_z_scan_manager.fit_visibility(fit_period_result, initialization_parameters)
+            plotter.show_context_window(FIT_VISIBILITY_CONTEXT_KEY)
 
             # ==========================================================================
             # %% Final Operations
@@ -156,6 +156,7 @@ class MainSingleGratingCoherenceZScan(WavePyScript):
 
             get_registered_qt_application_instance().run_qt_application()
         except Exception as e:
+            raise e
             print("\n*** Program terminated with the following exception: " + str(e))
 
 

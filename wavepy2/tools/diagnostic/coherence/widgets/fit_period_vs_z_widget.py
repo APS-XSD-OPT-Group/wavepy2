@@ -6,7 +6,6 @@ from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from PyQt5.QtWidgets import QHBoxLayout
 from PyQt5.QtCore import Qt
 
-from wavepy2.util.plot import plot_tools
 from wavepy2.util.plot.plotter import WavePyWidget, pixels_to_inches
 
 from warnings import filterwarnings

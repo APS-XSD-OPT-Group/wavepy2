@@ -71,6 +71,7 @@ def generate_initialization_parameters_sgz(dataFolder,
                                            pixelsize,
                                            gratingPeriod,
                                            pattern,
+                                           phenergy,
                                            sourceDistanceV,
                                            sourceDistanceH,
                                            unFilterSize,
@@ -124,6 +125,7 @@ def generate_initialization_parameters_sgz(dataFolder,
                       pixelsize=pixelsize,
                       gratingPeriod=gratingPeriod,
                       pattern=pattern,
+                      phenergy=phenergy,
                       sourceDistanceV=sourceDistanceV,
                       sourceDistanceH=sourceDistanceH,
                       unFilterSize=unFilterSize,
@@ -132,7 +134,7 @@ def generate_initialization_parameters_sgz(dataFolder,
 
 class AbstractSGZInputParametersWidget():
     WIDTH  = 800
-    HEIGHT = 520
+    HEIGHT = 550
 
     def __init__(self, application_name=None):
         self.__ini     = get_registered_ini_instance(application_name=application_name)
@@ -149,10 +151,11 @@ class AbstractSGZInputParametersWidget():
         self.pixelsize          = self.__ini.get_float_from_ini("Parameters", "pixel size", default=6.5e-07)
         self.gratingPeriod      = self.__ini.get_float_from_ini("Parameters", "checkerboard grating period", default=4.8e-06)
         self.pattern            = PATTERNS.index(self.__ini.get_string_from_ini("Parameters", "pattern", default="Diagonal"))
-        self.sourceDistanceV    = self.__ini.get_float_from_ini("Parameters", "source distance v", default=-0.73)
-        self.sourceDistanceH    = self.__ini.get_float_from_ini("Parameters", "source distance h", default=34.0)
+        self.phenergy           = self.__ini.get_float_from_ini("Parameters", "photon energy", default=14000.0)
+        self.sourceDistanceV    = self.__ini.get_float_from_ini("Parameters", "source distance v", default=50.0)
+        self.sourceDistanceH    = self.__ini.get_float_from_ini("Parameters", "source distance h", default=50.0)
         self.unFilterSize       = self.__ini.get_int_from_ini("Parameters", "size for uniform filter", default=1)
-        self.searchRegion       = self.__ini.get_int_from_ini("Parameters", "size for region for searching", default=1)
+        self.searchRegion       = self.__ini.get_int_from_ini("Parameters", "size for region for searching", default=50)
 
     def build_widget(self, **kwargs):
         try:    widget_width = kwargs["widget_width"]
@@ -204,6 +207,7 @@ class AbstractSGZInputParametersWidget():
         plot_tools.lineEdit(main_box, self, "pixelsize", label="Pixel Size", labelWidth=400, valueType=float, orientation="horizontal")
         plot_tools.lineEdit(main_box, self, "gratingPeriod", label="CB Grating Period", labelWidth=400, valueType=float, orientation="horizontal")
         plot_tools.comboBox(main_box, self, "pattern", label="CB Grating Pattern", items=PATTERNS, orientation="horizontal")
+        plot_tools.lineEdit(main_box, self, "phenergy", label="Photon Source Energy", labelWidth=400, valueType=float, orientation="horizontal")
         plot_tools.lineEdit(main_box, self, "sourceDistanceV", label="Source Distance Vertical Direction [m]", labelWidth=400, valueType=float, orientation="horizontal")
         plot_tools.lineEdit(main_box, self, "sourceDistanceH", label="Source Distance Horizontal Direction [m]", labelWidth=400, valueType=float, orientation="horizontal")
         plot_tools.lineEdit(main_box, self, "unFilterSize", label="Size for Uniform Filter [Pixels] (Enter 1 to NOT use the filter)", labelWidth=400, valueType=int, orientation="horizontal")
@@ -237,6 +241,7 @@ class AbstractSGZInputParametersWidget():
         self.__ini.set_value_at_ini("Parameters", "pixel size", self.pixelsize)
         self.__ini.set_value_at_ini("Parameters", "checkerboard grating period", self.gratingPeriod)
         self.__ini.set_value_at_ini("Parameters", "Pattern", PATTERNS[self.pattern])
+        self.__ini.set_value_at_ini("Parameters", "photon energy", self.phenergy)
         self.__ini.set_value_at_ini("Parameters", "source distance v", self.sourceDistanceV)
         self.__ini.set_value_at_ini("Parameters", "source distance h", self.sourceDistanceH)
         self.__ini.set_value_at_ini("Parameters", "size for uniform filter", self.unFilterSize)
@@ -255,6 +260,7 @@ class AbstractSGZInputParametersWidget():
                                                       self.pixelsize,
                                                       self.gratingPeriod,
                                                       PATTERNS[self.pattern],
+                                                      self.phenergy,
                                                       self.sourceDistanceV,
                                                       self.sourceDistanceH,
                                                       self.unFilterSize,

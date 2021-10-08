@@ -43,9 +43,10 @@
 # POSSIBILITY OF SUCH DAMAGE.                                             #
 # #########################################################################
 import numpy as np
+from scipy.optimize import curve_fit
 
 from wavepy2.util.common import common_tools
-from wavepy2.util.common.common_tools import FourierTransform
+from wavepy2.util.common.common_tools import hc, FourierTransform
 from wavepy2.util.log.logger import get_registered_logger_instance, get_registered_secondary_logger, register_secondary_logger, LoggerMode
 from wavepy2.util.plot.plotter import get_registered_plotter_instance
 from wavepy2.util.plot.plot_tools import PlottingProperties
@@ -80,8 +81,8 @@ class SingleGratingCoherenceZScanFacade(GenericProcessManager):
 
     def calculate_harmonic_periods(self, initial_crop_parameters, initialization_parameters, plotting_properties=PlottingProperties(), **kwargs): raise NotImplementedError()
     def run_calculation(self, harm_periods_result, initialization_parameters, plotting_properties=PlottingProperties(), **kwargs): raise NotImplementedError()
-    def sort_calculation_result(self, run_calculation_result, initialization_parameters, plotting_properties=PlottingProperties(), **kwargs): raise NotImplementedError()
-    def fit_calculation_result(self, sort_calculation_result, initialization_parameters, plotting_properties=PlottingProperties(), **kwargs): raise NotImplementedError()
+    def fit_period(self, run_calculation_result, initialization_parameters, plotting_properties=PlottingProperties(), **kwargs): raise NotImplementedError()
+    def fit_visibility(self, fit_period_result, initialization_parameters, plotting_properties=PlottingProperties(), **kwargs): raise NotImplementedError()
 
 def create_single_grating_coherence_z_scan_manager(mode=MULTI_THREAD, n_cpus=None):
     return _SingleGratingCoherenceZScanMultiThread(n_cpus) if mode == MULTI_THREAD else _SingleGratingCoherenceZScanSingleThread()
@@ -91,8 +92,8 @@ APPLICATION_NAME = "Single Grating Z Scan"
 INITIALIZATION_PARAMETERS_KEY          = APPLICATION_NAME + " Initialization"
 CALCULATE_HARMONIC_PERIODS_CONTEXT_KEY = "Calculate Harmonic Periods"
 RUN_CALCULATION_CONTEXT_KEY            = "Run Calculation"
-SORT_CALCULATION_RESULT_CONTEXT_KEY    = "Sort Calculation Result"
-FIT_CALCULATION_RESULT_CONTEXT_KEY     = "Fit Calculation Result"
+FIT_PERIOD_CONTEXT_KEY     = "Fit Period"
+FIT_VISIBILITY_CONTEXT_KEY    = "Fit Visibility"
 
 class __SingleGratingCoherenceZScan(SingleGratingCoherenceZScanFacade):
 
@@ -137,11 +138,15 @@ class __SingleGratingCoherenceZScan(SingleGratingCoherenceZScanFacade):
                                                                                pixelsize          = self.__ini.get_float_from_ini("Parameters", "pixel size", default=6.5e-07),
                                                                                gratingPeriod      = self.__ini.get_float_from_ini("Parameters", "checkerboard grating period", default=4.8e-06),
                                                                                pattern            = self.__ini.get_string_from_ini("Parameters", "pattern", default="Diagonal"),
+                                                                               phenergy           = self.__ini.get_float_from_ini("Parameters", "photon energy", default=14000.0),
                                                                                sourceDistanceV    = self.__ini.get_float_from_ini("Parameters", "source distance v", default=-0.73),
                                                                                sourceDistanceH    = self.__ini.get_float_from_ini("Parameters", "source distance h", default=34.0),
                                                                                unFilterSize       = self.__ini.get_int_from_ini("Parameters", "size for uniform filter", default=1),
                                                                                searchRegion       = self.__ini.get_int_from_ini("Parameters", "size for region for searching", default=1),
                                                                                logger=self._main_logger)
+
+        self.__wavelength = hc / initialization_parameters.get_parameter("phenergy")
+
         return initialization_parameters
 
     def manager_initialization(self, initialization_parameters, script_logger_mode=LoggerMode.FULL, show_fourier=False):
@@ -155,6 +160,8 @@ class __SingleGratingCoherenceZScan(SingleGratingCoherenceZScanFacade):
         register_secondary_logger(stream=stream, logger_mode=script_logger_mode, application_name=APPLICATION_NAME)
 
         self.__script_logger = get_registered_secondary_logger(application_name=APPLICATION_NAME)
+
+        self.__wavelength = hc / initialization_parameters.get_parameter("phenergy")
 
         return initialization_parameters
 
@@ -370,19 +377,12 @@ class __SingleGratingCoherenceZScan(SingleGratingCoherenceZScanFacade):
 
     # %% ==================================================================================================
 
-    def sort_calculation_result(self, run_calculation_result, initialization_parameters, plotting_properties=PlottingProperties(), **kwargs):
+    def fit_period(self, run_calculation_result, initialization_parameters, plotting_properties=PlottingProperties(), **kwargs):
         img       = run_calculation_result.get_parameter("img")
         res       = run_calculation_result.get_parameter("res")
 
         pixelsize = initialization_parameters.get_parameter("pixelsize")
         zvec      = initialization_parameters.get_parameter("zvec")
-
-        add_context_label = plotting_properties.get_parameter("add_context_label", True)
-        use_unique_id     = plotting_properties.get_parameter("use_unique_id", False)
-
-        unique_id = self.__plotter.register_context_window(SORT_CALCULATION_RESULT_CONTEXT_KEY,
-                                                           context_window=plotting_properties.get_context_widget(),
-                                                           use_unique_id=use_unique_id)
 
         contrastV = np.asarray([x[0] for x in res])
         contrastH = np.asarray([x[1] for x in res])
@@ -397,27 +397,10 @@ class __SingleGratingCoherenceZScan(SingleGratingCoherenceZScanFacade):
         self.__plotter.save_csv_file(np.c_[zvec.T, contrastV.T, contrastH.T, pattern_period_Vert_z.T, pattern_period_Horz_z.T],
                                      headerList=['z [m]', 'Vert Contrast', 'Horz Contrast', 'Vert Period [m]', 'Horz Period [m]'])
 
-        self.__plotter.push_plot_on_context(SORT_CALCULATION_RESULT_CONTEXT_KEY, VisibilityPlot, unique_id,
-                                            zvec=zvec, contrastV=contrastV, contrastH=contrastH, **kwargs)
-
-        self.__plotter.draw_context(SORT_CALCULATION_RESULT_CONTEXT_KEY, add_context_label=add_context_label, unique_id=unique_id, **kwargs)
-
-        return WavePyData(pattern_period_Vert_z=pattern_period_Vert_z, pattern_period_Horz_z=pattern_period_Horz_z, contrastV=contrastV, contrastH=contrastH)
-
-    # %% ==================================================================================================
-
-    def fit_calculation_result(self, sort_calculation_result, initialization_parameters, plotting_properties=PlottingProperties(), **kwargs):
-        pattern_period_Vert_z  = sort_calculation_result.get_parameter("pattern_period_Vert_z")
-        contrastV              = sort_calculation_result.get_parameter("contrastV")
-        pattern_period_Horz_z  = sort_calculation_result.get_parameter("pattern_period_Horz_z")
-        contrastH              = sort_calculation_result.get_parameter("contrastH")
-
-        zvec                   = initialization_parameters.get_parameter("zvec")
-
         add_context_label = plotting_properties.get_parameter("add_context_label", True)
         use_unique_id     = plotting_properties.get_parameter("use_unique_id", False)
 
-        unique_id = self.__plotter.register_context_window(FIT_CALCULATION_RESULT_CONTEXT_KEY,
+        unique_id = self.__plotter.register_context_window(FIT_PERIOD_CONTEXT_KEY,
                                                            context_window=plotting_properties.get_context_widget(),
                                                            use_unique_id=use_unique_id)
 
@@ -426,7 +409,7 @@ class __SingleGratingCoherenceZScan(SingleGratingCoherenceZScanFacade):
                                                                                     contrastV,
                                                                                     direction='Vertical',
                                                                                     threshold=0.002,
-                                                                                    context_key=FIT_CALCULATION_RESULT_CONTEXT_KEY,
+                                                                                    context_key=FIT_PERIOD_CONTEXT_KEY,
                                                                                     unique_id=unique_id,
                                                                                     **kwargs)
 
@@ -435,16 +418,60 @@ class __SingleGratingCoherenceZScan(SingleGratingCoherenceZScanFacade):
                                                                                     contrastH,
                                                                                     direction='Horizontal',
                                                                                     threshold=0.0005,
-                                                                                    context_key=FIT_CALCULATION_RESULT_CONTEXT_KEY,
+                                                                                    context_key=FIT_PERIOD_CONTEXT_KEY,
                                                                                     unique_id=unique_id,
                                                                                     **kwargs)
 
-        self.__plotter.draw_context(FIT_CALCULATION_RESULT_CONTEXT_KEY, add_context_label=add_context_label, unique_id=unique_id, **kwargs)
+        self.__plotter.draw_context(FIT_PERIOD_CONTEXT_KEY, add_context_label=add_context_label, unique_id=unique_id, **kwargs)
 
-        return WavePyData(sourceDistance_from_fit_V=sourceDistance_from_fit_V,
+        return WavePyData(contrastV=contrastV,
+                          contrastH=contrastH,
+                          sourceDistance_from_fit_V=sourceDistance_from_fit_V,
                           patternPeriodFromData_V=patternPeriodFromData_V,
                           sourceDistance_from_fit_H=sourceDistance_from_fit_H,
                           patternPeriodFromData_H=patternPeriodFromData_H)
+
+    # %% ==================================================================================================
+
+    def fit_visibility(self, fit_period_result, initialization_parameters, plotting_properties=PlottingProperties(), **kwargs):
+        contrastV              = fit_period_result.get_parameter("contrastV")
+        contrastH              = fit_period_result.get_parameter("contrastH")
+        sourceDistance_from_fit_V = fit_period_result.get_parameter("sourceDistance_from_fit_V")
+        patternPeriodFromData_V = fit_period_result.get_parameter("patternPeriodFromData_V")
+        sourceDistance_from_fit_H = fit_period_result.get_parameter("sourceDistance_from_fit_H")
+        patternPeriodFromData_H = fit_period_result.get_parameter("patternPeriodFromData_H")
+
+        zvec                   = initialization_parameters.get_parameter("zvec")
+
+        add_context_label = plotting_properties.get_parameter("add_context_label", True)
+        use_unique_id     = plotting_properties.get_parameter("use_unique_id", False)
+
+        unique_id = self.__plotter.register_context_window(FIT_VISIBILITY_CONTEXT_KEY,
+                                                           context_window=plotting_properties.get_context_widget(),
+                                                           use_unique_id=use_unique_id)
+
+        coherence_lenght_V, source_size_V = self.__fit_z_scan_talbot(zvec,
+                                                                     contrastV,
+                                                                     patternPeriodFromData_V,
+                                                                     sourceDistance_from_fit_V,
+                                                                     direction='Vertical',
+                                                                     context_key=FIT_VISIBILITY_CONTEXT_KEY,
+                                                                     unique_id=unique_id,
+                                                                     **kwargs)
+
+        coherence_lenght_H, source_size_H = self.__fit_z_scan_talbot(zvec,
+                                                                     contrastH,
+                                                                     patternPeriodFromData_H,
+                                                                     sourceDistance_from_fit_H,
+                                                                     direction='Horizontal',
+                                                                     context_key=FIT_VISIBILITY_CONTEXT_KEY,
+                                                                     unique_id=unique_id,
+                                                                     **kwargs)
+
+        self.__plotter.draw_context(FIT_VISIBILITY_CONTEXT_KEY, add_context_label=add_context_label, unique_id=unique_id, **kwargs)
+
+        return WavePyData(coherence_lenght_V=coherence_lenght_V, source_size_V=source_size_V,
+                          coherence_lenght_H=coherence_lenght_H, source_size_H=source_size_H)
 
     ###################################################################
     # PRIVATE METHODS
@@ -462,9 +489,12 @@ class __SingleGratingCoherenceZScan(SingleGratingCoherenceZScanFacade):
                                 searchRegion,
                                 min_zvec): raise NotImplementedError()
 
-    def __fit_period_vs_z(self, zvec, pattern_period_z, contrast, direction, threshold=0.005, context_key=FIT_CALCULATION_RESULT_CONTEXT_KEY, unique_id=None, **kwargs):
-        args_for_NOfit = np.argwhere(contrast < threshold).flatten()
-        args_for_fit = np.argwhere(contrast >= threshold).flatten()
+    def __fit_period_vs_z(self, zvec, pattern_period_z, contrast, direction, threshold=0.005, context_key=FIT_PERIOD_CONTEXT_KEY, unique_id=None, **kwargs):
+        limit_up   = np.average(pattern_period_z) + 3*np.std(pattern_period_z)
+        limit_down = np.average(pattern_period_z) - 3*np.std(pattern_period_z)
+
+        args_for_NOfit = np.argwhere(np.logical_or(contrast < threshold, pattern_period_z > limit_up, pattern_period_z < limit_down)).flatten()
+        args_for_fit = np.argwhere(np.logical_and(contrast >= threshold, pattern_period_z <= limit_up, pattern_period_z >= limit_down)).flatten()
 
         if 'Hor' in direction:
             ls1 = '-ro'
@@ -489,8 +519,32 @@ class __SingleGratingCoherenceZScan(SingleGratingCoherenceZScanFacade):
                                             output_data=output_data,
                                             **kwargs)
 
-
         return output_data.get_parameter("sourceDistance"), output_data.get_parameter("patternPeriodFromData")
+
+
+    def __fit_z_scan_talbot(self, zvec, contrast, patternPeriod, sourceDist, direction, context_key=FIT_VISIBILITY_CONTEXT_KEY, unique_id=None, **kwargs):
+        if 'Hor' in direction:
+            ls1 = ':ro'
+            lc2 = 'm'
+        else:
+            ls1 = ':ko'
+            lc2 = 'c'
+
+        output_data = WavePyData()
+
+        self.__plotter.push_plot_on_context(context_key, VisibilityPlot, unique_id,
+                                            zvec=zvec,
+                                            pattern_period=patternPeriod,
+                                            source_distance=sourceDist,
+                                            contrast=contrast,
+                                            ls1=ls1,
+                                            lc2=lc2,
+                                            direction=direction,
+                                            output_data=output_data,
+                                            wavelength=self.__wavelength,
+                                            **kwargs)
+
+        return output_data.get_parameter("coherence_length"), output_data.get_parameter("source_size")
 
 #=========================================================================================
 # MULTI-THREADING SECTION
