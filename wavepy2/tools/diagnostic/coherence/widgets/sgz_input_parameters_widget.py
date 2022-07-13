@@ -193,8 +193,8 @@ class AbstractSGZInputParametersWidget():
         
         plot_tools.lineEdit(self.zvec_box_1, self, "startDist",       label="Starting distance scan [m]", labelWidth=400, valueType=float, orientation="horizontal")
         plot_tools.lineEdit(self.zvec_box_1, self, "step_z_scan",     label="Step size scan [m]", labelWidth=400, valueType=float, orientation="horizontal")
-        plot_tools.lineEdit(self.zvec_box_1, self, "image_per_point", label="Number of images per step", labelWidth=400, valueType=float, orientation="horizontal")
-        plot_tools.lineEdit(self.zvec_box_1, self, "strideFile",      label="Stride (Use only every XX files)", labelWidth=400, valueType=float, orientation="horizontal")
+        plot_tools.lineEdit(self.zvec_box_1, self, "image_per_point", label="Number of images per step", labelWidth=400, valueType=int, orientation="horizontal")
+        plot_tools.lineEdit(self.zvec_box_1, self, "strideFile",      label="Stride (Use only every XX files)", labelWidth=400, valueType=int, orientation="horizontal")
 
         self.zvec_box_2 = plot_tools.widgetBox(main_box, orientation="vertical", height=110)
 
