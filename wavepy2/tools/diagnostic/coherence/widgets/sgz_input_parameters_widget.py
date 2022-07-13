@@ -134,7 +134,7 @@ def generate_initialization_parameters_sgz(dataFolder,
 
 class AbstractSGZInputParametersWidget():
     WIDTH  = 800
-    HEIGHT = 550
+    HEIGHT = 600
 
     def __init__(self, application_name=None):
         self.__ini     = get_registered_ini_instance(application_name=application_name)
