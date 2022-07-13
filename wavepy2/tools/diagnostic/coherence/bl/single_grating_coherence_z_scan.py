@@ -234,6 +234,7 @@ class __SingleGratingCoherenceZScan(SingleGratingCoherenceZScanFacade):
             idx4cropDark = [0, 20, 0, 20]
 
         initial_crop_parameters.set_parameter("idx4cropDark", idx4cropDark)
+        initial_crop_parameters.set_parameter("darkMeanValue", np.mean(common_tools.crop_matrix_at_indexes(img_original, idx4cropDark)))
 
         return initial_crop_parameters
 
@@ -243,6 +244,7 @@ class __SingleGratingCoherenceZScan(SingleGratingCoherenceZScanFacade):
         img            = initial_crop_parameters.get_parameter("img",          default_value=initialization_parameters.get_parameter("img"))
         idx4crop       = initial_crop_parameters.get_parameter("idx4crop",     default_value=self.__ini.get_list_from_ini("Parameters", "Crop"))
         idx4cropDark   = initial_crop_parameters.get_parameter("idx4cropDark", default_value=[0, 20, 0, 20])
+        darkMeanValue  = initial_crop_parameters.get_parameter("darkMeanValue")
 
         pattern        = initialization_parameters.get_parameter("pattern")
         gratingPeriod  = initialization_parameters.get_parameter("gratingPeriod")
@@ -322,7 +324,8 @@ class __SingleGratingCoherenceZScan(SingleGratingCoherenceZScanFacade):
 
         self.__plotter.draw_context(CALCULATE_HARMONIC_PERIODS_CONTEXT_KEY, add_context_label=add_context_label, unique_id=unique_id, **kwargs)
 
-        return WavePyData(period_harm_Vert=period_harm_Vert, period_harm_Horz=period_harm_Horz, img=img, idx4crop=idx4crop, idx4cropDark=idx4cropDark)
+        return WavePyData(period_harm_Vert=period_harm_Vert, period_harm_Horz=period_harm_Horz, img=img,
+                          idx4crop=idx4crop, darkMeanValue=darkMeanValue)
 
     # %% ==================================================================================================
 
@@ -331,7 +334,7 @@ class __SingleGratingCoherenceZScan(SingleGratingCoherenceZScanFacade):
         period_harm_Horz = harm_periods_result.get_parameter("period_harm_Horz")
         sample_img       = harm_periods_result.get_parameter("img")
         idx4crop         = harm_periods_result.get_parameter("idx4crop")
-        idx4cropDark     = harm_periods_result.get_parameter("idx4cropDark")
+        darkMeanValue    = harm_periods_result.get_parameter("darkMeanValue")
 
         show_fourier    = initialization_parameters.get_parameter("show_fourier", False)
         listOfDataFiles = initialization_parameters.get_parameter("listOfDataFiles")
@@ -351,7 +354,7 @@ class __SingleGratingCoherenceZScan(SingleGratingCoherenceZScanFacade):
         result = self._get_calculation_result(period_harm_Vert,
                                               period_harm_Horz,
                                               idx4crop,
-                                              idx4cropDark,
+                                              darkMeanValue,
                                               listOfDataFiles,
                                               zvec,
                                               sourceDistanceV,
@@ -480,7 +483,7 @@ class __SingleGratingCoherenceZScan(SingleGratingCoherenceZScanFacade):
                                 period_harm_Vert,
                                 period_harm_Horz,
                                 idx4crop,
-                                idx4cropDark,
+                                darkMeanValue,
                                 listOfDataFiles,
                                 zvec,
                                 sourceDistanceV,
@@ -555,7 +558,7 @@ def _run_calculation(parameters):
         data_file_i, \
         zvec_i, \
         min_zvec, \
-        idx4cropDark, \
+        darkMeanValue, \
         idx4crop, \
         period_harm_Vert, \
         sourceDistanceV, \
@@ -570,9 +573,6 @@ def _run_calculation(parameters):
 
         img = read_tiff(data_file_i)
 
-        darkMeanValue = np.mean(common_tools.crop_matrix_at_indexes(img, idx4cropDark))
-
-        # TODO xshi, need to add option of input one value
         img = img - darkMeanValue  # calculate and remove dark
         img = common_tools.crop_matrix_at_indexes(img, idx4crop)
 
@@ -599,7 +599,7 @@ class _SingleGratingCoherenceZScanSingleThread(__SingleGratingCoherenceZScan):
                                 period_harm_Vert,
                                 period_harm_Horz,
                                 idx4crop,
-                                idx4cropDark,
+                                darkMeanValue,
                                 listOfDataFiles,
                                 zvec,
                                 sourceDistanceV,
@@ -613,7 +613,7 @@ class _SingleGratingCoherenceZScanSingleThread(__SingleGratingCoherenceZScan):
                                          listOfDataFiles[i],
                                          zvec[i],
                                          min_zvec,
-                                         idx4cropDark,
+                                         darkMeanValue,
                                          idx4crop,
                                          period_harm_Vert,
                                          sourceDistanceV,
@@ -646,7 +646,7 @@ class _SingleGratingCoherenceZScanMultiThread(__SingleGratingCoherenceZScan):
                                 period_harm_Vert,
                                 period_harm_Horz,
                                 idx4crop,
-                                idx4cropDark,
+                                darkMeanValue,
                                 listOfDataFiles,
                                 zvec,
                                 sourceDistanceV,
@@ -664,7 +664,7 @@ class _SingleGratingCoherenceZScanMultiThread(__SingleGratingCoherenceZScan):
                                                                  listOfDataFiles[i],
                                                                  zvec[i],
                                                                  min_zvec,
-                                                                 idx4cropDark,
+                                                                 darkMeanValue,
                                                                  idx4crop,
                                                                  period_harm_Vert,
                                                                  sourceDistanceV,
