@@ -1223,8 +1223,8 @@ class __SingleGratingTalbot2D(SingleGratingTalbotFacade):
     def __draw_crop_for_integration(cls, plotting_properties, differential_phase_01, differential_phase_10, message="New Crop for Integration?", **kwargs):
         img_to_crop = differential_phase_01 ** 2 + differential_phase_10 ** 2
 
-        vmin = grating_interferometry.mean_plus_n_sigma(img_to_crop, -3)
-        vmax = grating_interferometry.mean_plus_n_sigma(img_to_crop, 3)
+        vmin = common_tools.mean_plus_n_sigma(img_to_crop, -3)
+        vmax = common_tools.mean_plus_n_sigma(img_to_crop, 3)
 
         return crop_image.draw_crop_image(img=img_to_crop,
                                           message=message,
@@ -1240,8 +1240,8 @@ class __SingleGratingTalbot2D(SingleGratingTalbotFacade):
         plotter = get_registered_plotter_instance(application_name=APPLICATION_NAME)
 
         if plotter.is_active():
-            vmin = grating_interferometry.mean_plus_n_sigma(image_to_crop, -3)
-            vmax = grating_interferometry.mean_plus_n_sigma(image_to_crop, 3)
+            vmin = common_tools.mean_plus_n_sigma(image_to_crop, -3)
+            vmax = common_tools.mean_plus_n_sigma(image_to_crop, 3)
 
             _, idx4crop, _ = crop_image.crop_image(img=image_to_crop,
                                                    message=message,
@@ -1256,8 +1256,8 @@ class __SingleGratingTalbot2D(SingleGratingTalbotFacade):
 
     @classmethod
     def __manage_crop_for_integration(cls, differential_phase_01, differential_phase_10, idx4crop):
-        differential_phase_01_crop = grating_interferometry.crop_matrix_at_indexes(differential_phase_01, idx4crop)
-        differential_phase_10_crop = grating_interferometry.crop_matrix_at_indexes(differential_phase_10, idx4crop)
+        differential_phase_01_crop = common_tools.crop_matrix_at_indexes(differential_phase_01, idx4crop)
+        differential_phase_10_crop = common_tools.crop_matrix_at_indexes(differential_phase_10, idx4crop)
 
         return differential_phase_01_crop, differential_phase_10_crop
 

@@ -49,7 +49,7 @@ import glob
 from aps.wavepy2.util.common.common_tools import PATH_SEPARATOR
 from aps.util.initializer import get_registered_ini_instance
 from aps.util.logger import get_registered_logger_instance
-from aps.wavepy2.util.plot import plot_tools
+from aps.util.plot import gui
 from aps.wavepy2.util.plot.plotter import WavePyInteractiveWidget, WavePyWidget
 from aps.util.io.tiff_file import read_tiff
 
@@ -166,7 +166,7 @@ class AbstractSGZInputParametersWidget():
         self.setFixedWidth(widget_width)
         self.setFixedHeight(widget_height)
 
-        tabs = plot_tools.tabWidget(self.get_central_widget())
+        tabs = gui.tabWidget(self.get_central_widget())
 
         ini_widget = QWidget()
         ini_widget.setFixedHeight(widget_height-10)
@@ -175,43 +175,43 @@ class AbstractSGZInputParametersWidget():
         runtime_widget.setFixedHeight(widget_height-10)
         runtime_widget.setFixedWidth(widget_width-10)
 
-        plot_tools.createTabPage(tabs, "Initialization Parameter", widgetToAdd=ini_widget)
+        gui.createTabPage(tabs, "Initialization Parameter", widgetToAdd=ini_widget)
 
-        main_box = plot_tools.widgetBox(ini_widget, "", width=widget_width - 70, height=widget_height - 50)
+        main_box = gui.widgetBox(ini_widget, "", width=widget_width - 70, height=widget_height - 50)
 
-        select_dataDirectory_box = plot_tools.widgetBox(main_box, orientation="horizontal")
-        self.le_dataDirectory = plot_tools.lineEdit(select_dataDirectory_box, self, "dataDirectory", label="Data Directory", labelWidth=150, valueType=str, orientation="horizontal")
-        plot_tools.button(select_dataDirectory_box, self, "...", callback=self.selectDataDirectory)
+        select_dataDirectory_box = gui.widgetBox(main_box, orientation="horizontal")
+        self.le_dataDirectory = gui.lineEdit(select_dataDirectory_box, self, "dataDirectory", label="Data Directory", labelWidth=150, valueType=str, orientation="horizontal")
+        gui.button(select_dataDirectory_box, self, "...", callback=self.selectDataDirectory)
 
-        select_file_img_box = plot_tools.widgetBox(main_box, orientation="horizontal")
-        self.le_img = plot_tools.lineEdit(select_file_img_box, self, "samplefileName", label="Image File for Cropping", labelWidth=150, valueType=str, orientation="horizontal")
-        plot_tools.button(select_file_img_box, self, "...", callback=self.selectImgFile)
+        select_file_img_box = gui.widgetBox(main_box, orientation="horizontal")
+        self.le_img = gui.lineEdit(select_file_img_box, self, "samplefileName", label="Image File for Cropping", labelWidth=150, valueType=str, orientation="horizontal")
+        gui.button(select_file_img_box, self, "...", callback=self.selectImgFile)
 
-        plot_tools.comboBox(main_box, self, "zvec_from", label="Z distances", items=ZVEC_FROM, callback=self.set_zvec_from, orientation="horizontal")
+        gui.comboBox(main_box, self, "zvec_from", label="Z distances", items=ZVEC_FROM, callback=self.set_zvec_from, orientation="horizontal")
 
-        self.zvec_box_1 = plot_tools.widgetBox(main_box, orientation="vertical", height=110)
+        self.zvec_box_1 = gui.widgetBox(main_box, orientation="vertical", height=110)
         
-        plot_tools.lineEdit(self.zvec_box_1, self, "startDist", label="Starting distance scan [m]", labelWidth=400, valueType=float, orientation="horizontal")
-        plot_tools.lineEdit(self.zvec_box_1, self, "step_z_scan", label="Step size scan [m]", labelWidth=400, valueType=float, orientation="horizontal")
-        plot_tools.lineEdit(self.zvec_box_1, self, "image_per_point", label="Number of images per step", labelWidth=400, valueType=int, orientation="horizontal")
-        plot_tools.lineEdit(self.zvec_box_1, self, "strideFile", label="Stride (Use only every XX files)", labelWidth=400, valueType=int, orientation="horizontal")
+        gui.lineEdit(self.zvec_box_1, self, "startDist", label="Starting distance scan [m]", labelWidth=400, valueType=float, orientation="horizontal")
+        gui.lineEdit(self.zvec_box_1, self, "step_z_scan", label="Step size scan [m]", labelWidth=400, valueType=float, orientation="horizontal")
+        gui.lineEdit(self.zvec_box_1, self, "image_per_point", label="Number of images per step", labelWidth=400, valueType=int, orientation="horizontal")
+        gui.lineEdit(self.zvec_box_1, self, "strideFile", label="Stride (Use only every XX files)", labelWidth=400, valueType=int, orientation="horizontal")
 
-        self.zvec_box_2 = plot_tools.widgetBox(main_box, orientation="vertical", height=110)
+        self.zvec_box_2 = gui.widgetBox(main_box, orientation="vertical", height=110)
 
-        select_zvec_file_box = plot_tools.widgetBox(self.zvec_box_2, orientation="horizontal")
-        self.le_zvec_file = plot_tools.lineEdit(select_zvec_file_box, self, "zvec_file", label="Table with the z distance values in mm", labelWidth=150, valueType=str, orientation="horizontal")
-        plot_tools.button(select_zvec_file_box, self, "...", callback=self.selectZVecFile)
+        select_zvec_file_box = gui.widgetBox(self.zvec_box_2, orientation="horizontal")
+        self.le_zvec_file = gui.lineEdit(select_zvec_file_box, self, "zvec_file", label="Table with the z distance values in mm", labelWidth=150, valueType=str, orientation="horizontal")
+        gui.button(select_zvec_file_box, self, "...", callback=self.selectZVecFile)
 
         self.set_zvec_from()
 
-        plot_tools.lineEdit(main_box, self, "pixelsize", label="Pixel Size", labelWidth=400, valueType=float, orientation="horizontal")
-        plot_tools.lineEdit(main_box, self, "gratingPeriod", label="CB Grating Period", labelWidth=400, valueType=float, orientation="horizontal")
-        plot_tools.comboBox(main_box, self, "pattern", label="CB Grating Pattern", items=PATTERNS, orientation="horizontal")
-        plot_tools.lineEdit(main_box, self, "phenergy", label="Photon Source Energy", labelWidth=400, valueType=float, orientation="horizontal")
-        plot_tools.lineEdit(main_box, self, "sourceDistanceV", label="Source Distance Vertical Direction [m]", labelWidth=400, valueType=float, orientation="horizontal")
-        plot_tools.lineEdit(main_box, self, "sourceDistanceH", label="Source Distance Horizontal Direction [m]", labelWidth=400, valueType=float, orientation="horizontal")
-        plot_tools.lineEdit(main_box, self, "unFilterSize", label="Size for Uniform Filter [Pixels] (Enter 1 to NOT use the filter)", labelWidth=400, valueType=int, orientation="horizontal")
-        plot_tools.lineEdit(main_box, self, "searchRegion", label="Size of Region for Searching the Peak [Pixels]", labelWidth=400, valueType=int, orientation="horizontal")
+        gui.lineEdit(main_box, self, "pixelsize", label="Pixel Size", labelWidth=400, valueType=float, orientation="horizontal")
+        gui.lineEdit(main_box, self, "gratingPeriod", label="CB Grating Period", labelWidth=400, valueType=float, orientation="horizontal")
+        gui.comboBox(main_box, self, "pattern", label="CB Grating Pattern", items=PATTERNS, orientation="horizontal")
+        gui.lineEdit(main_box, self, "phenergy", label="Photon Source Energy", labelWidth=400, valueType=float, orientation="horizontal")
+        gui.lineEdit(main_box, self, "sourceDistanceV", label="Source Distance Vertical Direction [m]", labelWidth=400, valueType=float, orientation="horizontal")
+        gui.lineEdit(main_box, self, "sourceDistanceH", label="Source Distance Horizontal Direction [m]", labelWidth=400, valueType=float, orientation="horizontal")
+        gui.lineEdit(main_box, self, "unFilterSize", label="Size for Uniform Filter [Pixels] (Enter 1 to NOT use the filter)", labelWidth=400, valueType=int, orientation="horizontal")
+        gui.lineEdit(main_box, self, "searchRegion", label="Size of Region for Searching the Peak [Pixels]", labelWidth=400, valueType=int, orientation="horizontal")
 
         self.update()
 
@@ -220,13 +220,13 @@ class AbstractSGZInputParametersWidget():
         self.zvec_box_2.setVisible(self.zvec_from == 1)
 
     def selectDataDirectory(self):
-        self.le_dataDirectory.setText(plot_tools.selectDirectoryFromDialog(self, self.dataDirectory, "Select Data Directory"))
+        self.le_dataDirectory.setText(gui.selectDirectoryFromDialog(self, self.dataDirectory, "Select Data Directory"))
 
     def selectImgFile(self):
-        self.le_img.setText(plot_tools.selectFileFromDialog(self, self.samplefileName, "Open Image File for Cropping"))
+        self.le_img.setText(gui.selectFileFromDialog(self, self.samplefileName, "Open Image File for Cropping"))
 
     def selectZVecFile(self):
-        self.le_zvec_file.setText(plot_tools.selectFileFromDialog(self, self.zvec_file, "Table with the z distance values"))
+        self.le_zvec_file.setText(gui.selectFileFromDialog(self, self.zvec_file, "Table with the z distance values"))
 
     def get_accepted_output(self):
         self.__ini.set_value_at_ini("Files", "data directory", self.dataDirectory)

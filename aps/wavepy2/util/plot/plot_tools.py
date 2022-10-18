@@ -225,6 +225,30 @@ def load_csv_file(fname):
 
     return data, headerlist, comments
 
+import pickle
+# %%
+def load_pickle_surf(fname):
+
+    file = open(fname, 'rb')
+    figx = pickle.load(file)
+
+    data = figx.axes[0].images[0].get_array().data
+    [xi, xf, yi, yf] = figx.axes[0].images[0].get_extent()
+
+    ax = figx.axes[0].images[0].get_axes()
+
+    title = figx.axes[0].images[0].axes.properties()['title']
+    xlabel = figx.axes[0].images[0].axes.properties()['xlabel']
+    ylabel = figx.axes[0].images[0].axes.properties()['ylabel']
+    cmap = figx.axes[0].images[0].properties()['cmap'].name
+
+    xxGrid, yyGrid = np.meshgrid(np.linspace(xi, xf, data.shape[1]),
+                                 np.linspace(yi, yf, data.shape[0]),
+                                 indexing='xy')
+
+    return data, xxGrid, yyGrid
+
+
 
 from matplotlib.pyplot import get_cmap
 import itertools

@@ -50,6 +50,7 @@ from aps.wavepy2.util.common import common_tools
 from aps.util.initializer import get_registered_ini_instance
 from aps.util.logger import get_registered_logger_instance
 from aps.wavepy2.util.plot import plot_tools
+from aps.util.plot import gui
 from aps.wavepy2.util.plot.plotter import WavePyWidget, WavePyInteractiveWidget
 
 from aps.wavepy2.tools.common.wavepy_data import WavePyData
@@ -84,7 +85,7 @@ def generate_initialization_parameters_frl(thickness_file_name,
         xx, yy = common_tools.realcoordmatrix(thickness.shape[1], pixelsize[1], thickness.shape[0], pixelsize[0])
 
     elif file_extension.lower() == '.pickle':
-        thickness, xx, yy = plot_tools.load_pickle_surf(thickness_file_name, False)
+        thickness, xx, yy = plot_tools.load_pickle_surf(thickness_file_name)
 
         thickness *= 1e-6
         xx *= 1e-6
@@ -143,43 +144,43 @@ class AbstractFRLInputParametersWidget():
         self.setFixedWidth(widget_width)
         self.setFixedHeight(widget_height)
 
-        if show_runtime_options: tabs = plot_tools.tabWidget(self.get_central_widget())
+        if show_runtime_options: tabs = gui.tabWidget(self.get_central_widget())
 
         ini_widget = QWidget()
         ini_widget.setFixedHeight(widget_height-10)
         ini_widget.setFixedWidth(widget_width-10)
 
-        if show_runtime_options: plot_tools.createTabPage(tabs, "Initialization Parameter", widgetToAdd=ini_widget)
+        if show_runtime_options: gui.createTabPage(tabs, "Initialization Parameter", widgetToAdd=ini_widget)
         else: self.get_central_widget().layout().addWidget(ini_widget)
 
-        main_box = plot_tools.widgetBox(ini_widget, "", width=widget_width - 70, height=widget_height - 50)
+        main_box = gui.widgetBox(ini_widget, "", width=widget_width - 70, height=widget_height - 50)
 
-        select_file_thickness_box = plot_tools.widgetBox(main_box, orientation="horizontal")
-        self.le_thickness = plot_tools.lineEdit(select_file_thickness_box, self, "thickness_file_name", label="Thickness File to Plot\n(Pickle or sdf)", labelWidth=150, valueType=str, orientation="horizontal")
-        plot_tools.button(select_file_thickness_box, self, "...", callback=self.selectThicknessFile)
+        select_file_thickness_box = gui.widgetBox(main_box, orientation="horizontal")
+        self.le_thickness = gui.lineEdit(select_file_thickness_box, self, "thickness_file_name", label="Thickness File to Plot\n(Pickle or sdf)", labelWidth=150, valueType=str, orientation="horizontal")
+        gui.button(select_file_thickness_box, self, "...", callback=self.selectThicknessFile)
 
-        plot_tools.lineEdit(main_box, self, "str4title", label="String for Titles", labelWidth=250, valueType=str, orientation="horizontal")
-        plot_tools.lineEdit(main_box, self, "nominalRadius", label="Nominal Radius For Fitting", labelWidth=350, valueType=float, orientation="horizontal")
-        plot_tools.lineEdit(main_box, self, "diameter4fit_str", label="Diameter of active area for fitting\n(comma separated list)", labelWidth=250, valueType=str, orientation="horizontal")
-        plot_tools.comboBox(main_box, self, "lensGeometry", label="Lens Geometry", items=LENS_GEOMETRIES, orientation="horizontal")
-        plot_tools.lineEdit(main_box, self, "phenergy", label="Photon Energy", labelWidth=250, valueType=float, orientation="horizontal")
+        gui.lineEdit(main_box, self, "str4title", label="String for Titles", labelWidth=250, valueType=str, orientation="horizontal")
+        gui.lineEdit(main_box, self, "nominalRadius", label="Nominal Radius For Fitting", labelWidth=350, valueType=float, orientation="horizontal")
+        gui.lineEdit(main_box, self, "diameter4fit_str", label="Diameter of active area for fitting\n(comma separated list)", labelWidth=250, valueType=str, orientation="horizontal")
+        gui.comboBox(main_box, self, "lensGeometry", label="Lens Geometry", items=LENS_GEOMETRIES, orientation="horizontal")
+        gui.lineEdit(main_box, self, "phenergy", label="Photon Energy", labelWidth=250, valueType=float, orientation="horizontal")
 
         if show_runtime_options:
             runtime_widget = QWidget()
             runtime_widget.setFixedHeight(widget_height-10)
             runtime_widget.setFixedWidth(widget_width-10)
 
-            plot_tools.createTabPage(tabs, "Runtime Parameter", widgetToAdd=runtime_widget)
+            gui.createTabPage(tabs, "Runtime Parameter", widgetToAdd=runtime_widget)
 
-            main_box = plot_tools.widgetBox(runtime_widget, "", width=widget_width - 70, height=widget_height - 50)
+            main_box = gui.widgetBox(runtime_widget, "", width=widget_width - 70, height=widget_height - 50)
 
-            plot_tools.checkBox(main_box, self, "crop_image", "Crop Thickness Image")
-            plot_tools.checkBox(main_box, self, "fit_radius_dpc", "Fit Radius DPC")
+            gui.checkBox(main_box, self, "crop_image", "Crop Thickness Image")
+            gui.checkBox(main_box, self, "fit_radius_dpc", "Fit Radius DPC")
 
         self.update()
 
     def selectThicknessFile(self):
-        self.le_thickness.setText(plot_tools.selectFileFromDialog(self, self.thickness_file_name, "Open Thickness File", file_extension_filter="Thickness Files (*.sdf *.pickle)"))
+        self.le_thickness.setText(gui.selectFileFromDialog(self, self.thickness_file_name, "Open Thickness File", file_extension_filter="Thickness Files (*.sdf *.pickle)"))
 
     def get_accepted_output(self):
         self.__ini.set_value_at_ini("Files", "file with thickness", self.thickness_file_name)

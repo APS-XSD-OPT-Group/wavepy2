@@ -13,6 +13,7 @@ from PyQt5.QtCore import Qt
 
 from aps.wavepy2.util.common import common_tools
 from aps.wavepy2.util.plot import plot_tools
+from aps.util.plot import gui
 from aps.wavepy2.util.plot.plotter import WavePyWidget, pixels_to_inches
 from aps.wavepy2.tools.common.widgets.plot_profile_widget import PlotProfileWidget
 
@@ -114,11 +115,11 @@ class PlotIntegration(WavePyWidget):
 
         figure_4_widget = FigureCanvas(figure4)
 
-        tabs = plot_tools.tabWidget(self)
+        tabs = gui.tabWidget(self)
 
-        plot_tools.createTabPage(tabs, "Integration (3D)", figure_1_widget)
-        plot_tools.createTabPage(tabs, "Profile (Animation)", plot_profile_widget)
-        plot_tools.createTabPage(tabs, "Profile (Saved)", figure_4_widget)
+        gui.createTabPage(tabs, "Integration (3D)", figure_1_widget)
+        gui.createTabPage(tabs, "Profile (Animation)", plot_profile_widget)
+        gui.createTabPage(tabs, "Profile (Saved)", figure_4_widget)
 
         self.setFixedWidth(max(plot_profile_widget.get_figure_canvas().get_width_height()[0],
                                figure_1_widget.get_width_height()[0],

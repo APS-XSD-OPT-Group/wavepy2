@@ -50,6 +50,7 @@ from aps.wavepy2.util.common import common_tools
 from aps.util.initializer import get_registered_ini_instance
 from aps.util.logger import get_registered_logger_instance
 from aps.wavepy2.util.plot import plot_tools
+from aps.util.plot import gui
 from aps.wavepy2.util.plot.plotter import WavePyInteractiveWidget, WavePyWidget
 from aps.util.io.tiff_file import read_tiff
 
@@ -95,10 +96,10 @@ def generate_initialization_parameters_sgt(img_file_name,
 
     if imgBlank is None:
         defaultBlankV = np.int(np.mean(img[0:100, 0:100]))
-        defaultBlankV = plot_tools.ValueDialog.get_value(widget,
-                                                         message="No Dark File. Value of Dark [counts]\n(Default is the mean value of the 100x100 pixels top-left corner)",
-                                                         title='Experimental Values',
-                                                         default=defaultBlankV)
+        defaultBlankV = gui.ValueDialog.get_value(widget,
+                                                  message="No Dark File. Value of Dark [counts]\n(Default is the mean value of the 100x100 pixels top-left corner)",
+                                                  title='Experimental Values',
+                                                  default=defaultBlankV)
         imgBlank = img * 0.0 + defaultBlankV
 
     img = img - imgBlank
@@ -202,46 +203,46 @@ class AbstractSGTInputParametersWidget():
         self.setFixedWidth(widget_width)
         self.setFixedHeight(widget_height)
 
-        if show_runtime_options: tabs = plot_tools.tabWidget(self.get_central_widget())
+        if show_runtime_options: tabs = gui.tabWidget(self.get_central_widget())
 
         ini_widget = QWidget()
         ini_widget.setFixedHeight(widget_height-10)
         ini_widget.setFixedWidth(widget_width-10)
 
-        if show_runtime_options: plot_tools.createTabPage(tabs, "Initialization Parameter", widgetToAdd=ini_widget)
+        if show_runtime_options: gui.createTabPage(tabs, "Initialization Parameter", widgetToAdd=ini_widget)
         else: self.get_central_widget().layout().addWidget(ini_widget)
 
-        main_box = plot_tools.widgetBox(ini_widget, "", width=widget_width - 70, height=widget_height - 50)
-        plot_tools.separator(main_box)
-        plot_tools.comboBox(main_box, self, "mode", label="Mode", items=MODES, callback=self.set_mode, orientation="horizontal")
+        main_box = gui.widgetBox(ini_widget, "", width=widget_width - 70, height=widget_height - 50)
+        gui.separator(main_box)
+        gui.comboBox(main_box, self, "mode", label="Mode", items=MODES, callback=self.set_mode, orientation="horizontal")
 
-        select_file_img_box = plot_tools.widgetBox(main_box, orientation="horizontal")
-        self.le_img = plot_tools.lineEdit(select_file_img_box, self, "img", label="Image File", labelWidth=150, valueType=str, orientation="horizontal")
-        plot_tools.button(select_file_img_box, self, "...", callback=self.selectImgFile)
+        select_file_img_box = gui.widgetBox(main_box, orientation="horizontal")
+        self.le_img = gui.lineEdit(select_file_img_box, self, "img", label="Image File", labelWidth=150, valueType=str, orientation="horizontal")
+        gui.button(select_file_img_box, self, "...", callback=self.selectImgFile)
 
-        self.select_file_imgRef_box = plot_tools.widgetBox(main_box, orientation="horizontal")
-        self.le_imgRef = plot_tools.lineEdit(self.select_file_imgRef_box, self, "imgRef", label="Reference Image File", labelWidth=150, valueType=str, orientation="horizontal")
-        plot_tools.button(self.select_file_imgRef_box, self, "...", callback=self.selectImgRefFile)
+        self.select_file_imgRef_box = gui.widgetBox(main_box, orientation="horizontal")
+        self.le_imgRef = gui.lineEdit(self.select_file_imgRef_box, self, "imgRef", label="Reference Image File", labelWidth=150, valueType=str, orientation="horizontal")
+        gui.button(self.select_file_imgRef_box, self, "...", callback=self.selectImgRefFile)
 
-        self.select_file_imgBlank_box = plot_tools.widgetBox(main_box, orientation="horizontal")
-        self.le_imgBlank = plot_tools.lineEdit(self.select_file_imgBlank_box, self, "imgBlank", label="Blank Image File", labelWidth=150, valueType=str, orientation="horizontal")
-        plot_tools.button(self.select_file_imgBlank_box, self, "...", callback=self.selectImgBlankFile)
+        self.select_file_imgBlank_box = gui.widgetBox(main_box, orientation="horizontal")
+        self.le_imgBlank = gui.lineEdit(self.select_file_imgBlank_box, self, "imgBlank", label="Blank Image File", labelWidth=150, valueType=str, orientation="horizontal")
+        gui.button(self.select_file_imgBlank_box, self, "...", callback=self.selectImgBlankFile)
 
         self.set_mode()
 
-        plot_tools.comboBox(main_box, self, "dimension", label="Dimension", items=DIMENSIONS, callback=self.set_dimension, orientation="horizontal")
-        self.__cb_directions = plot_tools.comboBox(main_box, self, "direction", label="Direction", items=DIRECTIONS, orientation="horizontal")
+        gui.comboBox(main_box, self, "dimension", label="Dimension", items=DIMENSIONS, callback=self.set_dimension, orientation="horizontal")
+        self.__cb_directions = gui.comboBox(main_box, self, "direction", label="Direction", items=DIRECTIONS, orientation="horizontal")
 
         self.set_dimension()
 
-        plot_tools.lineEdit(main_box, self, "pixel", label="Pixel Size", labelWidth=250, valueType=float, orientation="horizontal")
-        plot_tools.lineEdit(main_box, self, "gratingPeriod", label="Grating Period", labelWidth=250, valueType=float, orientation="horizontal")
+        gui.lineEdit(main_box, self, "pixel", label="Pixel Size", labelWidth=250, valueType=float, orientation="horizontal")
+        gui.lineEdit(main_box, self, "gratingPeriod", label="Grating Period", labelWidth=250, valueType=float, orientation="horizontal")
 
-        plot_tools.comboBox(main_box, self, "pattern", label="Pattern", items=PATTERNS, orientation="horizontal")
+        gui.comboBox(main_box, self, "pattern", label="Pattern", items=PATTERNS, orientation="horizontal")
 
-        plot_tools.lineEdit(main_box, self, "distDet2sample", label="Distance Detector to Grating", labelWidth=250, valueType=float, orientation="horizontal")
-        plot_tools.lineEdit(main_box, self, "phenergy", label="Photon Energy", labelWidth=250, valueType=float, orientation="horizontal")
-        plot_tools.lineEdit(main_box, self, "sourceDistance", label="Source Distance", labelWidth=250, valueType=float, orientation="horizontal")
+        gui.lineEdit(main_box, self, "distDet2sample", label="Distance Detector to Grating", labelWidth=250, valueType=float, orientation="horizontal")
+        gui.lineEdit(main_box, self, "phenergy", label="Photon Energy", labelWidth=250, valueType=float, orientation="horizontal")
+        gui.lineEdit(main_box, self, "sourceDistance", label="Source Distance", labelWidth=250, valueType=float, orientation="horizontal")
 
         #--------------------------------------------------
 
@@ -250,19 +251,19 @@ class AbstractSGTInputParametersWidget():
             runtime_widget.setFixedHeight(widget_height-10)
             runtime_widget.setFixedWidth(widget_width-10)
 
-            plot_tools.createTabPage(tabs, "Runtime Parameter", widgetToAdd=runtime_widget)
+            gui.createTabPage(tabs, "Runtime Parameter", widgetToAdd=runtime_widget)
 
-            main_box = plot_tools.widgetBox(runtime_widget, "", width=widget_width - 70, height=widget_height - 50)
+            main_box = gui.widgetBox(runtime_widget, "", width=widget_width - 70, height=widget_height - 50)
 
-            plot_tools.separator(main_box)
-            plot_tools.checkBox(main_box, self, "correct_pi_jump", "Correct pi jump in DPC signal")
-            plot_tools.checkBox(main_box, self, "remove_mean", "Remove mean DPC")
-            plot_tools.checkBox(main_box, self, "correct_dpc_center", "Correct DPC center")
-            plot_tools.checkBox(main_box, self, "remove_linear", "Remove 2D linear fit from DPC")
-            plot_tools.checkBox(main_box, self, "do_integration", "Calculate Frankot-Chellappa integration")
-            plot_tools.checkBox(main_box, self, "calc_thickness", "Convert phase to thickness")
-            plot_tools.checkBox(main_box, self, "remove_2nd_order", "Remove 2nd order polynomial from integrated Phase")
-            plot_tools.comboBox(main_box, self, "material_idx", items=["Diamond", "Beryllium"], label="Material", labelWidth=200, orientation="horizontal")
+            gui.separator(main_box)
+            gui.checkBox(main_box, self, "correct_pi_jump", "Correct pi jump in DPC signal")
+            gui.checkBox(main_box, self, "remove_mean", "Remove mean DPC")
+            gui.checkBox(main_box, self, "correct_dpc_center", "Correct DPC center")
+            gui.checkBox(main_box, self, "remove_linear", "Remove 2D linear fit from DPC")
+            gui.checkBox(main_box, self, "do_integration", "Calculate Frankot-Chellappa integration")
+            gui.checkBox(main_box, self, "calc_thickness", "Convert phase to thickness")
+            gui.checkBox(main_box, self, "remove_2nd_order", "Remove 2nd order polynomial from integrated Phase")
+            gui.comboBox(main_box, self, "material_idx", items=["Diamond", "Beryllium"], label="Material", labelWidth=200, orientation="horizontal")
 
         self.update()
 
@@ -273,13 +274,13 @@ class AbstractSGTInputParametersWidget():
         self.__cb_directions.setEnabled(self.dimension == 0)
 
     def selectImgFile(self):
-        self.le_img.setText(plot_tools.selectFileFromDialog(self, self.img, "Open Image File"))
+        self.le_img.setText(gui.selectFileFromDialog(self, self.img, "Open Image File"))
 
     def selectImgRefFile(self):
-        self.le_imgRef.setText(plot_tools.selectFileFromDialog(self, self.imgRef, "Open Reference Image File"))
+        self.le_imgRef.setText(gui.selectFileFromDialog(self, self.imgRef, "Open Reference Image File"))
 
     def selectImgBlankFile(self):
-        self.le_imgBlank.setText(plot_tools.selectFileFromDialog(self, self.imgBlank, "Open Blank Image File"))
+        self.le_imgBlank.setText(gui.selectFileFromDialog(self, self.imgBlank, "Open Blank Image File"))
 
     def get_accepted_output(self):
         self.__ini.set_value_at_ini('Files', 'sample', self.img)

@@ -43,6 +43,7 @@
 # POSSIBILITY OF SUCH DAMAGE.                                             #
 # #########################################################################
 from aps.util.singleton import Singleton, synchronized_method
+from aps.util.plot import gui
 from aps.wavepy2.util.plot import plot_tools
 from aps.wavepy2.util.common import common_tools
 
@@ -131,7 +132,6 @@ class WavePyWidget(QWidget, WavePyGenericWidget):
         if self._allows_saving(): return self.__figures_to_save
         else: return None
 
-
 class WavePyInteractiveWidget(QDialog, WavePyGenericWidget):
 
     def __init__(self, parent, message, title, application_name=None, **kwargs):
@@ -144,7 +144,7 @@ class WavePyInteractiveWidget(QDialog, WavePyGenericWidget):
         self.setWindowFlags(self.windowFlags() | Qt.CustomizeWindowHint)
         self.setWindowFlags(self.windowFlags() & ~Qt.WindowCloseButtonHint)
 
-        self.__central_widget = plot_tools.widgetBox(self, title, "vertical")
+        self.__central_widget = gui.widgetBox(self, title, "vertical")
 
         layout = QVBoxLayout(self)
         layout.setAlignment(Qt.AlignCenter)
@@ -299,11 +299,11 @@ class _AbstractActivePlotter(_AbstractPlotter):
     def draw_context_on_widget(self, context_key, container_widget, add_context_label=True, unique_id=None, **kwargs):
         context_label = context_key
         if not unique_id is None: context_key += "_" + unique_id
-        container_widget.setStyleSheet(plot_tools.stylesheet_string)
+        container_widget.setStyleSheet(gui.stylesheet_string)
 
-        main_box = plot_tools.widgetBox(container_widget, context_label if add_context_label else "", orientation="horizontal")
+        main_box = gui.widgetBox(container_widget, context_label if add_context_label else "", orientation="horizontal")
         main_box.layout().setAlignment(Qt.AlignCenter)
-        tab_widget = plot_tools.tabWidget(main_box)
+        tab_widget = gui.tabWidget(main_box)
 
         widths  = []
         heights = []
@@ -312,15 +312,15 @@ class _AbstractActivePlotter(_AbstractPlotter):
             plot_widget_instances = self.__plot_registry[context_key]
 
             for plot_widget_instance in plot_widget_instances:
-                tab = plot_tools.createTabPage(tab_widget, plot_widget_instance.get_plot_tab_name())
+                tab = gui.createTabPage(tab_widget, plot_widget_instance.get_plot_tab_name())
                 tab.layout().setAlignment(Qt.AlignCenter)
                 tab.layout().addWidget(plot_widget_instance)
                 widths.append(plot_widget_instance.width())
                 heights.append(plot_widget_instance.height())
         else:
-            tab = plot_tools.createTabPage(tab_widget, context_label)
+            tab = gui.createTabPage(tab_widget, context_label)
 
-            label = plot_tools.widgetLabel(tab, "\n\n\n\n\n        Nothing to Display")
+            label = gui.widgetLabel(tab, "\n\n\n\n\n        Nothing to Display")
             label.setStyleSheet("font: 24pt")
 
             widths.append(500)

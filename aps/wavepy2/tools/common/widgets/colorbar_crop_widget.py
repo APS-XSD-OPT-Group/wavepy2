@@ -51,6 +51,7 @@ from aps.wavepy2.util.common import common_tools
 from aps.util.initializer import get_registered_ini_instance
 from aps.util.logger import get_registered_logger_instance, LoggerColor
 from aps.wavepy2.util.plot import plot_tools
+from aps.util.plot import gui
 from aps.wavepy2.util.plot.plotter import WavePyInteractiveWidget, WavePyWidget
 
 class AbstractColorbarCropWidget():
@@ -94,11 +95,11 @@ class AbstractColorbarCropWidget():
 
         figure_slide_colorbar.set_images_to_change([self.crop_image.get_image_to_change()])
 
-        tab_widget = plot_tools.tabWidget(self.get_central_widget())
+        tab_widget = gui.tabWidget(self.get_central_widget())
 
-        plot_tools.createTabPage(tab_widget, "Raw Image", original_cropped_image)
-        plot_tools.createTabPage(tab_widget, "Colormap", figure_slide_colorbar)
-        plot_tools.createTabPage(tab_widget, "Crop Image", self.crop_image)
+        gui.createTabPage(tab_widget, "Raw Image", original_cropped_image)
+        gui.createTabPage(tab_widget, "Colormap", figure_slide_colorbar)
+        gui.createTabPage(tab_widget, "Crop Image", self.crop_image)
 
         self.setFixedWidth(max(original_cropped_image.width(), figure_slide_colorbar.width(), self.crop_image.width())*1.1)
         self.setFixedHeight(740)

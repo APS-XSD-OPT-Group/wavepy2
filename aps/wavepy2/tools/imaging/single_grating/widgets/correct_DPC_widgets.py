@@ -48,6 +48,7 @@ from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 
 from aps.wavepy2.util.common import common_tools
 from aps.wavepy2.util.plot import plot_tools
+from aps.util.plot import gui
 from aps.wavepy2.util.plot.plotter import WavePyWidget, WavePyInteractiveWidget
 
 
@@ -109,11 +110,11 @@ class CorrectDPCCenter(WavePyInteractiveWidget):
     def build_widget(self, **kwargs):
         self.__initialize(kwargs["angle"])
 
-        main_box = plot_tools.widgetBox(self.get_central_widget(), "", width=WIDGET_FIXED_WIDTH * 2, orientation="horizontal")
+        main_box = gui.widgetBox(self.get_central_widget(), "", width=WIDGET_FIXED_WIDTH * 2, orientation="horizontal")
 
-        harm_box = [plot_tools.widgetBox(main_box, "Harmonic 01"), plot_tools.widgetBox(main_box, "Harmonic 10")]
+        harm_box = [gui.widgetBox(main_box, "Harmonic 01"), gui.widgetBox(main_box, "Harmonic 10")]
 
-        self.__tab_widget = [plot_tools.tabWidget(harm_box[0]), plot_tools.tabWidget(harm_box[1])]
+        self.__tab_widget = [gui.tabWidget(harm_box[0]), gui.tabWidget(harm_box[1])]
 
         self.__result_canvas_histo = [FigureCanvas(Figure()), FigureCanvas(Figure())]
         self.__result_canvas       = [FigureCanvas(Figure()), FigureCanvas(Figure())]
@@ -121,12 +122,12 @@ class CorrectDPCCenter(WavePyInteractiveWidget):
         for index in [0, 1]:
             self.__update_result_figures(index)
 
-            plot_tools.createTabPage(self.__tab_widget[index], "Correct Zero", GraphicalSelectPointIdx(self,
+            gui.createTabPage(self.__tab_widget[index], "Correct Zero", GraphicalSelectPointIdx(self,
                                                                                                        image=self.__pi_jump[index],
                                                                                                        selection_listener=self.set_selection,
                                                                                                        args_for_listener=index))
-            plot_tools.createTabPage(self.__tab_widget[index], "Angle Displacement of Fringes", self.__result_canvas_histo[index])
-            plot_tools.createTabPage(self.__tab_widget[index], "DPC Center", self.__result_canvas[index])
+            gui.createTabPage(self.__tab_widget[index], "Angle Displacement of Fringes", self.__result_canvas_histo[index])
+            gui.createTabPage(self.__tab_widget[index], "DPC Center", self.__result_canvas[index])
 
             harm_box[index].setFixedHeight(max(self.__result_canvas_histo[index].get_width_height()[1], self.__result_canvas[index].get_width_height()[1])+220)
 

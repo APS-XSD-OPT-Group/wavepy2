@@ -56,6 +56,7 @@ from scipy.ndimage.filters import uniform_filter1d
 
 from aps.wavepy2.util.common import common_tools
 from aps.wavepy2.util.plot import plot_tools
+from aps.util.plot import gui
 from aps.wavepy2.util.plot.plotter import WavePyWidget, get_registered_plotter_instance, pixels_to_inches
 
 
@@ -139,19 +140,19 @@ class NProfilesHV(WavePyWidget):
             figure2_v = self.__get_empty_figure()
             tab_index = 0
 
-        tabs = plot_tools.tabWidget(self, width=plot_tools.WIDGET_FIXED_WIDTH * 1.4)
+        tabs = gui.tabWidget(self, width=plot_tools.WIDGET_FIXED_WIDTH * 1.4)
 
-        tab_h = plot_tools.createTabPage(tabs, "Horizontal")
-        tab_v = plot_tools.createTabPage(tabs, "Vertical")
+        tab_h = gui.createTabPage(tabs, "Horizontal")
+        tab_v = gui.createTabPage(tabs, "Vertical")
 
-        tabs_h = plot_tools.tabWidget(tab_h)
-        tabs_v = plot_tools.tabWidget(tab_v)
+        tabs_h = gui.tabWidget(tab_h)
+        tabs_v = gui.tabWidget(tab_v)
 
-        plot_tools.createTabPage(tabs_h, titleH, widgetToAdd=FigureCanvas(figure1_h))
-        plot_tools.createTabPage(tabs_h, titleH + ", profile positions", widgetToAdd=FigureCanvas(figure2_h))
+        gui.createTabPage(tabs_h, titleH, widgetToAdd=FigureCanvas(figure1_h))
+        gui.createTabPage(tabs_h, titleH + ", profile positions", widgetToAdd=FigureCanvas(figure2_h))
 
-        plot_tools.createTabPage(tabs_v, titleV, widgetToAdd=FigureCanvas(figure1_v))
-        plot_tools.createTabPage(tabs_v, titleV + ", profile positions", widgetToAdd=FigureCanvas(figure2_v))
+        gui.createTabPage(tabs_v, titleV, widgetToAdd=FigureCanvas(figure1_v))
+        gui.createTabPage(tabs_v, titleV + ", profile positions", widgetToAdd=FigureCanvas(figure2_v))
 
         tabs.setCurrentIndex(tab_index)
 

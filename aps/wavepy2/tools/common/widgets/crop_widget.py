@@ -46,6 +46,7 @@ import numpy as np
 from aps.wavepy2.util.common import common_tools
 from aps.util.logger import get_registered_logger_instance
 from aps.wavepy2.util.plot import plot_tools
+from aps.util.plot import gui
 from aps.wavepy2.util.plot.plotter import WavePyInteractiveWidget, WavePyWidget, pixels_to_inches
 from aps.wavepy2.tools.common.widgets.graphical_roi_idx import GraphicalRoiIdx
 
@@ -81,9 +82,9 @@ class AbstractCropWidget():
                                      application_name=self.__application_name, image=img, set_crop_output_listener=self.create_cropped_output,
                                      figure_width=figure_width, figure_height=figure_height, kwargs4graph=kwargs4graph)
 
-        tab_widget = plot_tools.tabWidget(self.get_central_widget())
+        tab_widget = gui.tabWidget(self.get_central_widget())
 
-        plot_tools.createTabPage(tab_widget, "Crop Image", crop_image)
+        gui.createTabPage(tab_widget, "Crop Image", crop_image)
 
         self.setFixedWidth(FIXED_WIDTH)
 
