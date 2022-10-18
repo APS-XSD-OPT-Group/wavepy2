@@ -43,95 +43,62 @@
 # POSSIBILITY OF SUCH DAMAGE.                                             #
 # #########################################################################
 
-import os
 
-try:
-    from setuptools import find_packages, setup
-except AttributeError:
-    from setuptools import find_packages, setup
+from aps.util.initializer import get_registered_ini_instance
+from aps.util.logger import LoggerMode
+from aps.util.plot.qt_application import get_registered_qt_application_instance
+from aps.wavepy2.util.plot.plotter import get_registered_plotter_instance
 
-NAME = 'wavepy2'
+from aps.wavepy2.tools.common.wavepy_script import WavePyScript
 
-VERSION = '0.0.51'
-ISRELEASED = False
+from aps.wavepy2.tools.metrology.lenses.bl.fit_residual_lenses import create_fit_residual_lenses_manager, APPLICATION_NAME, \
+    CROP_THICKNESS_CONTEXT_KEY, CENTER_IMAGE_CONTEXT_KEY, FIT_RADIUS_DPC_CONTEXT_KEY, DO_FIT_CONTEXT_KEY
 
-DESCRIPTION = 'Wavepy 2 library'
-README_FILE = os.path.join(os.path.dirname(__file__), 'README.md')
-LONG_DESCRIPTION = open(README_FILE).read()
-AUTHOR = 'Luca Rebuffi, Xianbo Shi, Zhi Qiao'
-AUTHOR_EMAIL = 'lrebuffi@anl.gov'
-URL = 'https://github.com/aps-xsd-opt-group/wavepy2'
-DOWNLOAD_URL = 'https://github.com/aps-xsd-opt-group/wavepy2'
-MAINTAINER = 'XSD-OPT Group @ APS-ANL'
-MAINTAINER_EMAIL = 'lrebuffi@anl.gov'
-LICENSE = 'BSD-3'
+class MainFitResidualLenses(WavePyScript):
+    SCRIPT_ID = "met-frl"
 
-KEYWORDS = ['dictionary',
-    'glossary',
-    'synchrotron'
-    'simulation',
-]
+    def _get_script_id(self): return MainFitResidualLenses.SCRIPT_ID
+    def _get_application_name(self): return APPLICATION_NAME
+    def _get_ini_file_name(self): return ".fit_residual_lenses.ini"
 
-CLASSIFIERS = [
-    'Development Status :: 4 - Beta',
-    'License :: OSI Approved :: BSD License',
-    'Natural Language :: English',
-    'Environment :: Console',
-    'Environment :: Plugins',
-    'Programming Language :: Python :: 3.7',
-    'Topic :: Scientific/Engineering :: Visualization',
-    'Intended Audience :: Science/Research',
-]
+    def _run_script(self, SCRIPT_LOGGER_MODE=LoggerMode.FULL, **args):
+        plotter = get_registered_plotter_instance(application_name=self._get_application_name())
 
-INSTALL_REQUIRES = (
-    'setuptools',
-    'numpy',
-    'scipy',
-    'h5py',
-    'pyfftw',
-    'scikit-image',
-    'termcolor',
-    'tifffile',
-    'pandas',
-    'PyQt5',
-    'aps_common_libraries'
-)
+        fit_residual_lenses_manager = create_fit_residual_lenses_manager()
 
-SETUP_REQUIRES = (
-    'setuptools',
-)
+        # ==========================================================================
+        # %% Initialization parameters
+        # ==========================================================================
 
-PACKAGES = find_packages(exclude=('*.tests', '*.tests.*', 'tests.*', 'tests'))
+        initialization_parameters = fit_residual_lenses_manager.manager_initialization(fit_residual_lenses_manager.get_initialization_parameters(),
+                                                                                       SCRIPT_LOGGER_MODE)
 
-PACKAGE_DATA = {
-}
+        crop_result = fit_residual_lenses_manager.crop_thickness(initialization_parameters)
+        plotter.show_context_window(CROP_THICKNESS_CONTEXT_KEY)
 
-NAMESPACE_PACAKGES = ["aps", "aps.wavepy2"]
+        center_image_result = fit_residual_lenses_manager.center_image(crop_result, initialization_parameters)
+        plotter.show_context_window(CENTER_IMAGE_CONTEXT_KEY)
 
-def setup_package():
+        fit_radius_dpc_result = fit_residual_lenses_manager.fit_radius_dpc(center_image_result, initialization_parameters)
+        plotter.show_context_window(FIT_RADIUS_DPC_CONTEXT_KEY)
 
-    setup(
-        name=NAME,
-        version=VERSION,
-        description=DESCRIPTION,
-        long_description=LONG_DESCRIPTION,
-        author=AUTHOR,
-        author_email=AUTHOR_EMAIL,
-        maintainer=MAINTAINER,
-        maintainer_email=MAINTAINER_EMAIL,
-        url=URL,
-        download_url=DOWNLOAD_URL,
-        license=LICENSE,
-        keywords=KEYWORDS,
-        classifiers=CLASSIFIERS,
-        packages=PACKAGES,
-        package_data=PACKAGE_DATA,
-        namespace_packages=NAMESPACE_PACAKGES,
-        zip_safe=False,
-        include_package_data=True,
-        install_requires=INSTALL_REQUIRES,
-        setup_requires=SETUP_REQUIRES,
-    )
+        fit_result = fit_residual_lenses_manager.do_fit(fit_radius_dpc_result, initialization_parameters)
+        plotter.show_context_window(DO_FIT_CONTEXT_KEY)
 
-if __name__ == '__main__':
-    setup_package()
+
+        # ==========================================================================
+        # %% Final Operations
+        # ==========================================================================
+
+        get_registered_ini_instance(self._get_application_name()).push()
+        get_registered_qt_application_instance().show_application_closer()
+
+        # ==========================================================================
+
+        get_registered_qt_application_instance().run_qt_application()
+
+
+import os, sys
+if __name__=="__main__":
+    if os.getenv('WAVEPY_DEBUG', "0") == "1": MainFitResidualLenses(sys_argv=sys.argv).run_script()
+    else: MainFitResidualLenses().show_help()

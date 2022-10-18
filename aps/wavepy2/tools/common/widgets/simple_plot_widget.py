@@ -43,95 +43,73 @@
 # POSSIBILITY OF SUCH DAMAGE.                                             #
 # #########################################################################
 
-import os
+from PyQt5.QtCore import Qt
+from PyQt5.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout
+from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
+from matplotlib.figure import Figure
 
-try:
-    from setuptools import find_packages, setup
-except AttributeError:
-    from setuptools import find_packages, setup
+from aps.wavepy2.tools.common.widgets.image_to_change import ImageToChange
 
-NAME = 'wavepy2'
+from aps.wavepy2.util.common import common_tools
+from aps.wavepy2.util.plot.plotter import WavePyWidget
 
-VERSION = '0.0.51'
-ISRELEASED = False
 
-DESCRIPTION = 'Wavepy 2 library'
-README_FILE = os.path.join(os.path.dirname(__file__), 'README.md')
-LONG_DESCRIPTION = open(README_FILE).read()
-AUTHOR = 'Luca Rebuffi, Xianbo Shi, Zhi Qiao'
-AUTHOR_EMAIL = 'lrebuffi@anl.gov'
-URL = 'https://github.com/aps-xsd-opt-group/wavepy2'
-DOWNLOAD_URL = 'https://github.com/aps-xsd-opt-group/wavepy2'
-MAINTAINER = 'XSD-OPT Group @ APS-ANL'
-MAINTAINER_EMAIL = 'lrebuffi@anl.gov'
-LICENSE = 'BSD-3'
+class SimplePlot(WavePyWidget):
+    def __init__(self, parent=None, application_name=None, **kwargs):
+        WavePyWidget.__init__(self, parent=parent, application_name=application_name)
 
-KEYWORDS = ['dictionary',
-    'glossary',
-    'synchrotron'
-    'simulation',
-]
+    def get_plot_tab_name(self): return self.__title
 
-CLASSIFIERS = [
-    'Development Status :: 4 - Beta',
-    'License :: OSI Approved :: BSD License',
-    'Natural Language :: English',
-    'Environment :: Console',
-    'Environment :: Plugins',
-    'Programming Language :: Python :: 3.7',
-    'Topic :: Scientific/Engineering :: Visualization',
-    'Intended Audience :: Science/Research',
-]
+    def build_widget(self, **kwargs):
+        img                = kwargs["img"]
+        pixelsize          = kwargs["pixelsize"]
+        try: self.__title = kwargs["title"]
+        except: self.__title = "Plot Image"
+        try: xlabel = kwargs["xlabel"]
+        except: xlabel = r'x [$\mu m$ ]'
+        try: ylabel = kwargs["ylabel"]
+        except: ylabel = r'y [$\mu m$ ]'
 
-INSTALL_REQUIRES = (
-    'setuptools',
-    'numpy',
-    'scipy',
-    'h5py',
-    'pyfftw',
-    'scikit-image',
-    'termcolor',
-    'tifffile',
-    'pandas',
-    'PyQt5',
-    'aps_common_libraries'
-)
+        layout = QHBoxLayout()
+        layout.setAlignment(Qt.AlignCenter)
 
-SETUP_REQUIRES = (
-    'setuptools',
-)
+        widget = SimplePlotWidget(self,
+                                  image=img,
+                                  title=self.__title,
+                                  xlabel=xlabel,
+                                  ylabel=ylabel,
+                                  extent=common_tools.extent_func(img, pixelsize) * 1e6)
+        layout.addWidget(widget)
 
-PACKAGES = find_packages(exclude=('*.tests', '*.tests.*', 'tests.*', 'tests'))
+        self.setLayout(layout)
 
-PACKAGE_DATA = {
-}
+        self.append_mpl_figure_to_save(widget.get_image_to_change().get_mpl_figure())
 
-NAMESPACE_PACAKGES = ["aps", "aps.wavepy2"]
+class SimplePlotWidget(QWidget):
+    def __init__(self, parent, image, title='', xlabel='', ylabel='', figure_width=8, figure_height=7, **kwargs4imshow):
+        super(SimplePlotWidget, self).__init__(parent)
 
-def setup_package():
+        figure_canvas = FigureCanvas(Figure((figure_width, figure_height)))
+        mpl_figure = figure_canvas.figure
 
-    setup(
-        name=NAME,
-        version=VERSION,
-        description=DESCRIPTION,
-        long_description=LONG_DESCRIPTION,
-        author=AUTHOR,
-        author_email=AUTHOR_EMAIL,
-        maintainer=MAINTAINER,
-        maintainer_email=MAINTAINER_EMAIL,
-        url=URL,
-        download_url=DOWNLOAD_URL,
-        license=LICENSE,
-        keywords=KEYWORDS,
-        classifiers=CLASSIFIERS,
-        packages=PACKAGES,
-        package_data=PACKAGE_DATA,
-        namespace_packages=NAMESPACE_PACAKGES,
-        zip_safe=False,
-        include_package_data=True,
-        install_requires=INSTALL_REQUIRES,
-        setup_requires=SETUP_REQUIRES,
-    )
+        ax = mpl_figure.subplots(1, 1)
+        mpl_image = ax.imshow(image, cmap='viridis', **kwargs4imshow)
+        mpl_image.cmap.set_over('#FF0000')  # Red
+        mpl_image.cmap.set_under('#8B008B')  # Light Cyan
 
-if __name__ == '__main__':
-    setup_package()
+        ax.set_title(title, fontsize=18, weight='bold')
+        ax.set_xlabel(xlabel)
+        ax.set_ylabel(ylabel)
+
+        mpl_figure.colorbar(mpl_image, ax=ax, orientation="vertical")
+
+        self.__image_to_change = ImageToChange(mpl_image=mpl_image, mpl_figure=mpl_figure)
+
+        layout = QVBoxLayout()
+        layout.addWidget(figure_canvas)
+        layout.setAlignment(Qt.AlignCenter)
+
+        self.setLayout(layout)
+
+    def get_image_to_change(self):
+        return self.__image_to_change

@@ -42,96 +42,45 @@
 # ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE         #
 # POSSIBILITY OF SUCH DAMAGE.                                             #
 # #########################################################################
+from aps.wavepy2.util.plot.plotter import *
+import sys
+from matplotlib.figure import Figure
 
-import os
+from PyQt5.Qt import QApplication
 
-try:
-    from setuptools import find_packages, setup
-except AttributeError:
-    from setuptools import find_packages, setup
+a = QApplication(sys.argv)
 
-NAME = 'wavepy2'
+register_plotter_instance(PlotterMode.FULL)
 
-VERSION = '0.0.51'
-ISRELEASED = False
+class MyWidget(WavePyWidget):
 
-DESCRIPTION = 'Wavepy 2 library'
-README_FILE = os.path.join(os.path.dirname(__file__), 'README.md')
-LONG_DESCRIPTION = open(README_FILE).read()
-AUTHOR = 'Luca Rebuffi, Xianbo Shi, Zhi Qiao'
-AUTHOR_EMAIL = 'lrebuffi@anl.gov'
-URL = 'https://github.com/aps-xsd-opt-group/wavepy2'
-DOWNLOAD_URL = 'https://github.com/aps-xsd-opt-group/wavepy2'
-MAINTAINER = 'XSD-OPT Group @ APS-ANL'
-MAINTAINER_EMAIL = 'lrebuffi@anl.gov'
-LICENSE = 'BSD-3'
+    def get_plot_tab_name(self): "TEST"
 
-KEYWORDS = ['dictionary',
-    'glossary',
-    'synchrotron'
-    'simulation',
-]
+    def build_mpl_figure(self, **kwargs):
+        return Figure(figsize=(2, 2))
 
-CLASSIFIERS = [
-    'Development Status :: 4 - Beta',
-    'License :: OSI Approved :: BSD License',
-    'Natural Language :: English',
-    'Environment :: Console',
-    'Environment :: Plugins',
-    'Programming Language :: Python :: 3.7',
-    'Topic :: Scientific/Engineering :: Visualization',
-    'Intended Audience :: Science/Research',
-]
+plotter = get_registered_plotter_instance()
 
-INSTALL_REQUIRES = (
-    'setuptools',
-    'numpy',
-    'scipy',
-    'h5py',
-    'pyfftw',
-    'scikit-image',
-    'termcolor',
-    'tifffile',
-    'pandas',
-    'PyQt5',
-    'aps_common_libraries'
-)
+plotter.push_plot_on_context("CONTEXT1", MyWidget)
 
-SETUP_REQUIRES = (
-    'setuptools',
-)
+container=QWidget()
 
-PACKAGES = find_packages(exclude=('*.tests', '*.tests.*', 'tests.*', 'tests'))
+class MyInteractiveWidget(WavePyInteractiveWidget):
+    def __init__(self, parent):
+        super(MyInteractiveWidget, self).__init__(parent, message="MSG", title="TIT")
 
-PACKAGE_DATA = {
-}
+    def build_widget(self, **kwargs):
+        pass
 
-NAMESPACE_PACAKGES = ["aps", "aps.wavepy2"]
+    def get_accepted_output(self):
+        return "TEST2"
 
-def setup_package():
+plotter.draw_context_on_widget("CONTEXT1", container_widget=container)
 
-    setup(
-        name=NAME,
-        version=VERSION,
-        description=DESCRIPTION,
-        long_description=LONG_DESCRIPTION,
-        author=AUTHOR,
-        author_email=AUTHOR_EMAIL,
-        maintainer=MAINTAINER,
-        maintainer_email=MAINTAINER_EMAIL,
-        url=URL,
-        download_url=DOWNLOAD_URL,
-        license=LICENSE,
-        keywords=KEYWORDS,
-        classifiers=CLASSIFIERS,
-        packages=PACKAGES,
-        package_data=PACKAGE_DATA,
-        namespace_packages=NAMESPACE_PACAKGES,
-        zip_safe=False,
-        include_package_data=True,
-        install_requires=INSTALL_REQUIRES,
-        setup_requires=SETUP_REQUIRES,
-    )
+container.show()
 
-if __name__ == '__main__':
-    setup_package()
+print(plotter.show_interactive_plot(MyInteractiveWidget, container_widget=container))
+
+a.exec_()
+
+

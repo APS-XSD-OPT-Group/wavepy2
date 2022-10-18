@@ -42,96 +42,65 @@
 # ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE         #
 # POSSIBILITY OF SUCH DAMAGE.                                             #
 # #########################################################################
+from aps.util.logger import *
 
-import os
+from PyQt5.QtWidgets import QWidget
+from PyQt5.Qt import QApplication, QTextCursor
 
-try:
-    from setuptools import find_packages, setup
-except AttributeError:
-    from setuptools import find_packages, setup
+import oasys.widgets.gui as gui
 
-NAME = 'wavepy2'
+class TestWidget(LogStream):
+    class Widget(QWidget):
+        def __init__(self):
+            super(TestWidget.Widget, self).__init__()
 
-VERSION = '0.0.51'
-ISRELEASED = False
+            self.setFixedHeight(200)
+            self.setFixedWidth(250)
 
-DESCRIPTION = 'Wavepy 2 library'
-README_FILE = os.path.join(os.path.dirname(__file__), 'README.md')
-LONG_DESCRIPTION = open(README_FILE).read()
-AUTHOR = 'Luca Rebuffi, Xianbo Shi, Zhi Qiao'
-AUTHOR_EMAIL = 'lrebuffi@anl.gov'
-URL = 'https://github.com/aps-xsd-opt-group/wavepy2'
-DOWNLOAD_URL = 'https://github.com/aps-xsd-opt-group/wavepy2'
-MAINTAINER = 'XSD-OPT Group @ APS-ANL'
-MAINTAINER_EMAIL = 'lrebuffi@anl.gov'
-LICENSE = 'BSD-3'
+            text_area_box = gui.__widgetBox(self, "Test", orientation="vertical", height=160, width=200)
 
-KEYWORDS = ['dictionary',
-    'glossary',
-    'synchrotron'
-    'simulation',
-]
+            self.__text_area = gui.textArea(height=120, width=160, readOnly=True)
+            self.__text_area.setText("")
 
-CLASSIFIERS = [
-    'Development Status :: 4 - Beta',
-    'License :: OSI Approved :: BSD License',
-    'Natural Language :: English',
-    'Environment :: Console',
-    'Environment :: Plugins',
-    'Programming Language :: Python :: 3.7',
-    'Topic :: Scientific/Engineering :: Visualization',
-    'Intended Audience :: Science/Research',
-]
+            text_area_box.layout().addWidget(self.__text_area)
 
-INSTALL_REQUIRES = (
-    'setuptools',
-    'numpy',
-    'scipy',
-    'h5py',
-    'pyfftw',
-    'scikit-image',
-    'termcolor',
-    'tifffile',
-    'pandas',
-    'PyQt5',
-    'aps_common_libraries'
-)
+        def write(self, text):
+            cursor = self.__text_area.textCursor()
+            cursor.movePosition(QTextCursor.End)
+            cursor.insertText(text)
+            self.__text_area.setTextCursor(cursor)
+            self.__text_area.ensureCursorVisible()
 
-SETUP_REQUIRES = (
-    'setuptools',
-)
+    def __init__(self): self.__widget = TestWidget.Widget()
+    def close(self): pass
+    def write(self, text): self.__widget.write(text)
+    def flush(self, *args, **kwargs): pass
+    def show(self): self.__widget.show()
 
-PACKAGES = find_packages(exclude=('*.tests', '*.tests.*', 'tests.*', 'tests'))
+def __log():
+    logger = get_registered_logger_instance()
 
-PACKAGE_DATA = {
-}
+    logger.print('Hello, World!')
+    logger.print_message('Hello, World!')
+    logger.print_warning('Hello, World!')
+    logger.print_error('Hello, World!')
 
-NAMESPACE_PACAKGES = ["aps", "aps.wavepy2"]
+def run_test_logger():
+    a = QApplication(sys.argv)
 
-def setup_package():
+    test_widget = TestWidget()
+    test_widget.show()
 
-    setup(
-        name=NAME,
-        version=VERSION,
-        description=DESCRIPTION,
-        long_description=LONG_DESCRIPTION,
-        author=AUTHOR,
-        author_email=AUTHOR_EMAIL,
-        maintainer=MAINTAINER,
-        maintainer_email=MAINTAINER_EMAIL,
-        url=URL,
-        download_url=DOWNLOAD_URL,
-        license=LICENSE,
-        keywords=KEYWORDS,
-        classifiers=CLASSIFIERS,
-        packages=PACKAGES,
-        package_data=PACKAGE_DATA,
-        namespace_packages=NAMESPACE_PACAKGES,
-        zip_safe=False,
-        include_package_data=True,
-        install_requires=INSTALL_REQUIRES,
-        setup_requires=SETUP_REQUIRES,
-    )
+    try:
+        register_logger_pool_instance([test_widget, open("__TEST/diobescul.txt", "wt"), DEFAULT_STREAM], LoggerMode.FULL)
+        __log()
 
-if __name__ == '__main__':
-    setup_package()
+        register_logger_single_instance(DEFAULT_STREAM, LoggerMode.NONE, reset=True)
+        __log()
+    except Exception as e:
+        print(e)
+
+    a.exec_()
+
+if __name__=="__main__":
+    run_test_logger()

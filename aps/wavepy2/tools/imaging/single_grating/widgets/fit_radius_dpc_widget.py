@@ -42,96 +42,77 @@
 # ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE         #
 # POSSIBILITY OF SUCH DAMAGE.                                             #
 # #########################################################################
+import numpy as np
+from matplotlib.figure import Figure
+from aps.wavepy2.util.common import common_tools
+from aps.wavepy2.util.plot.plotter import WavePyWidget
+from aps.util.logger import get_registered_logger_instance
 
-import os
+from warnings import filterwarnings
+filterwarnings("ignore")
 
-try:
-    from setuptools import find_packages, setup
-except AttributeError:
-    from setuptools import find_packages, setup
+class FitRadiusDPC(WavePyWidget):
+    def __init__(self, parent=None, application_name=None, **kwargs):
+        super(FitRadiusDPC, self).__init__(parent=parent, application_name=application_name)
 
-NAME = 'wavepy2'
+        self.__logger  = get_registered_logger_instance(application_name=application_name)
 
-VERSION = '0.0.51'
-ISRELEASED = False
+    def get_plot_tab_name(self): return "Fit Radius"
 
-DESCRIPTION = 'Wavepy 2 library'
-README_FILE = os.path.join(os.path.dirname(__file__), 'README.md')
-LONG_DESCRIPTION = open(README_FILE).read()
-AUTHOR = 'Luca Rebuffi, Xianbo Shi, Zhi Qiao'
-AUTHOR_EMAIL = 'lrebuffi@anl.gov'
-URL = 'https://github.com/aps-xsd-opt-group/wavepy2'
-DOWNLOAD_URL = 'https://github.com/aps-xsd-opt-group/wavepy2'
-MAINTAINER = 'XSD-OPT Group @ APS-ANL'
-MAINTAINER_EMAIL = 'lrebuffi@anl.gov'
-LICENSE = 'BSD-3'
+    def build_mpl_figure(self, **kwargs):
+        dpx       = kwargs["dpx"]
+        dpy       = kwargs["dpy"]
+        pixelsize = kwargs["pixelsize"]
+        kwave     = kwargs["kwave"]
+        str4title = kwargs["str4title"]
 
-KEYWORDS = ['dictionary',
-    'glossary',
-    'synchrotron'
-    'simulation',
-]
+        xVec = common_tools.realcoordvec(dpx.shape[1], pixelsize[1])
+        yVec = common_tools.realcoordvec(dpx.shape[0], pixelsize[0])
 
-CLASSIFIERS = [
-    'Development Status :: 4 - Beta',
-    'License :: OSI Approved :: BSD License',
-    'Natural Language :: English',
-    'Environment :: Console',
-    'Environment :: Plugins',
-    'Programming Language :: Python :: 3.7',
-    'Topic :: Scientific/Engineering :: Visualization',
-    'Intended Audience :: Science/Research',
-]
+        fig = Figure(figsize=(14, 5))
+        fig.suptitle(str4title + 'Phase [rad]', fontsize=14)
 
-INSTALL_REQUIRES = (
-    'setuptools',
-    'numpy',
-    'scipy',
-    'h5py',
-    'pyfftw',
-    'scikit-image',
-    'termcolor',
-    'tifffile',
-    'pandas',
-    'PyQt5',
-    'aps_common_libraries'
-)
+        ax1 = fig.add_subplot(121)
+        ax2 = fig.add_subplot(122, sharex=ax1, sharey=ax1)
 
-SETUP_REQUIRES = (
-    'setuptools',
-)
+        ax1.plot(xVec * 1e6, dpx[dpx.shape[0] // 4, :],     '-ob', label='1/4')
+        ax1.plot(xVec * 1e6, dpx[dpx.shape[0] // 4 * 3, :], '-og', label='3/4')
+        ax1.plot(xVec * 1e6, dpx[dpx.shape[0] // 2, :],     '-or', label='1/2')
 
-PACKAGES = find_packages(exclude=('*.tests', '*.tests.*', 'tests.*', 'tests'))
+        lin_fitx = np.polyfit(xVec, dpx[dpx.shape[0] // 2, :], 1)
+        lin_funcx = np.poly1d(lin_fitx)
+        ax1.plot(xVec * 1e6, lin_funcx(xVec), '--c', lw=2, label='Fit 1/2')
+        curvrad_x = kwave / (lin_fitx[0])
 
-PACKAGE_DATA = {
-}
+        self.__logger.print_message('lin_fitx[0] x: {:.3g} m'.format(lin_fitx[0]))
+        self.__logger.print_message('lin_fitx[1] x: {:.3g} m'.format(lin_fitx[1]))
+        self.__logger.print_message('Curvature Radius of WF x: {:.3g} m'.format(curvrad_x))
 
-NAMESPACE_PACAKGES = ["aps", "aps.wavepy2"]
+        ax1.ticklabel_format(style='sci', axis='y', scilimits=(0, 1))
+        ax1.set_xlabel(r'[$\mu m$]')
+        ax1.set_ylabel('dpx [radians]')
+        ax1.legend(loc=7, fontsize='small')
+        ax1.set_title('H Curvature Radius of WF {:.3g} m'.format(curvrad_x), fontsize=16)
+        ax1.set_adjustable('box')
 
-def setup_package():
+        ax2.plot(yVec * 1e6, dpy[:, dpy.shape[1] // 4],     '-ob', label='1/4')
+        ax2.plot(yVec * 1e6, dpy[:, dpy.shape[1] // 4 * 3], '-og', label='3/4')
+        ax2.plot(yVec * 1e6, dpy[:, dpy.shape[1] // 2],     '-or', label='1/2')
 
-    setup(
-        name=NAME,
-        version=VERSION,
-        description=DESCRIPTION,
-        long_description=LONG_DESCRIPTION,
-        author=AUTHOR,
-        author_email=AUTHOR_EMAIL,
-        maintainer=MAINTAINER,
-        maintainer_email=MAINTAINER_EMAIL,
-        url=URL,
-        download_url=DOWNLOAD_URL,
-        license=LICENSE,
-        keywords=KEYWORDS,
-        classifiers=CLASSIFIERS,
-        packages=PACKAGES,
-        package_data=PACKAGE_DATA,
-        namespace_packages=NAMESPACE_PACAKGES,
-        zip_safe=False,
-        include_package_data=True,
-        install_requires=INSTALL_REQUIRES,
-        setup_requires=SETUP_REQUIRES,
-    )
+        lin_fity = np.polyfit(yVec,
+                              dpy[:, dpy.shape[1] // 2], 1)
+        lin_funcy = np.poly1d(lin_fity)
+        ax2.plot(yVec * 1e6, lin_funcy(yVec),
+                 '--c', lw=2,
+                 label='Fit 1/2')
+        curvrad_y = kwave / (lin_fity[0])
+        self.__logger.print_message('Curvature Radius of WF y: {:.3g} m'.format(curvrad_y))
 
-if __name__ == '__main__':
-    setup_package()
+        ax2.ticklabel_format(style='sci', axis='y', scilimits=(0, 1))
+        ax2.set_xlabel(r'[$\mu m$]')
+        ax2.set_ylabel('dpy [radians]')
+        ax2.legend(loc=7, fontsize='small')
+        ax2.set_title('V Curvature Radius of WF {:.3g} m'.format(curvrad_y), fontsize=16)
+        ax2.set_adjustable('box')
+
+        return fig

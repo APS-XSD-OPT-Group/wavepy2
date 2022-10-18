@@ -42,96 +42,67 @@
 # ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE         #
 # POSSIBILITY OF SUCH DAMAGE.                                             #
 # #########################################################################
+import numpy as np
+from matplotlib.figure import Figure
+from aps.wavepy2.util.common import common_tools
+from aps.wavepy2.util.plot.plotter import WavePyWidget
+from aps.util.logger import get_registered_secondary_logger
 
-import os
+from warnings import filterwarnings
+filterwarnings("ignore")
 
-try:
-    from setuptools import find_packages, setup
-except AttributeError:
-    from setuptools import find_packages, setup
+class SlopeErrorHist(WavePyWidget):
+    def __init__(self, parent=None, application_name=None, **kwargs):
+        super(SlopeErrorHist, self).__init__(parent=parent, application_name=application_name)
 
-NAME = 'wavepy2'
+        self.__script_logger  = get_registered_secondary_logger(application_name=application_name)
 
-VERSION = '0.0.51'
-ISRELEASED = False
+    def get_plot_tab_name(self): return "Slope Error"
 
-DESCRIPTION = 'Wavepy 2 library'
-README_FILE = os.path.join(os.path.dirname(__file__), 'README.md')
-LONG_DESCRIPTION = open(README_FILE).read()
-AUTHOR = 'Luca Rebuffi, Xianbo Shi, Zhi Qiao'
-AUTHOR_EMAIL = 'lrebuffi@anl.gov'
-URL = 'https://github.com/aps-xsd-opt-group/wavepy2'
-DOWNLOAD_URL = 'https://github.com/aps-xsd-opt-group/wavepy2'
-MAINTAINER = 'XSD-OPT Group @ APS-ANL'
-MAINTAINER_EMAIL = 'lrebuffi@anl.gov'
-LICENSE = 'BSD-3'
+    def build_mpl_figure(self, **kwargs):
+        thickness     = kwargs["thickness"]
+        pixelsize     = kwargs["pixelsize"]
+        fitted        = kwargs["fitted"]
+        try: delta    = kwargs["delta"]
+        except: delta = 1
+        try: str4title    = kwargs["str4title"]
+        except: str4title = ""
+        output_data = kwargs["output_data"]
 
-KEYWORDS = ['dictionary',
-    'glossary',
-    'synchrotron'
-    'simulation',
-]
+        errorThickness = thickness - fitted
 
-CLASSIFIERS = [
-    'Development Status :: 4 - Beta',
-    'License :: OSI Approved :: BSD License',
-    'Natural Language :: English',
-    'Environment :: Console',
-    'Environment :: Plugins',
-    'Programming Language :: Python :: 3.7',
-    'Topic :: Scientific/Engineering :: Visualization',
-    'Intended Audience :: Science/Research',
-]
+        fig = Figure(figsize=(15, 8))
+        fig.add_subplot(121)
 
-INSTALL_REQUIRES = (
-    'setuptools',
-    'numpy',
-    'scipy',
-    'h5py',
-    'pyfftw',
-    'scikit-image',
-    'termcolor',
-    'tifffile',
-    'pandas',
-    'PyQt5',
-    'aps_common_libraries'
-)
+        slope_error_h = np.diff(errorThickness, axis=0) / pixelsize[0] * delta
+        argNotNAN = np.isfinite(slope_error_h)
+        factor_seh, unit_seh = common_tools.choose_unit(slope_error_h[argNotNAN])
+        sigma_seh = np.std(slope_error_h[argNotNAN].flatten())
 
-SETUP_REQUIRES = (
-    'setuptools',
-)
+        fig.gca().hist(slope_error_h[argNotNAN].flatten() * factor_seh, 100, histtype="stepfilled")
+        fig.gca().set_xlabel(r"Slope Error [$  " + unit_seh + " rad$ ]")
+        fig.gca().set_title("Horizontal, SDV = {:.2f}".format(sigma_seh * factor_seh) +  " $" + unit_seh + " rad$")
 
-PACKAGES = find_packages(exclude=('*.tests', '*.tests.*', 'tests.*', 'tests'))
+        fig.add_subplot(122)
 
-PACKAGE_DATA = {
-}
+        slope_error_v = np.diff(errorThickness, axis=1) / pixelsize[1] * delta
+        argNotNAN = np.isfinite(slope_error_v)
+        factor_sev, unit_sev = common_tools.choose_unit(slope_error_v[argNotNAN])
+        sigma_sev = np.std(slope_error_v[argNotNAN].flatten())
 
-NAMESPACE_PACAKGES = ["aps", "aps.wavepy2"]
+        fig.gca().hist(slope_error_v[argNotNAN].flatten() * factor_sev, 100, histtype="stepfilled")
+        fig.gca().set_xlabel(r"Slope Error [$  " + unit_sev + " rad$ ]")
+        fig.gca().set_title("Vertical, SDV = {:.2f}".format(sigma_sev * factor_sev) + " $" + unit_sev + " rad$")
 
-def setup_package():
+        if delta != 1:  str4title += " WF slope error"
+        else: str4title += " Thickness slope error"
+        
+        fig.suptitle(str4title, fontsize=18, weight="bold")
 
-    setup(
-        name=NAME,
-        version=VERSION,
-        description=DESCRIPTION,
-        long_description=LONG_DESCRIPTION,
-        author=AUTHOR,
-        author_email=AUTHOR_EMAIL,
-        maintainer=MAINTAINER,
-        maintainer_email=MAINTAINER_EMAIL,
-        url=URL,
-        download_url=DOWNLOAD_URL,
-        license=LICENSE,
-        keywords=KEYWORDS,
-        classifiers=CLASSIFIERS,
-        packages=PACKAGES,
-        package_data=PACKAGE_DATA,
-        namespace_packages=NAMESPACE_PACAKGES,
-        zip_safe=False,
-        include_package_data=True,
-        install_requires=INSTALL_REQUIRES,
-        setup_requires=SETUP_REQUIRES,
-    )
+        self.__script_logger.print("Slope Error Hor SDV = " + "{:.3f}".format(sigma_seh * factor_seh) + unit_seh + " rad")
+        self.__script_logger.print("Slope Error Ver SDV = " + "{:.3f}".format(sigma_sev * factor_sev) + unit_sev + " rad")
 
-if __name__ == '__main__':
-    setup_package()
+        output_data["sigma_seh"] = sigma_seh
+        output_data["sigma_sev"] = sigma_sev
+
+        return fig

@@ -42,96 +42,61 @@
 # ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE         #
 # POSSIBILITY OF SUCH DAMAGE.                                             #
 # #########################################################################
+import numpy as np
+from PyQt5.QtWidgets import QWidget, QHBoxLayout
+from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
+from matplotlib.figure import Figure
+from matplotlib.widgets import Cursor
+from aps.wavepy2.util.plot.plot_tools import WIDGET_FIXED_WIDTH
+from aps.util.logger import get_registered_logger_instance
 
-import os
+class GraphicalSelectPointIdx(QWidget):
+    def __init__(self, parent, image, selection_listener, args_for_listener, application_name=None, **kwargs4imshow):
+        super(GraphicalSelectPointIdx, self).__init__(parent)
 
-try:
-    from setuptools import find_packages, setup
-except AttributeError:
-    from setuptools import find_packages, setup
+        logger = get_registered_logger_instance(application_name=application_name)
 
-NAME = 'wavepy2'
+        layout = QHBoxLayout()
 
-VERSION = '0.0.51'
-ISRELEASED = False
+        figure_canvas = FigureCanvas(Figure(facecolor="white", figsize=(10, 8)))
+        figure = figure_canvas.figure
 
-DESCRIPTION = 'Wavepy 2 library'
-README_FILE = os.path.join(os.path.dirname(__file__), 'README.md')
-LONG_DESCRIPTION = open(README_FILE).read()
-AUTHOR = 'Luca Rebuffi, Xianbo Shi, Zhi Qiao'
-AUTHOR_EMAIL = 'lrebuffi@anl.gov'
-URL = 'https://github.com/aps-xsd-opt-group/wavepy2'
-DOWNLOAD_URL = 'https://github.com/aps-xsd-opt-group/wavepy2'
-MAINTAINER = 'XSD-OPT Group @ APS-ANL'
-MAINTAINER_EMAIL = 'lrebuffi@anl.gov'
-LICENSE = 'BSD-3'
+        ax = figure.subplots()
 
-KEYWORDS = ['dictionary',
-    'glossary',
-    'synchrotron'
-    'simulation',
-]
+        surface = ax.imshow(image, cmap='Spectral', **kwargs4imshow)
+        ax.autoscale(False)
 
-CLASSIFIERS = [
-    'Development Status :: 4 - Beta',
-    'License :: OSI Approved :: BSD License',
-    'Natural Language :: English',
-    'Environment :: Console',
-    'Environment :: Plugins',
-    'Programming Language :: Python :: 3.7',
-    'Topic :: Scientific/Engineering :: Visualization',
-    'Intended Audience :: Science/Research',
-]
+        ax1 = ax.plot(image.shape[1] // 2, image.shape[0] // 2, 'r+', ms=30, picker=10)
 
-INSTALL_REQUIRES = (
-    'setuptools',
-    'numpy',
-    'scipy',
-    'h5py',
-    'pyfftw',
-    'scikit-image',
-    'termcolor',
-    'tifffile',
-    'pandas',
-    'PyQt5',
-    'aps_common_libraries'
-)
+        ax.grid()
+        ax.set_xlabel('Pixels')
+        ax.set_ylabel('Pixels')
+        ax.set_title('CHOOSE POINT, Click OK when Done\nRight Click: Select point\n',
+                      fontsize=16, color='r', weight='bold')
+        figure.colorbar(surface)
 
-SETUP_REQUIRES = (
-    'setuptools',
-)
+        def onclick(event):
+            if event.button == 3: # right click
+                xo, yo = event.xdata, event.ydata
 
-PACKAGES = find_packages(exclude=('*.tests', '*.tests.*', 'tests.*', 'tests'))
+                logger.print_message('Middle Click: Select point:\tx: {:.0f}, y: {:.0f}'.format(xo, yo))
 
-PACKAGE_DATA = {
-}
+                ax1[0].set_xdata(xo)
+                ax1[0].set_ydata(yo)
 
-NAMESPACE_PACAKGES = ["aps", "aps.wavepy2"]
+                ax.set_title('CHOOSE POINT, Click OK when Done\nRight Click: Select point\n' +
+                              'x: {:.0f}, y: {:.0f}'.format(xo, yo),
+                              fontsize=16, color='r', weight='bold')
 
-def setup_package():
+                if np.isnan(xo) or np.isnan(yo): selection_listener(None, None, args_for_listener)
+                else: selection_listener(xo, yo, args_for_listener)
 
-    setup(
-        name=NAME,
-        version=VERSION,
-        description=DESCRIPTION,
-        long_description=LONG_DESCRIPTION,
-        author=AUTHOR,
-        author_email=AUTHOR_EMAIL,
-        maintainer=MAINTAINER,
-        maintainer_email=MAINTAINER_EMAIL,
-        url=URL,
-        download_url=DOWNLOAD_URL,
-        license=LICENSE,
-        keywords=KEYWORDS,
-        classifiers=CLASSIFIERS,
-        packages=PACKAGES,
-        package_data=PACKAGE_DATA,
-        namespace_packages=NAMESPACE_PACAKGES,
-        zip_safe=False,
-        include_package_data=True,
-        install_requires=INSTALL_REQUIRES,
-        setup_requires=SETUP_REQUIRES,
-    )
+                figure.canvas.draw()
 
-if __name__ == '__main__':
-    setup_package()
+        Cursor(ax, useblit=True, color='red', linewidth=2)
+        figure.canvas.mpl_connect('button_press_event', onclick)
+
+        layout.addWidget(figure_canvas)
+
+        self.setLayout(layout)
+        self.setFixedWidth(WIDGET_FIXED_WIDTH)

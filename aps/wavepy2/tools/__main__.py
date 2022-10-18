@@ -42,96 +42,35 @@
 # ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE         #
 # POSSIBILITY OF SUCH DAMAGE.                                             #
 # #########################################################################
+import sys
 
-import os
+from aps.wavepy2.tools.imaging.single_grating.scripts.main_single_grating_talbot import MainSingleGratingTalbot
+from aps.wavepy2.tools.diagnostic.coherence.scripts.main_single_grating_coherence_z_scan import MainSingleGratingCoherenceZScan
+from aps.wavepy2.tools.metrology.lenses.scripts.main_fit_residual_lenses import MainFitResidualLenses
 
-try:
-    from setuptools import find_packages, setup
-except AttributeError:
-    from setuptools import find_packages, setup
+if __name__ == "__main__":
+    def show_help(error=False):
+        print("")
+        if error:
+            print("*************************************************************")
+            print("********              Command not valid!             ********")
+            print("*************************************************************\n")
+        else:
+            print("=============================================================")
+            print("           WELCOME TO WavePy 2 - command line mode")
+            print("=============================================================\n")
+        print("To launch a script:       python -m aps.wavepy2.tools <script id> <options>\n")
+        print("To show help of a script: python -m aps.wavepy2.tools <script id> --h\n")
+        print("To show this help:        python -m aps.wavepy2.tools --h\n")
+        print("* Available scripts:\n" +
+              "    1) Imaging   - Single Grating Talbot, id: " + MainSingleGratingTalbot.SCRIPT_ID + "\n" +
+              "    2) Coherence - Single Grating Z Scan, id: " + MainSingleGratingCoherenceZScan.SCRIPT_ID + "\n" +
+              "    3) Metrology - Fit Residual Lenses,   id: " + MainFitResidualLenses.SCRIPT_ID + "\n")
 
-NAME = 'wavepy2'
-
-VERSION = '0.0.51'
-ISRELEASED = False
-
-DESCRIPTION = 'Wavepy 2 library'
-README_FILE = os.path.join(os.path.dirname(__file__), 'README.md')
-LONG_DESCRIPTION = open(README_FILE).read()
-AUTHOR = 'Luca Rebuffi, Xianbo Shi, Zhi Qiao'
-AUTHOR_EMAIL = 'lrebuffi@anl.gov'
-URL = 'https://github.com/aps-xsd-opt-group/wavepy2'
-DOWNLOAD_URL = 'https://github.com/aps-xsd-opt-group/wavepy2'
-MAINTAINER = 'XSD-OPT Group @ APS-ANL'
-MAINTAINER_EMAIL = 'lrebuffi@anl.gov'
-LICENSE = 'BSD-3'
-
-KEYWORDS = ['dictionary',
-    'glossary',
-    'synchrotron'
-    'simulation',
-]
-
-CLASSIFIERS = [
-    'Development Status :: 4 - Beta',
-    'License :: OSI Approved :: BSD License',
-    'Natural Language :: English',
-    'Environment :: Console',
-    'Environment :: Plugins',
-    'Programming Language :: Python :: 3.7',
-    'Topic :: Scientific/Engineering :: Visualization',
-    'Intended Audience :: Science/Research',
-]
-
-INSTALL_REQUIRES = (
-    'setuptools',
-    'numpy',
-    'scipy',
-    'h5py',
-    'pyfftw',
-    'scikit-image',
-    'termcolor',
-    'tifffile',
-    'pandas',
-    'PyQt5',
-    'aps_common_libraries'
-)
-
-SETUP_REQUIRES = (
-    'setuptools',
-)
-
-PACKAGES = find_packages(exclude=('*.tests', '*.tests.*', 'tests.*', 'tests'))
-
-PACKAGE_DATA = {
-}
-
-NAMESPACE_PACAKGES = ["aps", "aps.wavepy2"]
-
-def setup_package():
-
-    setup(
-        name=NAME,
-        version=VERSION,
-        description=DESCRIPTION,
-        long_description=LONG_DESCRIPTION,
-        author=AUTHOR,
-        author_email=AUTHOR_EMAIL,
-        maintainer=MAINTAINER,
-        maintainer_email=MAINTAINER_EMAIL,
-        url=URL,
-        download_url=DOWNLOAD_URL,
-        license=LICENSE,
-        keywords=KEYWORDS,
-        classifiers=CLASSIFIERS,
-        packages=PACKAGES,
-        package_data=PACKAGE_DATA,
-        namespace_packages=NAMESPACE_PACAKGES,
-        zip_safe=False,
-        include_package_data=True,
-        install_requires=INSTALL_REQUIRES,
-        setup_requires=SETUP_REQUIRES,
-    )
-
-if __name__ == '__main__':
-    setup_package()
+    if len(sys.argv) == 1 or sys.argv[1] == "--h":
+        show_help()
+    else:
+        if sys.argv[1]   == MainSingleGratingTalbot.SCRIPT_ID:         MainSingleGratingTalbot(sys_argv=sys.argv).run_script()
+        elif sys.argv[1] == MainSingleGratingCoherenceZScan.SCRIPT_ID: MainSingleGratingCoherenceZScan(sys_argv=sys.argv).run_script()
+        elif sys.argv[1] == MainFitResidualLenses.SCRIPT_ID:           MainFitResidualLenses(sys_argv=sys.argv).run_script()
+        else: show_help(error=True)

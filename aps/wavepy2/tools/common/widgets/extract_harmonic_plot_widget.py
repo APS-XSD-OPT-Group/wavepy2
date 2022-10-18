@@ -42,96 +42,50 @@
 # ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE         #
 # POSSIBILITY OF SUCH DAMAGE.                                             #
 # #########################################################################
+import numpy as np
+from matplotlib.figure import Figure
+from matplotlib.patches import Rectangle
+from aps.wavepy2.util.common.common_tools import extent_func, is_empty_string
+from aps.wavepy2.util.plot.plotter import WavePyWidget
 
-import os
 
-try:
-    from setuptools import find_packages, setup
-except AttributeError:
-    from setuptools import find_packages, setup
+class ExtractHarmonicPlot(WavePyWidget):
+    def __init__(self, parent=None, application_name=None, **kwargs):
+        WavePyWidget.__init__(self, parent=parent, application_name=application_name)
 
-NAME = 'wavepy2'
+    def get_plot_tab_name(self): return self.__image_name + "Extract Harmonic " + self.__harmonic_name
 
-VERSION = '0.0.51'
-ISRELEASED = False
+    def build_mpl_figure(self, **kwargs):
+        intensity   = kwargs["intensity"]
+        idxPeak_ij  = kwargs["idxPeak_ij"]
+        harmonic_ij = kwargs["harmonic_ij"]
+        nColumns    = kwargs["nColumns"]
+        nRows       = kwargs["nRows"]
+        periodHor   = kwargs["periodHor"]
+        periodVert  = kwargs["periodVert"]
+        image_name  = kwargs["image_name"]
 
-DESCRIPTION = 'Wavepy 2 library'
-README_FILE = os.path.join(os.path.dirname(__file__), 'README.md')
-LONG_DESCRIPTION = open(README_FILE).read()
-AUTHOR = 'Luca Rebuffi, Xianbo Shi, Zhi Qiao'
-AUTHOR_EMAIL = 'lrebuffi@anl.gov'
-URL = 'https://github.com/aps-xsd-opt-group/wavepy2'
-DOWNLOAD_URL = 'https://github.com/aps-xsd-opt-group/wavepy2'
-MAINTAINER = 'XSD-OPT Group @ APS-ANL'
-MAINTAINER_EMAIL = 'lrebuffi@anl.gov'
-LICENSE = 'BSD-3'
+        self.__harmonic_name = harmonic_ij[0] + harmonic_ij[1]
+        self.__image_name = "" if is_empty_string(image_name) else image_name + ": "
 
-KEYWORDS = ['dictionary',
-    'glossary',
-    'synchrotron'
-    'simulation',
-]
+        figure = Figure(figsize=(8, 7))
+        ax = figure.subplots(1, 1)
+        ax.imshow(np.log10(intensity), cmap='inferno', extent=extent_func(intensity))
 
-CLASSIFIERS = [
-    'Development Status :: 4 - Beta',
-    'License :: OSI Approved :: BSD License',
-    'Natural Language :: English',
-    'Environment :: Console',
-    'Environment :: Plugins',
-    'Programming Language :: Python :: 3.7',
-    'Topic :: Scientific/Engineering :: Visualization',
-    'Intended Audience :: Science/Research',
-]
+        ax.set_xlabel('Pixels')
+        ax.set_ylabel('Pixels')
 
-INSTALL_REQUIRES = (
-    'setuptools',
-    'numpy',
-    'scipy',
-    'h5py',
-    'pyfftw',
-    'scikit-image',
-    'termcolor',
-    'tifffile',
-    'pandas',
-    'PyQt5',
-    'aps_common_libraries'
-)
+        # xo yo are the lower left position of the reangle
+        xo = idxPeak_ij[1] - nColumns // 2 - periodHor // 2
+        yo = nRows // 2 - idxPeak_ij[0] - periodVert // 2
 
-SETUP_REQUIRES = (
-    'setuptools',
-)
+        figure.gca().add_patch(Rectangle((xo, yo),
+                               periodHor, periodVert,
+                               lw=2, ls='--', color='red',
+                               fill=None, alpha=1))
 
-PACKAGES = find_packages(exclude=('*.tests', '*.tests.*', 'tests.*', 'tests'))
+        ax.set_title('Selected Region ' + self.__harmonic_name, fontsize=18, weight='bold')
 
-PACKAGE_DATA = {
-}
+        ax.figure.canvas.draw()
 
-NAMESPACE_PACAKGES = ["aps", "aps.wavepy2"]
-
-def setup_package():
-
-    setup(
-        name=NAME,
-        version=VERSION,
-        description=DESCRIPTION,
-        long_description=LONG_DESCRIPTION,
-        author=AUTHOR,
-        author_email=AUTHOR_EMAIL,
-        maintainer=MAINTAINER,
-        maintainer_email=MAINTAINER_EMAIL,
-        url=URL,
-        download_url=DOWNLOAD_URL,
-        license=LICENSE,
-        keywords=KEYWORDS,
-        classifiers=CLASSIFIERS,
-        packages=PACKAGES,
-        package_data=PACKAGE_DATA,
-        namespace_packages=NAMESPACE_PACAKGES,
-        zip_safe=False,
-        include_package_data=True,
-        install_requires=INSTALL_REQUIRES,
-        setup_requires=SETUP_REQUIRES,
-    )
-
-if __name__ == '__main__':
-    setup_package()
+        return figure

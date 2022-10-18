@@ -42,96 +42,59 @@
 # ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE         #
 # POSSIBILITY OF SUCH DAMAGE.                                             #
 # #########################################################################
+import numpy as np
+from matplotlib.figure import Figure
+from aps.wavepy2.util.common import common_tools
+from aps.wavepy2.util.plot.plotter import WavePyWidget
 
-import os
+from warnings import filterwarnings
+filterwarnings("ignore")
 
-try:
-    from setuptools import find_packages, setup
-except AttributeError:
-    from setuptools import find_packages, setup
+class ErrorIntegration(WavePyWidget):
+    def __init__(self, parent=None, application_name=None, **kwargs):
+        WavePyWidget.__init__(self, parent=parent, application_name=application_name)
 
-NAME = 'wavepy2'
+    def get_plot_tab_name(self): return "Error Integration"
 
-VERSION = '0.0.51'
-ISRELEASED = False
+    def build_mpl_figure(self, **kwargs):
+        delx_f     = kwargs["delx_f"]
+        dely_f     = kwargs["dely_f"]
 
-DESCRIPTION = 'Wavepy 2 library'
-README_FILE = os.path.join(os.path.dirname(__file__), 'README.md')
-LONG_DESCRIPTION = open(README_FILE).read()
-AUTHOR = 'Luca Rebuffi, Xianbo Shi, Zhi Qiao'
-AUTHOR_EMAIL = 'lrebuffi@anl.gov'
-URL = 'https://github.com/aps-xsd-opt-group/wavepy2'
-DOWNLOAD_URL = 'https://github.com/aps-xsd-opt-group/wavepy2'
-MAINTAINER = 'XSD-OPT Group @ APS-ANL'
-MAINTAINER_EMAIL = 'lrebuffi@anl.gov'
-LICENSE = 'BSD-3'
+        func     = kwargs["func"]
+        pixelsize = kwargs["pixelsize"]
 
-KEYWORDS = ['dictionary',
-    'glossary',
-    'synchrotron'
-    'simulation',
-]
+        grad_x  = kwargs["grad_x"]
+        grad_y  = kwargs["grad_y"]
+        error_x  = kwargs["error_x"]
+        error_y  = kwargs["error_y"]
 
-CLASSIFIERS = [
-    'Development Status :: 4 - Beta',
-    'License :: OSI Approved :: BSD License',
-    'Natural Language :: English',
-    'Environment :: Console',
-    'Environment :: Plugins',
-    'Programming Language :: Python :: 3.7',
-    'Topic :: Scientific/Engineering :: Visualization',
-    'Intended Audience :: Science/Research',
-]
+        xx, yy = common_tools.realcoordmatrix(func.shape[1], pixelsize[1], func.shape[0], pixelsize[0])
+        midleX = xx.shape[0] // 2
+        midleY = xx.shape[1] // 2
 
-INSTALL_REQUIRES = (
-    'setuptools',
-    'numpy',
-    'scipy',
-    'h5py',
-    'pyfftw',
-    'scikit-image',
-    'termcolor',
-    'tifffile',
-    'pandas',
-    'PyQt5',
-    'aps_common_libraries'
-)
+        figure = Figure(figsize=(9, 6.4)) # 14, 10
 
-SETUP_REQUIRES = (
-    'setuptools',
-)
+        ax1 = figure.add_subplot(221)
+        ax1.ticklabel_format(style='sci', axis='both', scilimits=(0, 1))
+        ax1.plot(xx[midleX, :], delx_f[midleX, :], '-kx', markersize=10, label='dx data')
+        ax1.plot(xx[midleX, :], grad_x[midleX, :], '-r+', markersize=10, label='dx reconstructed')
+        ax1.legend(loc=7)
 
-PACKAGES = find_packages(exclude=('*.tests', '*.tests.*', 'tests.*', 'tests'))
+        ax2 = figure.add_subplot(223, sharex=ax1)
+        ax2.plot(xx[midleX, :], error_x[midleX, :], '-g.', label='error x')
+        ax2.set_title(r'$\mu$ = {:.2g}'.format(np.mean(error_x[midleX, :])))
+        ax2.legend(loc=7)
 
-PACKAGE_DATA = {
-}
+        ax3 = figure.add_subplot(222, sharex=ax1, sharey=ax1)
+        ax3.plot(yy[:, midleY], dely_f[:, midleY], '-kx', markersize=10, label='dy data')
+        ax3.plot(yy[:, midleY], grad_y[:, midleY], '-r+', markersize=10, label='dy reconstructed')
+        ax3.legend(loc=7)
 
-NAMESPACE_PACAKGES = ["aps", "aps.wavepy2"]
+        ax4 = figure.add_subplot(224, sharex=ax1, sharey=ax2)
+        ax4.plot(yy[:, midleY], error_y[:, midleY], '-g.', label='error y')
+        ax4.set_title(r'$\mu$ = {:.2g}'.format(np.mean(error_y[:, midleY])))
+        ax4.legend(loc=7)
 
-def setup_package():
+        figure.suptitle('Error integration', fontsize=22)
 
-    setup(
-        name=NAME,
-        version=VERSION,
-        description=DESCRIPTION,
-        long_description=LONG_DESCRIPTION,
-        author=AUTHOR,
-        author_email=AUTHOR_EMAIL,
-        maintainer=MAINTAINER,
-        maintainer_email=MAINTAINER_EMAIL,
-        url=URL,
-        download_url=DOWNLOAD_URL,
-        license=LICENSE,
-        keywords=KEYWORDS,
-        classifiers=CLASSIFIERS,
-        packages=PACKAGES,
-        package_data=PACKAGE_DATA,
-        namespace_packages=NAMESPACE_PACAKGES,
-        zip_safe=False,
-        include_package_data=True,
-        install_requires=INSTALL_REQUIRES,
-        setup_requires=SETUP_REQUIRES,
-    )
-
-if __name__ == '__main__':
-    setup_package()
+        return figure

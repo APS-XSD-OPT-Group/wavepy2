@@ -42,96 +42,44 @@
 # ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE         #
 # POSSIBILITY OF SUCH DAMAGE.                                             #
 # #########################################################################
+import numpy as np
+from matplotlib.figure import Figure
+from aps.wavepy2.util.common.common_tools import extent_func, is_empty_string
+from aps.wavepy2.util.plot.plotter import WavePyWidget
 
-import os
+class SingleGratingHarmonicImages(WavePyWidget):
+    def __init__(self, parent=None, application_name=None, **kwargs):
+        WavePyWidget.__init__(self, parent=parent, application_name=application_name)
 
-try:
-    from setuptools import find_packages, setup
-except AttributeError:
-    from setuptools import find_packages, setup
+    def get_plot_tab_name(self): return self.__image_name + "Intensity in Fourier Space"
 
-NAME = 'wavepy2'
+    def build_mpl_figure(self, **kwargs):
+        # Intensity is Fourier Space
+        intFFT00 = np.log10(np.abs(kwargs["imgFFT00"]))
+        intFFT01 = np.log10(np.abs(kwargs["imgFFT01"]))
+        intFFT10 = np.log10(np.abs(kwargs["imgFFT10"]))
+        image_name = kwargs["image_name"]
 
-VERSION = '0.0.51'
-ISRELEASED = False
+        self.__image_name = "" if is_empty_string(image_name) else image_name + ": "
 
-DESCRIPTION = 'Wavepy 2 library'
-README_FILE = os.path.join(os.path.dirname(__file__), 'README.md')
-LONG_DESCRIPTION = open(README_FILE).read()
-AUTHOR = 'Luca Rebuffi, Xianbo Shi, Zhi Qiao'
-AUTHOR_EMAIL = 'lrebuffi@anl.gov'
-URL = 'https://github.com/aps-xsd-opt-group/wavepy2'
-DOWNLOAD_URL = 'https://github.com/aps-xsd-opt-group/wavepy2'
-MAINTAINER = 'XSD-OPT Group @ APS-ANL'
-MAINTAINER_EMAIL = 'lrebuffi@anl.gov'
-LICENSE = 'BSD-3'
+        figure = Figure(figsize=(14, 5))
+        axes = figure.subplots(nrows=1, ncols=3)
 
-KEYWORDS = ['dictionary',
-    'glossary',
-    'synchrotron'
-    'simulation',
-]
+        for dat, ax, textTitle in zip([intFFT00, intFFT01, intFFT10],
+                                      axes.flat,
+                                      ['FFT 00', 'FFT 01', 'FFT 10']):
 
-CLASSIFIERS = [
-    'Development Status :: 4 - Beta',
-    'License :: OSI Approved :: BSD License',
-    'Natural Language :: English',
-    'Environment :: Console',
-    'Environment :: Plugins',
-    'Programming Language :: Python :: 3.7',
-    'Topic :: Scientific/Engineering :: Visualization',
-    'Intended Audience :: Science/Research',
-]
+            # The vmin and vmax arguments specify the color limits
+            im = ax.imshow(dat, cmap='inferno', vmin=np.min(intFFT00),
+                           vmax=np.max(intFFT00),
+                           extent=extent_func(dat))
 
-INSTALL_REQUIRES = (
-    'setuptools',
-    'numpy',
-    'scipy',
-    'h5py',
-    'pyfftw',
-    'scikit-image',
-    'termcolor',
-    'tifffile',
-    'pandas',
-    'PyQt5',
-    'aps_common_libraries'
-)
+            ax.set_title(textTitle)
+            if textTitle == 'FFT 00': ax.set_ylabel('Pixels')
+            ax.set_xlabel('Pixels')
 
-SETUP_REQUIRES = (
-    'setuptools',
-)
+        # Make an axis for the colorbar on the right side
+        figure.colorbar(im, cax=figure.add_axes([0.92, 0.1, 0.03, 0.8]))
+        figure.suptitle('FFT subsets - Intensity', fontsize=18, weight='bold')
 
-PACKAGES = find_packages(exclude=('*.tests', '*.tests.*', 'tests.*', 'tests'))
-
-PACKAGE_DATA = {
-}
-
-NAMESPACE_PACAKGES = ["aps", "aps.wavepy2"]
-
-def setup_package():
-
-    setup(
-        name=NAME,
-        version=VERSION,
-        description=DESCRIPTION,
-        long_description=LONG_DESCRIPTION,
-        author=AUTHOR,
-        author_email=AUTHOR_EMAIL,
-        maintainer=MAINTAINER,
-        maintainer_email=MAINTAINER_EMAIL,
-        url=URL,
-        download_url=DOWNLOAD_URL,
-        license=LICENSE,
-        keywords=KEYWORDS,
-        classifiers=CLASSIFIERS,
-        packages=PACKAGES,
-        package_data=PACKAGE_DATA,
-        namespace_packages=NAMESPACE_PACAKGES,
-        zip_safe=False,
-        include_package_data=True,
-        install_requires=INSTALL_REQUIRES,
-        setup_requires=SETUP_REQUIRES,
-    )
-
-if __name__ == '__main__':
-    setup_package()
+        return figure

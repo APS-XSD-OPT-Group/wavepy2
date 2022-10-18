@@ -42,96 +42,56 @@
 # ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE         #
 # POSSIBILITY OF SUCH DAMAGE.                                             #
 # #########################################################################
+import numpy as np
+from matplotlib.figure import Figure
+from aps.wavepy2.util.common.common_tools import get_idxPeak_ij, is_empty_string
+from aps.wavepy2.util.plot.plotter import WavePyWidget
 
-import os
+class HarmonicPeakPlot(WavePyWidget):
+    def __init__(self, parent=None, application_name=None, **kwargs):
+        WavePyWidget.__init__(self, parent=parent, application_name=application_name)
 
-try:
-    from setuptools import find_packages, setup
-except AttributeError:
-    from setuptools import find_packages, setup
+    def get_plot_tab_name(self): return self.__image_name + "Harmonic Peak"
 
-NAME = 'wavepy2'
+    def build_mpl_figure(self, **kwargs):
+        imgFFT         = kwargs["imgFFT"]
+        harmonicPeriod = kwargs["harmonicPeriod"]
+        image_name     = kwargs["image_name"]
 
-VERSION = '0.0.51'
-ISRELEASED = False
+        self.__image_name = "" if is_empty_string(image_name) else image_name + ": "
 
-DESCRIPTION = 'Wavepy 2 library'
-README_FILE = os.path.join(os.path.dirname(__file__), 'README.md')
-LONG_DESCRIPTION = open(README_FILE).read()
-AUTHOR = 'Luca Rebuffi, Xianbo Shi, Zhi Qiao'
-AUTHOR_EMAIL = 'lrebuffi@anl.gov'
-URL = 'https://github.com/aps-xsd-opt-group/wavepy2'
-DOWNLOAD_URL = 'https://github.com/aps-xsd-opt-group/wavepy2'
-MAINTAINER = 'XSD-OPT Group @ APS-ANL'
-MAINTAINER_EMAIL = 'lrebuffi@anl.gov'
-LICENSE = 'BSD-3'
+        (nRows, nColumns) = imgFFT.shape
 
-KEYWORDS = ['dictionary',
-    'glossary',
-    'synchrotron'
-    'simulation',
-]
+        periodVert = harmonicPeriod[0]
+        periodHor = harmonicPeriod[1]
 
-CLASSIFIERS = [
-    'Development Status :: 4 - Beta',
-    'License :: OSI Approved :: BSD License',
-    'Natural Language :: English',
-    'Environment :: Console',
-    'Environment :: Plugins',
-    'Programming Language :: Python :: 3.7',
-    'Topic :: Scientific/Engineering :: Visualization',
-    'Intended Audience :: Science/Research',
-]
+        # adjusts for 1D grating
+        if periodVert <= 0 or periodVert is None: periodVert = nRows
+        if periodHor <= 0 or periodHor is None: periodHor = nColumns
 
-INSTALL_REQUIRES = (
-    'setuptools',
-    'numpy',
-    'scipy',
-    'h5py',
-    'pyfftw',
-    'scikit-image',
-    'termcolor',
-    'tifffile',
-    'pandas',
-    'PyQt5',
-    'aps_common_libraries'
-)
+        figure = Figure(figsize=(8, 7))
 
-SETUP_REQUIRES = (
-    'setuptools',
-)
+        ax1 = figure.add_subplot(121)
+        ax2 = figure.add_subplot(122)
 
-PACKAGES = find_packages(exclude=('*.tests', '*.tests.*', 'tests.*', 'tests'))
+        idxPeak_ij = get_idxPeak_ij(0, 1, nRows, nColumns, periodVert, periodHor)
 
-PACKAGE_DATA = {
-}
+        for i in range(-5, 5): ax1.plot(np.abs(imgFFT[idxPeak_ij[0] - 100 : idxPeak_ij[0] + 100, idxPeak_ij[1]-i]), lw=2, label='01 Vert ' + str(i))
+        ax1.grid()
 
-NAMESPACE_PACAKGES = ["aps", "aps.wavepy2"]
+        idxPeak_ij = get_idxPeak_ij(1, 0, nRows, nColumns, periodVert, periodHor)
 
-def setup_package():
+        for i in range(-5, 5): ax2.plot(np.abs(imgFFT[idxPeak_ij[0]-i, idxPeak_ij[1] - 100 : idxPeak_ij[1] + 100]), lw=2, label='10 Horz ' + str(i))
+        ax2.grid()
 
-    setup(
-        name=NAME,
-        version=VERSION,
-        description=DESCRIPTION,
-        long_description=LONG_DESCRIPTION,
-        author=AUTHOR,
-        author_email=AUTHOR_EMAIL,
-        maintainer=MAINTAINER,
-        maintainer_email=MAINTAINER_EMAIL,
-        url=URL,
-        download_url=DOWNLOAD_URL,
-        license=LICENSE,
-        keywords=KEYWORDS,
-        classifiers=CLASSIFIERS,
-        packages=PACKAGES,
-        package_data=PACKAGE_DATA,
-        namespace_packages=NAMESPACE_PACAKGES,
-        zip_safe=False,
-        include_package_data=True,
-        install_requires=INSTALL_REQUIRES,
-        setup_requires=SETUP_REQUIRES,
-    )
+        ax1.set_xlabel('Pixels')
+        ax1.set_ylabel(r'$| FFT |$ ')
+        ax1.legend(loc=1, fontsize='xx-small')
+        ax1.title.set_text('Horz')
 
-if __name__ == '__main__':
-    setup_package()
+        ax2.set_xlabel('Pixels')
+        ax2.set_ylabel(r'$| FFT |$ ')
+        ax2.legend(loc=1, fontsize='xx-small')
+        ax2.title.set_text('Vert')
+
+        return figure

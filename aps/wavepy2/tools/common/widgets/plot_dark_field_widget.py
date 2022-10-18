@@ -42,96 +42,43 @@
 # ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE         #
 # POSSIBILITY OF SUCH DAMAGE.                                             #
 # #########################################################################
+import numpy as np
+from matplotlib.figure import Figure
+from aps.wavepy2.util.common import common_tools
+from aps.wavepy2.util.plot.plotter import WavePyWidget
 
-import os
+from warnings import filterwarnings
+filterwarnings("ignore")
 
-try:
-    from setuptools import find_packages, setup
-except AttributeError:
-    from setuptools import find_packages, setup
+class PlotDarkField(WavePyWidget):
+    def __init__(self, parent=None, application_name=None, **kwargs):
+        WavePyWidget.__init__(self, parent=parent, application_name=application_name)
 
-NAME = 'wavepy2'
+    def get_plot_tab_name(self): return "Dark Field"
 
-VERSION = '0.0.51'
-ISRELEASED = False
+    def build_mpl_figure(self, **kwargs):
+        darkField01 = kwargs["darkField01"]
+        darkField10 = kwargs["darkField10"]
+        pixelsize   = kwargs["pixelsize"]
 
-DESCRIPTION = 'Wavepy 2 library'
-README_FILE = os.path.join(os.path.dirname(__file__), 'README.md')
-LONG_DESCRIPTION = open(README_FILE).read()
-AUTHOR = 'Luca Rebuffi, Xianbo Shi, Zhi Qiao'
-AUTHOR_EMAIL = 'lrebuffi@anl.gov'
-URL = 'https://github.com/aps-xsd-opt-group/wavepy2'
-DOWNLOAD_URL = 'https://github.com/aps-xsd-opt-group/wavepy2'
-MAINTAINER = 'XSD-OPT Group @ APS-ANL'
-MAINTAINER_EMAIL = 'lrebuffi@anl.gov'
-LICENSE = 'BSD-3'
+        factor, unit_xy = common_tools.choose_unit(np.sqrt(darkField01.size) * pixelsize[0])
 
-KEYWORDS = ['dictionary',
-    'glossary',
-    'synchrotron'
-    'simulation',
-]
+        figure = Figure(figsize=(14, 6))
 
-CLASSIFIERS = [
-    'Development Status :: 4 - Beta',
-    'License :: OSI Approved :: BSD License',
-    'Natural Language :: English',
-    'Environment :: Console',
-    'Environment :: Plugins',
-    'Programming Language :: Python :: 3.7',
-    'Topic :: Scientific/Engineering :: Visualization',
-    'Intended Audience :: Science/Research',
-]
+        def create_plot(ax, img, title):
+            im = ax.imshow(img,
+                           cmap='viridis',
+                           vmax=common_tools.mean_plus_n_sigma(img, 4),
+                           extent=common_tools.extent_func(img, pixelsize) * factor)
+            ax.set_xlabel(r'$[{0} m]$'.format(unit_xy))
+            ax.set_ylabel(r'$[{0} m]$'.format(unit_xy))
+            figure.colorbar(im, shrink=0.5)
+            ax.set_title(title, fontsize=18, weight='bold')
 
-INSTALL_REQUIRES = (
-    'setuptools',
-    'numpy',
-    'scipy',
-    'h5py',
-    'pyfftw',
-    'scikit-image',
-    'termcolor',
-    'tifffile',
-    'pandas',
-    'PyQt5',
-    'aps_common_libraries'
-)
+        create_plot(figure.add_subplot(1, 2, 1), darkField01, "Horizontal")
+        create_plot(figure.add_subplot(1, 2, 2), darkField10, "Vertical")
 
-SETUP_REQUIRES = (
-    'setuptools',
-)
+        figure.suptitle('Dark Field', fontsize=18, weight='bold')
+        figure.tight_layout(rect=[0, 0, 1, 1])
 
-PACKAGES = find_packages(exclude=('*.tests', '*.tests.*', 'tests.*', 'tests'))
-
-PACKAGE_DATA = {
-}
-
-NAMESPACE_PACAKGES = ["aps", "aps.wavepy2"]
-
-def setup_package():
-
-    setup(
-        name=NAME,
-        version=VERSION,
-        description=DESCRIPTION,
-        long_description=LONG_DESCRIPTION,
-        author=AUTHOR,
-        author_email=AUTHOR_EMAIL,
-        maintainer=MAINTAINER,
-        maintainer_email=MAINTAINER_EMAIL,
-        url=URL,
-        download_url=DOWNLOAD_URL,
-        license=LICENSE,
-        keywords=KEYWORDS,
-        classifiers=CLASSIFIERS,
-        packages=PACKAGES,
-        package_data=PACKAGE_DATA,
-        namespace_packages=NAMESPACE_PACAKGES,
-        zip_safe=False,
-        include_package_data=True,
-        install_requires=INSTALL_REQUIRES,
-        setup_requires=SETUP_REQUIRES,
-    )
-
-if __name__ == '__main__':
-    setup_package()
+        return figure
