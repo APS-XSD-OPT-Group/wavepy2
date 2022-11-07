@@ -46,7 +46,7 @@ import numpy as np
 from matplotlib.figure import Figure
 from aps.wavepy2.util.common import common_tools
 from aps.wavepy2.util.plot.plotter import WavePyWidget
-from aps.util.logger import get_registered_secondary_logger
+from aps.common.logger import get_registered_secondary_logger
 
 from warnings import filterwarnings
 filterwarnings("ignore")

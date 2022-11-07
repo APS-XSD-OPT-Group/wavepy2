@@ -49,7 +49,7 @@ from skimage.restoration import unwrap_phase
 from aps.wavepy2.tools.common.widgets.extract_harmonic_plot_widget import ExtractHarmonicPlot
 from aps.wavepy2.tools.common.widgets.harmonic_grid_plot_widget import HarmonicGridPlot
 from aps.wavepy2.tools.common.widgets.single_grating_harmonic_images_widget import SingleGratingHarmonicImages
-from aps.util.logger   import LoggerFacade
+from aps.common.logger   import LoggerFacade
 from aps.wavepy2.util.plot.plotter import PlotterFacade
 from aps.wavepy2.util.common.common_tools import FourierTransform, get_idxPeak_ij, get_idxPeak_ij_exp
 

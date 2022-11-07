@@ -56,7 +56,7 @@ from scipy.ndimage.filters import uniform_filter1d
 
 from aps.wavepy2.util.common import common_tools
 from aps.wavepy2.util.plot import plot_tools
-from aps.util.plot import gui
+from aps.common.plot import gui
 from aps.wavepy2.util.plot.plotter import WavePyWidget, get_registered_plotter_instance, pixels_to_inches
 
 

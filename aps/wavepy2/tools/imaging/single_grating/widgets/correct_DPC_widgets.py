@@ -48,7 +48,7 @@ from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 
 from aps.wavepy2.util.common import common_tools
 from aps.wavepy2.util.plot import plot_tools
-from aps.util.plot import gui
+from aps.common.plot import gui
 from aps.wavepy2.util.plot.plotter import WavePyWidget, WavePyInteractiveWidget
 
 
@@ -94,7 +94,7 @@ class CorrectDPCHistos(WavePyWidget):
 
         return figure
 
-from aps.util.logger import get_registered_logger_instance, LoggerColor
+from aps.common.logger import get_registered_logger_instance, LoggerColor
 from aps.wavepy2.util.plot.plot_tools import WIDGET_FIXED_WIDTH
 from aps.wavepy2.tools.common.widgets.graphical_select_point_idx import GraphicalSelectPointIdx
 

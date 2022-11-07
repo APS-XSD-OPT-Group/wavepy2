@@ -44,9 +44,9 @@
 # #########################################################################
 import sys
 
-from aps.util.initializer import register_ini_instance, IniMode
-from aps.util.logger import register_logger_single_instance, LoggerMode
-from aps.util.plot.qt_application import register_qt_application_instance, QtApplicationMode
+from aps.common.initializer import register_ini_instance, IniMode
+from aps.common.logger import register_logger_single_instance, LoggerMode
+from aps.common.plot.qt_application import register_qt_application_instance, QtApplicationMode
 from aps.wavepy2.util.plot.plotter import register_plotter_instance, PlotterMode
 
 class WavePyScript():

@@ -43,4 +43,4 @@
 # POSSIBILITY OF SUCH DAMAGE.                                             #
 # #########################################################################
 
-from aps.util.io.tiff_file import read_tiff, write_tiff
+from aps.common.io.tiff_file import read_tiff, write_tiff

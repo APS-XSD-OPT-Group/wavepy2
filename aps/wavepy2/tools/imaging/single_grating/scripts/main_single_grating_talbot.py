@@ -49,9 +49,9 @@ from aps.wavepy2.tools.imaging.single_grating.bl.single_grating_talbot import cr
 
 from aps.wavepy2.tools.imaging.single_grating.bl.dpc_profile_analysis import DPC_PROFILE_ANALYSYS_CONTEXT_KEY
 
-from aps.util.initializer import get_registered_ini_instance
-from aps.util.logger import LoggerMode
-from aps.util.plot.qt_application import get_registered_qt_application_instance
+from aps.common.initializer import get_registered_ini_instance
+from aps.common.logger import LoggerMode
+from aps.common.plot.qt_application import get_registered_qt_application_instance
 from aps.wavepy2.util.plot.plotter import get_registered_plotter_instance
 
 from aps.wavepy2.tools.common.wavepy_script import WavePyScript

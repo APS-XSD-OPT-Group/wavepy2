@@ -8,7 +8,7 @@ from matplotlib.figure import Figure
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 
 from aps.wavepy2.util.plot.plotter import WavePyWidget, pixels_to_inches
-from aps.util.plot.gui import widgetBox, separator, button, checkBox, lineEdit
+from aps.common.plot.gui import widgetBox, separator, button, checkBox, lineEdit
 
 from warnings import filterwarnings
 filterwarnings("ignore")

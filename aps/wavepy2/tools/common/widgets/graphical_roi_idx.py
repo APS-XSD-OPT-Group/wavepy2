@@ -49,7 +49,7 @@ from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.figure import Figure
 from matplotlib.widgets import RectangleSelector
 
-from aps.util.logger import get_registered_logger_instance
+from aps.common.logger import get_registered_logger_instance
 from aps.wavepy2.tools.common.widgets.image_to_change import ImageToChange
 
 

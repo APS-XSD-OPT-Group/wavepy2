@@ -47,7 +47,7 @@ import numpy as np
 from PyQt5.QtWidgets import QMainWindow, QDesktopWidget, QWidget
 from PyQt5.QtCore import QRect
 
-from aps.util.plot.gui import stylesheet_string
+from aps.common.plot.gui import stylesheet_string
 
 ##########################################################################
 # WIDGET FOR SCRIPTING
@@ -113,7 +113,7 @@ WIDGET_FIXED_WIDTH = 800
 ##########################################################################
 # UTILITY FROM WAVEPY
 
-from aps.util.logger import get_registered_logger_instance
+from aps.common.logger import get_registered_logger_instance
 from aps.wavepy2.util.common import common_tools
 
 

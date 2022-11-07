@@ -48,7 +48,7 @@ from matplotlib.pyplot import cm
 
 from aps.wavepy2.util.common import common_tools
 from aps.wavepy2.util.plot.plotter import WavePyWidget, pixels_to_inches
-from aps.util.logger import get_registered_logger_instance
+from aps.common.logger import get_registered_logger_instance
 from aps.wavepy2.util.plot.plotter import get_registered_plotter_instance
 from aps.wavepy2.tools.common.widgets.plot_profile_widget import PlotProfile
 

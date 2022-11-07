@@ -51,7 +51,7 @@ from matplotlib.widgets import Slider
 
 from aps.wavepy2.util.common import common_tools
 from aps.wavepy2.util.plot.plot_tools import WIDGET_FIXED_WIDTH
-from aps.util.plot.gui import widgetBox, separator, button, radioButtons
+from aps.common.plot.gui import widgetBox, separator, button, radioButtons
 
 class FigureSlideColorbar(QWidget):
     def __init__(self, parent, image, title='', xlabel='', ylabel='', cmin_o=None, cmax_o=None, **kwargs):

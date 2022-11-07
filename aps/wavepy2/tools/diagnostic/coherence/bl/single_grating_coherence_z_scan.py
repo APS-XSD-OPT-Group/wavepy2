@@ -46,11 +46,11 @@ import numpy as np
 
 from aps.wavepy2.util.common import common_tools
 from aps.wavepy2.util.common.common_tools import hc, FourierTransform
-from aps.util.logger import get_registered_logger_instance, get_registered_secondary_logger, register_secondary_logger, LoggerMode
+from aps.common.logger import get_registered_logger_instance, get_registered_secondary_logger, register_secondary_logger, LoggerMode
 from aps.wavepy2.util.plot.plotter import get_registered_plotter_instance
 from aps.wavepy2.util.plot.plot_tools import PlottingProperties
-from aps.util.initializer import get_registered_ini_instance
-from aps.util.io.tiff_file import read_tiff
+from aps.common.initializer import get_registered_ini_instance
+from aps.common.io.tiff_file import read_tiff
 
 from aps.wavepy2.tools.common.wavepy_data import WavePyData
 

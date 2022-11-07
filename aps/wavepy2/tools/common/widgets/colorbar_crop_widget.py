@@ -48,10 +48,10 @@ from aps.wavepy2.tools.common.widgets.figure_slide_colorbar import FigureSlideCo
 from aps.wavepy2.tools.common.widgets.graphical_roi_idx import GraphicalRoiIdx
 from aps.wavepy2.tools.common.widgets.simple_plot_widget import SimplePlotWidget
 from aps.wavepy2.util.common import common_tools
-from aps.util.initializer import get_registered_ini_instance
-from aps.util.logger import get_registered_logger_instance, LoggerColor
+from aps.common.initializer import get_registered_ini_instance
+from aps.common.logger import get_registered_logger_instance, LoggerColor
 from aps.wavepy2.util.plot import plot_tools
-from aps.util.plot import gui
+from aps.common.plot import gui
 from aps.wavepy2.util.plot.plotter import WavePyInteractiveWidget, WavePyWidget
 
 class AbstractColorbarCropWidget():

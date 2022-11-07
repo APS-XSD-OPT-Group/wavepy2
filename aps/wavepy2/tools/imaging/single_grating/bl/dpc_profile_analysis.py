@@ -46,7 +46,7 @@ import numpy as np
 import os
 from aps.wavepy2.util.common.common_tools import PATH_SEPARATOR
 
-from aps.util.logger import get_registered_logger_instance, get_registered_secondary_logger
+from aps.common.logger import get_registered_logger_instance, get_registered_secondary_logger
 from aps.wavepy2.util.plot.plotter import get_registered_plotter_instance
 from aps.wavepy2.util.plot.plot_tools import PlottingProperties
 

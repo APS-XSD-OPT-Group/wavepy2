@@ -3,7 +3,7 @@ import numpy as np
 from aps.wavepy2.util.common import common_tools
 from aps.wavepy2.util.plot.plotter import get_registered_plotter_instance
 from aps.wavepy2.util.plot.plot_tools import PlottingProperties
-from aps.util.initializer import get_registered_ini_instance
+from aps.common.initializer import get_registered_ini_instance
 
 from aps.wavepy2.tools.common.widgets.crop_widget import CropDialogPlot, CropWidgetPlot
 from aps.wavepy2.tools.common.widgets.colorbar_crop_widget import ColorbarCropDialogPlot, ColorbarCropWidgetPlot

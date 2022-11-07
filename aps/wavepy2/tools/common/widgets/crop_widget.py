@@ -44,9 +44,9 @@
 # #########################################################################
 import numpy as np
 from aps.wavepy2.util.common import common_tools
-from aps.util.logger import get_registered_logger_instance
+from aps.common.logger import get_registered_logger_instance
 from aps.wavepy2.util.plot import plot_tools
-from aps.util.plot import gui
+from aps.common.plot import gui
 from aps.wavepy2.util.plot.plotter import WavePyInteractiveWidget, WavePyWidget, pixels_to_inches
 from aps.wavepy2.tools.common.widgets.graphical_roi_idx import GraphicalRoiIdx
 

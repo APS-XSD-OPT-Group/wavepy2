@@ -48,7 +48,7 @@ from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.figure import Figure
 from matplotlib.widgets import Cursor
 from aps.wavepy2.util.plot.plot_tools import WIDGET_FIXED_WIDTH
-from aps.util.logger import get_registered_logger_instance
+from aps.common.logger import get_registered_logger_instance
 
 class GraphicalSelectPointIdx(QWidget):
     def __init__(self, parent, image, selection_listener, args_for_listener, application_name=None, **kwargs4imshow):

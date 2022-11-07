@@ -48,9 +48,9 @@ from aps.wavepy2.tools.diagnostic.coherence.bl.single_grating_coherence_z_scan i
 from aps.wavepy2.tools.diagnostic.coherence.bl.single_grating_coherence_z_scan import \
     CALCULATE_HARMONIC_PERIODS_CONTEXT_KEY, RUN_CALCULATION_CONTEXT_KEY, FIT_PERIOD_CONTEXT_KEY, FIT_VISIBILITY_CONTEXT_KEY
 
-from aps.util.initializer import get_registered_ini_instance
-from aps.util.logger import LoggerMode
-from aps.util.plot.qt_application import get_registered_qt_application_instance
+from aps.common.initializer import get_registered_ini_instance
+from aps.common.logger import LoggerMode
+from aps.common.plot.qt_application import get_registered_qt_application_instance
 from aps.wavepy2.util.plot.plotter import get_registered_plotter_instance
 
 from aps.wavepy2.tools.common.wavepy_script import WavePyScript

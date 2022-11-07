@@ -42,8 +42,8 @@
 # ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE         #
 # POSSIBILITY OF SUCH DAMAGE.                                             #
 # #########################################################################
-from aps.util.singleton import Singleton, synchronized_method
-from aps.util.plot import gui
+from aps.common.singleton import Singleton, synchronized_method
+from aps.common.plot import gui
 from aps.wavepy2.util.plot import plot_tools
 from aps.wavepy2.util.common import common_tools
 
