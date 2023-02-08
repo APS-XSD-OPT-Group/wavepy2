@@ -44,76 +44,11 @@
 # #########################################################################
 import numpy as np
 
-from PyQt5.QtWidgets import QMainWindow, QDesktopWidget, QWidget
-from PyQt5.QtCore import QRect
-
-from aps.common.plot.gui import stylesheet_string
-
-##########################################################################
-# WIDGET FOR SCRIPTING
-
-class AbstractContextWidget():
-
-    def __init__(self, container_widget):
-        self.__container_widget = container_widget
-
-    def get_container_widget(self):
-        return self.__container_widget
-
-class DefaultContextWidget(AbstractContextWidget):
-    def __init__(self, container_widget):
-        super(DefaultContextWidget, self).__init__(container_widget)
-
-class DefaultMainWindow(QMainWindow, AbstractContextWidget):
-    def __init__(self, title):
-        super(DefaultMainWindow, self).__init__(container_widget=QWidget())
-        self.setWindowTitle(title)
-        self.setCentralWidget(self.get_container_widget())
-
-        desktop_widget = QDesktopWidget()
-        actual_geometry = self.frameGeometry()
-        screen_geometry = desktop_widget.availableGeometry()
-        new_geometry = QRect()
-        new_geometry.setWidth(actual_geometry.width())
-        new_geometry.setHeight(actual_geometry.height())
-        new_geometry.setTop(screen_geometry.height()*0.05)
-        new_geometry.setLeft(screen_geometry.width()*0.05)
-
-        self.setGeometry(new_geometry)
-
-        self.setStyleSheet(stylesheet_string)
-
-class PlottingProperties:
-    def __init__(self, container_widget=None, context_widget=None, **parameters):
-        self.__container_widget = container_widget
-        self.__context_widget = context_widget
-        self.__parameters = parameters
-
-    def get_container_widget(self):
-        return self.__container_widget
-
-    def get_context_widget(self):
-        return self.__context_widget
-
-    def get_parameters(self):
-        return self.__parameters
-
-    def get_parameter(self, parameter_name, default_value=None):
-        try:
-            return self.__parameters[parameter_name]
-        except:
-            return default_value
-
-    def set_parameter(self, parameter_name, value):
-        self.__parameters[parameter_name] = value
-
-
-WIDGET_FIXED_WIDTH = 800
-
 ##########################################################################
 # UTILITY FROM WAVEPY
 
 from aps.common.logger import get_registered_logger_instance
+from aps.common.widgets.context_widget import PlottingProperties as PlottingProperties, WIDGET_FIXED_WIDTH # to ensure
 from aps.wavepy2.util.common import common_tools
 
 
@@ -235,12 +170,11 @@ def load_pickle_surf(fname):
     data = figx.axes[0].images[0].get_array().data
     [xi, xf, yi, yf] = figx.axes[0].images[0].get_extent()
 
-    ax = figx.axes[0].images[0].get_axes()
-
-    title = figx.axes[0].images[0].axes.properties()['title']
-    xlabel = figx.axes[0].images[0].axes.properties()['xlabel']
-    ylabel = figx.axes[0].images[0].axes.properties()['ylabel']
-    cmap = figx.axes[0].images[0].properties()['cmap'].name
+    #ax = figx.axes[0].images[0].get_axes()
+    #title  = figx.axes[0].images[0].axes.properties()['title']
+    #xlabel = figx.axes[0].images[0].axes.properties()['xlabel']
+    #ylabel = figx.axes[0].images[0].axes.properties()['ylabel']
+    #cmap   = figx.axes[0].images[0].properties()['cmap'].name
 
     xxGrid, yyGrid = np.meshgrid(np.linspace(xi, xf, data.shape[1]),
                                  np.linspace(yi, yf, data.shape[0]),

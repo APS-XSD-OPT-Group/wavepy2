@@ -42,27 +42,9 @@
 # ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE         #
 # POSSIBILITY OF SUCH DAMAGE.                                             #
 # #########################################################################
-import copy
 
-class WavePyData():
-    def __init__(self, **parameters):
-        self.__parameters = parameters
+from aps.common.scripts.script_data import ScriptData
 
-    def get_parameters(self):
-        return self.__parameters
-
-    def get_parameter(self, parameter_name, default_value=None):
-        try:
-            return self.__parameters[parameter_name]
-        except:
-            return default_value
-
-    def set_parameter(self, parameter_name, value):
-        self.__parameters[parameter_name] = value
-
-    def duplicate(self):
-        duplicated = WavePyData()
-        for parameter_name in self.__parameters.keys():
-            duplicated.set_parameter(parameter_name, copy.deepcopy(self.get_parameter(parameter_name)))
-
-        return duplicated
+class WavePyData(ScriptData):
+    def __init__(self, **parameters): super(WavePyData, self).__init__(**parameters)
+    def _get_instance_to_duplicate(self): return WavePyData()
