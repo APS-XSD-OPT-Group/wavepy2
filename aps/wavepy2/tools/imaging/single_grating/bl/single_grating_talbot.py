@@ -50,13 +50,14 @@ from aps.common.logger import get_registered_logger_instance, get_registered_sec
 
 from aps.wavepy2.util.plot.plotter import get_registered_plotter_instance
 from aps.wavepy2.util.plot.plot_tools import PlottingProperties
+
 from aps.common.initializer import get_registered_ini_instance
+from aps.common.scripts.generic_process_manager import GenericProcessManager
 
 from aps.wavepy2.tools.common.wavepy_data import WavePyData
 
 from aps.wavepy2.tools.common.bl import grating_interferometry, surface_from_grad
 from aps.wavepy2.tools.common.bl import crop_image
-from aps.wavepy2.tools.common.bl.generic_process_manager import GenericProcessManager
 from aps.wavepy2.tools.common.widgets.plot_intensities_harms_widget import PlotIntensitiesHarms
 from aps.wavepy2.tools.common.widgets.plot_dark_field_widget import PlotDarkField
 from aps.wavepy2.tools.common.widgets.plot_integration_widget import PlotIntegration
