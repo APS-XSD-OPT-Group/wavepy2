@@ -56,7 +56,7 @@ from aps.wavepy2.tools.common.wavepy_data import WavePyData
 
 from aps.wavepy2.tools.common.bl import grating_interferometry
 from aps.wavepy2.tools.common.bl import crop_image
-from aps.wavepy2.tools.common.bl.generic_process_manager import GenericProcessManager
+from aps.common.scripts.generic_process_manager import GenericProcessManager
 
 from aps.wavepy2.tools.common.widgets.harmonic_grid_plot_widget import HarmonicGridPlot
 from aps.wavepy2.tools.common.widgets.harmonic_peak_plot_widget import HarmonicPeakPlot

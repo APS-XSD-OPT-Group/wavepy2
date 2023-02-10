@@ -407,7 +407,7 @@ class __NullPlotter(_AbstractPlotter):
     def save_sdf_file(self, array, pixelsize=[1, 1], file_prefix=None, file_suffix="", extraHeader={}): return self._get_file_name(file_prefix, file_suffix, "sdf")
     def save_csv_file(self, array_list, file_prefix=None, file_suffix="", headerList=[], comments=""): return self._get_file_name(file_prefix, file_suffix, "csv")
 
-from aps.wavepy2.util.common.common_tools import GenericRegistry
+from aps.common.registry import GenericRegistry
 
 @Singleton
 class __PlotterRegistry(GenericRegistry):
