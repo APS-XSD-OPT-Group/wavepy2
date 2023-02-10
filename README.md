@@ -13,11 +13,11 @@ Prerequisites: `xraylib 3.3.0` - see: https://github.com/tschoonj/xraylib/wiki/I
 
 To install:               `python3 -m pip install wavepy2`
   
-To show help:             `python3 -m wavepy2.tools --h`
+To show help:             `python3 -m aps.wavepy2.tools --h`
 
-To run a script:          `python3 -m wavepy2.tools <script id> <options>`
+To run a script:          `python3 -m aps.wavepy2.tools <script id> <options>`
   
-To show help of a script: `python -m wavepy2.tools <script id> --h`
+To show help of a script: `python -m aps.wavepy2.tools <script id> --h`
   
 
 Available scripts:
