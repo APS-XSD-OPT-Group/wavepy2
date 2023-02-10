@@ -122,4 +122,3 @@ def register_plotter_instance(plotter_mode=PlotterMode.FULL, reset=False, applic
 
 def get_registered_plotter_instance(application_name=None):
     return PlotterRegistry.Instance().get_plotter_instance(application_name)
-
