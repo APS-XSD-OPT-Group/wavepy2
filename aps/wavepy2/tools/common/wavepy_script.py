@@ -49,5 +49,5 @@ from aps.common.scripts.generic_qt_script import GenericQTScript
 class WavePyScript(GenericQTScript):
     def __init__(self, sys_argv=None, **kwargs): super(WavePyScript, self).__init__(sys_argv=sys_argv, **kwargs)
     def _get_script_package(self): return "aps.wavepy2.tools"
-    def _register_plotter_instance(self, plotter_mode, application_name):
+    def _register_plotter_instance(self, plotter_mode, application_name, **args):
         register_plotter_instance(plotter_mode=plotter_mode, application_name=application_name)
