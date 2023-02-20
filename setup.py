@@ -52,8 +52,8 @@ except AttributeError:
 
 NAME = 'wavepy2'
 
-VERSION = '0.0.52'
-ISRELEASED = False
+VERSION = '1.0.0'
+ISRELEASED = True
 
 DESCRIPTION = 'Wavepy 2 library'
 README_FILE = os.path.join(os.path.dirname(__file__), 'README.md')
@@ -85,16 +85,10 @@ CLASSIFIERS = [
 
 INSTALL_REQUIRES = (
     'setuptools',
-    'numpy',
-    'scipy',
-    'h5py',
+    'aps_common_libraries>=1.0.0',
     'pyfftw',
-    'scikit-image',
-    'termcolor',
     'tifffile',
     'pandas',
-    'PyQt5',
-    'aps_common_libraries'
 )
 
 SETUP_REQUIRES = (
