@@ -167,7 +167,7 @@ class AbstractSGTInputParametersWidget():
         HEIGHT = 470
     else:
         WIDTH = 820
-        HEIGHT = 500
+        HEIGHT = 560
 
     def __init__(self, application_name=None):
         self.__ini     = get_registered_ini_instance(application_name=application_name)
@@ -342,7 +342,7 @@ from PyQt5.QtCore import Qt
 class SGTInputParametersWidget(AbstractSGTInputParametersWidget, WavePyWidget):
     def __init__(self, application_name=None, **kwargs):
         AbstractSGTInputParametersWidget.__init__(self, application_name)
-        WavePyWidget.__init__(self, parent=None, application_name=application_name)
+        WavePyWidget.__init__(self, parent=None, application_name=application_name, **kwargs)
 
         layout = QHBoxLayout()
         layout.setAlignment(Qt.AlignCenter)
@@ -365,4 +365,4 @@ class SGTInputParametersWidget(AbstractSGTInputParametersWidget, WavePyWidget):
 class SGTInputParametersDialog(AbstractSGTInputParametersWidget, WavePyInteractiveWidget):
     def __init__(self, parent, application_name=None, **kwargs):
         AbstractSGTInputParametersWidget.__init__(self, application_name)
-        WavePyInteractiveWidget.__init__(self, parent, message="Input Parameters", title="Input Parameters")
+        WavePyInteractiveWidget.__init__(self, parent, message="Input Parameters", title="Input Parameters", **kwargs)

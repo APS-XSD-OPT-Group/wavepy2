@@ -133,8 +133,12 @@ def generate_initialization_parameters_sgz(dataFolder,
                       saveFileSuf=fname2save)
 
 class AbstractSGZInputParametersWidget():
-    WIDTH  = 800
-    HEIGHT = 600
+    if sys.platform == 'darwin' :
+        WIDTH  = 800
+        HEIGHT = 600
+    else:
+        WIDTH = 830
+        HEIGHT = 620
 
     def __init__(self, application_name=None):
         self.__ini     = get_registered_ini_instance(application_name=application_name)
@@ -178,6 +182,7 @@ class AbstractSGZInputParametersWidget():
         gui.createTabPage(tabs, "Initialization Parameter", widgetToAdd=ini_widget)
 
         main_box = gui.widgetBox(ini_widget, "", width=widget_width - 70, height=widget_height - 50)
+        gui.separator(main_box)
 
         select_dataDirectory_box = gui.widgetBox(main_box, orientation="horizontal")
         self.le_dataDirectory = gui.lineEdit(select_dataDirectory_box, self, "dataDirectory", label="Data Directory", labelWidth=150, valueType=str, orientation="horizontal")
