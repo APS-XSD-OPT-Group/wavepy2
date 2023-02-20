@@ -162,8 +162,12 @@ def generate_initialization_parameters_sgt(img_file_name,
 
 
 class AbstractSGTInputParametersWidget():
-    WIDTH  = 800
-    HEIGHT = 470
+    if sys.platform == 'darwin' :
+        WIDTH  = 800
+        HEIGHT = 470
+    else:
+        WIDTH = 820
+        HEIGHT = 500
 
     def __init__(self, application_name=None):
         self.__ini     = get_registered_ini_instance(application_name=application_name)
