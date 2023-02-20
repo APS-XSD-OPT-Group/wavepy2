@@ -135,7 +135,7 @@ def generate_initialization_parameters_sgz(dataFolder,
 class AbstractSGZInputParametersWidget():
     if sys.platform == 'darwin' :
         WIDTH  = 800
-        HEIGHT = 600
+        HEIGHT = 620
     else:
         WIDTH = 830
         HEIGHT = 620
@@ -283,7 +283,8 @@ from PyQt5.QtCore import Qt
 class SGZInputParametersWidget(AbstractSGZInputParametersWidget, WavePyWidget):
     def __init__(self, application_name=None, **kwargs):
         AbstractSGZInputParametersWidget.__init__(self, application_name)
-        WavePyWidget.__init__(self, parent=None, application_name=application_name)
+        if "parent" in kwargs.keys() : WavePyWidget.__init__(self, application_name=application_name, **kwargs)
+        else:                          WavePyWidget.__init__(self, parent=None, application_name=application_name, **kwargs)
 
         layout = QHBoxLayout()
         layout.setAlignment(Qt.AlignCenter)
@@ -306,4 +307,5 @@ class SGZInputParametersWidget(AbstractSGZInputParametersWidget, WavePyWidget):
 class SGZInputParametersDialog(AbstractSGZInputParametersWidget, WavePyInteractiveWidget):
     def __init__(self, parent, application_name=None, **kwargs):
         AbstractSGZInputParametersWidget.__init__(self, application_name)
-        WavePyInteractiveWidget.__init__(self, parent, message="Input Parameters", title="Input Parameters", application_name=application_name)
+        if "parent" in kwargs.keys() : kwargs.pop("parent")
+        WavePyInteractiveWidget.__init__(self, parent, message="Input Parameters", title="Input Parameters", application_name=application_name, **kwargs)

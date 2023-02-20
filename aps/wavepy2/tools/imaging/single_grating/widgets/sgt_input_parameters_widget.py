@@ -342,7 +342,8 @@ from PyQt5.QtCore import Qt
 class SGTInputParametersWidget(AbstractSGTInputParametersWidget, WavePyWidget):
     def __init__(self, application_name=None, **kwargs):
         AbstractSGTInputParametersWidget.__init__(self, application_name)
-        WavePyWidget.__init__(self, parent=None, application_name=application_name, **kwargs)
+        if "parent" in kwargs.keys() : WavePyWidget.__init__(self, application_name=application_name, **kwargs)
+        else:                          WavePyWidget.__init__(self, parent=None, application_name=application_name, **kwargs)
 
         layout = QHBoxLayout()
         layout.setAlignment(Qt.AlignCenter)
@@ -365,4 +366,5 @@ class SGTInputParametersWidget(AbstractSGTInputParametersWidget, WavePyWidget):
 class SGTInputParametersDialog(AbstractSGTInputParametersWidget, WavePyInteractiveWidget):
     def __init__(self, parent, application_name=None, **kwargs):
         AbstractSGTInputParametersWidget.__init__(self, application_name)
+        if "parent" in kwargs.keys() : kwargs.pop("parent")
         WavePyInteractiveWidget.__init__(self, parent, message="Input Parameters", title="Input Parameters", **kwargs)

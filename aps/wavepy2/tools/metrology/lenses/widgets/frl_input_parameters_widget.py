@@ -213,7 +213,8 @@ from PyQt5.QtCore import Qt
 class FRLInputParametersWidget(AbstractFRLInputParametersWidget, WavePyWidget):
     def __init__(self, application_name=None, **kwargs):
         AbstractFRLInputParametersWidget.__init__(self, application_name)
-        WavePyWidget.__init__(self, parent=None, application_name=application_name)
+        if "parent" in kwargs.keys() : WavePyWidget.__init__(self, application_name=application_name, **kwargs)
+        else:                          WavePyWidget.__init__(self, parent=None, application_name=application_name, **kwargs)
 
         layout = QHBoxLayout()
         layout.setAlignment(Qt.AlignCenter)
@@ -236,4 +237,5 @@ class FRLInputParametersWidget(AbstractFRLInputParametersWidget, WavePyWidget):
 class FRLInputParametersDialog(AbstractFRLInputParametersWidget, WavePyInteractiveWidget):
     def __init__(self, parent, application_name=None, **kwargs):
         AbstractFRLInputParametersWidget.__init__(self, application_name)
+        if "parent" in kwargs.keys() : kwargs.pop("parent")
         WavePyInteractiveWidget.__init__(self, parent, message="Input Parameters", title="Input Parameters", application_name=application_name)
