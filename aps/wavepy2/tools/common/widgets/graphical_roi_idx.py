@@ -110,8 +110,7 @@ class GraphicalRoiIdx(QWidget):
                 toggle_selector.RS.set_active(True)
 
         toggle_selector.RS = RectangleSelector(figure.gca(), onselect,
-                                               drawtype='box',
-                                               rectprops=dict(facecolor='purple',
+                                               props=dict(facecolor='purple',
                                                               edgecolor='black',
                                                               alpha=0.5,
                                                               fill=True))

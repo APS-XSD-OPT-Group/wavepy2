@@ -197,7 +197,7 @@ class __SingleGratingCoherenceZScan(SingleGratingCoherenceZScanFacade):
                               cmap=cmap,
                               colorlimit=colorlimit)
         else:
-            idx4crop     = self.__ini.get_list_from_ini("Parameters", "Crop")
+            idx4crop     = self.__ini.get_list_from_ini("Parameters", "Crop", type=int)
             img          = common_tools.crop_matrix_at_indexes(img_original, idx4crop)
 
             return WavePyData(img_original=img_original,
@@ -242,7 +242,7 @@ class __SingleGratingCoherenceZScan(SingleGratingCoherenceZScanFacade):
 
     def calculate_harmonic_periods(self, initial_crop_parameters, initialization_parameters, plotting_properties=PlottingProperties(), **kwargs):
         img            = initial_crop_parameters.get_parameter("img",          default_value=initialization_parameters.get_parameter("img"))
-        idx4crop       = initial_crop_parameters.get_parameter("idx4crop",     default_value=self.__ini.get_list_from_ini("Parameters", "Crop"))
+        idx4crop       = initial_crop_parameters.get_parameter("idx4crop",     default_value=self.__ini.get_list_from_ini("Parameters", "Crop", type=int))
         idx4cropDark   = initial_crop_parameters.get_parameter("idx4cropDark", default_value=[0, 20, 0, 20])
         darkMeanValue  = initial_crop_parameters.get_parameter("darkMeanValue")
 
@@ -268,11 +268,11 @@ class __SingleGratingCoherenceZScan(SingleGratingCoherenceZScanFacade):
         # ==============================================================================
 
         if pattern == PATTERNS[0]:
-            period_harm_Vert = np.int(np.sqrt(2)*pixelsize/gratingPeriod*img.shape[0])
-            period_harm_Horz = np.int(np.sqrt(2)*pixelsize/gratingPeriod*img.shape[1])
+            period_harm_Vert = int(np.sqrt(2)*pixelsize/gratingPeriod*img.shape[0])
+            period_harm_Horz = int(np.sqrt(2)*pixelsize/gratingPeriod*img.shape[1])
         elif pattern == PATTERNS[1]:
-            period_harm_Vert = np.int(2*pixelsize/gratingPeriod*img.shape[0])
-            period_harm_Horz = np.int(2*pixelsize/gratingPeriod*img.shape[1])
+            period_harm_Vert = int(2*pixelsize/gratingPeriod*img.shape[0])
+            period_harm_Horz = int(2*pixelsize/gratingPeriod*img.shape[1])
 
         # Obtain harmonic periods from images
 

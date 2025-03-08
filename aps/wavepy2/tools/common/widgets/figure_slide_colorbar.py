@@ -125,7 +125,7 @@ class FigureSlideColorbar(QWidget):
         button_box_container.setFixedWidth(figure_canvas.get_width_height()[0])
         button_box_container.setFixedHeight(45)
         button_box = widgetBox(button_box_container, orientation="horizontal", width=button_box_container.width())
-        separator(button_box, width=button_box_container.width()*0.8)
+        separator(button_box, width=int(button_box_container.width()*0.8))
 
         def reset():
             scmin.set_val(cmin_o)
@@ -203,7 +203,7 @@ class FigureSlideColorbar(QWidget):
 
         radio_button_box_container = QWidget()
         radio_button_box_container.setFixedWidth(140)
-        radio_button_box_container.setFixedHeight(figure_canvas.get_width_height()[1] + button_box_container.height() + 70)
+        radio_button_box_container.setFixedHeight(int(figure_canvas.get_width_height()[1] + button_box_container.height() + 70))
         radio_button_box = widgetBox(radio_button_box_container, "Options", orientation="vertical", width=120)
 
         self.radio1 = 2

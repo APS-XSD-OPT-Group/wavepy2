@@ -241,7 +241,7 @@ class _SingleGratingTalbot(SingleGratingTalbotFacade):
                                                                              **kwargs)
         else:
             img_size_o   = np.shape(img)
-            idx4crop     = self.__ini.get_list_from_ini("Parameters", "Crop")
+            idx4crop     = self.__ini.get_list_from_ini("Parameters", "Crop", type=int)
             img          = common_tools.crop_matrix_at_indexes(img, idx4crop)
 
         return WavePyData(img=img,
@@ -511,7 +511,7 @@ class __SingleGratingTalbot2D(SingleGratingTalbotFacade):
             factor_i = virtual_pixelsize[0]/pixelsize[0]
             factor_j = virtual_pixelsize[1]/pixelsize[1]
 
-            idx1stCrop = self.__ini.get_list_from_ini("Parameters", "Crop")
+            idx1stCrop = self.__ini.get_list_from_ini("Parameters", "Crop", type=int)
 
             idx4crop = [0, -1, 0, -1]
             idx4crop[0] = int(np.rint(idx1stCrop[0] + idx2ndCrop[0]*factor_i))

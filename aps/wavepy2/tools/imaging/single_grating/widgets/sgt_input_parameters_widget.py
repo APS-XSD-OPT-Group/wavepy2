@@ -95,7 +95,7 @@ def generate_initialization_parameters_sgt(img_file_name,
     pixelsize = [pixel, pixel]
 
     if imgBlank is None:
-        defaultBlankV = np.int(np.mean(img[0:100, 0:100]))
+        defaultBlankV = int(np.mean(img[0:100, 0:100]))
         defaultBlankV = gui.ValueDialog.get_value(widget,
                                                   message="No Dark File. Value of Dark [counts]\n(Default is the mean value of the 100x100 pixels top-left corner)",
                                                   title='Experimental Values',
@@ -133,8 +133,8 @@ def generate_initialization_parameters_sgt(img_file_name,
     saveFileSuf = saveFileSuf.replace('.', 'p')
 
     # calculate the theoretical position of the hamonics
-    period_harm_Vert = np.int(pixelsize[0] / gratingPeriod * img.shape[0] / (sourceDistance + distDet2sample) * sourceDistance)
-    period_harm_Hor = np.int(pixelsize[1] / gratingPeriod * img.shape[1] / (sourceDistance + distDet2sample) * sourceDistance)
+    period_harm_Vert = int(pixelsize[0] / gratingPeriod * img.shape[0] / (sourceDistance + distDet2sample) * sourceDistance)
+    period_harm_Hor = int(pixelsize[1] / gratingPeriod * img.shape[1] / (sourceDistance + distDet2sample) * sourceDistance)
 
     return WavePyData(img=img,
                       imgRef=imgRef,

@@ -121,9 +121,9 @@ class PlotIntegration(WavePyWidget):
         gui.createTabPage(tabs, "Profile (Animation)", plot_profile_widget)
         gui.createTabPage(tabs, "Profile (Saved)", figure_4_widget)
 
-        self.setFixedWidth(max(plot_profile_widget.get_figure_canvas().get_width_height()[0],
+        self.setFixedWidth(int(max(plot_profile_widget.get_figure_canvas().get_width_height()[0],
                                figure_1_widget.get_width_height()[0],
-                               figure_4_widget.get_width_height()[0])*1.1)
-        self.setFixedHeight(max(plot_profile_widget.get_figure_canvas().get_width_height()[1],
+                               figure_4_widget.get_width_height()[0])*1.1))
+        self.setFixedHeight(int(max(plot_profile_widget.get_figure_canvas().get_width_height()[1],
                                figure_1_widget.get_width_height()[1],
-                               figure_4_widget.get_width_height()[1])*1.1)
+                               figure_4_widget.get_width_height()[1])*1.1))

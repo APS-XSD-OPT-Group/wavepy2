@@ -66,5 +66,5 @@ class FitPeriodVsZPlot(WavePyWidget):
 
         layout.addWidget(FigureCanvas(figure))
 
-        self.setFixedWidth(figure_width/pixels_to_inches)
-        self.setFixedHeight(figure_height/pixels_to_inches)
+        self.setFixedWidth(int(figure_width/pixels_to_inches))
+        self.setFixedHeight(int(figure_height/pixels_to_inches))

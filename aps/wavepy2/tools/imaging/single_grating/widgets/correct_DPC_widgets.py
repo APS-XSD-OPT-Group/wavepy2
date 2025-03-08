@@ -129,9 +129,9 @@ class CorrectDPCCenter(WavePyInteractiveWidget):
             gui.createTabPage(self.__tab_widget[index], "Angle Displacement of Fringes", self.__result_canvas_histo[index])
             gui.createTabPage(self.__tab_widget[index], "DPC Center", self.__result_canvas[index])
 
-            harm_box[index].setFixedHeight(max(self.__result_canvas_histo[index].get_width_height()[1], self.__result_canvas[index].get_width_height()[1])+220)
+            harm_box[index].setFixedHeight(int(max(self.__result_canvas_histo[index].get_width_height()[1], self.__result_canvas[index].get_width_height()[1])+220))
 
-        self.setFixedWidth(WIDGET_FIXED_WIDTH*2.1)
+        self.setFixedWidth(int(WIDGET_FIXED_WIDTH*2.1))
 
         self.update()
 

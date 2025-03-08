@@ -151,5 +151,5 @@ class IntegrateDPCCumSum(WavePyWidget):
 
         layout.addWidget(FigureCanvas(figure1))
 
-        self.setFixedWidth(plot_tools.WIDGET_FIXED_WIDTH * 1.4)
+        self.setFixedWidth(int(plot_tools.WIDGET_FIXED_WIDTH * 1.4))
         self.setFixedHeight(700)

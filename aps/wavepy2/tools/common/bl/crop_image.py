@@ -42,7 +42,7 @@ def crop_image(img, plotting_properties=PlottingProperties(), application_name=N
         ini = get_registered_ini_instance(application_name=application_name)
 
         img_size_o = np.shape(img)
-        idx4crop   = ini.get_list_from_ini("Parameters", "Crop")
+        idx4crop   = ini.get_list_from_ini("Parameters", "Crop", type=int)
         img        = common_tools.crop_matrix_at_indexes(img, idx4crop)
 
     return img, idx4crop, img_size_o
@@ -77,7 +77,7 @@ def colorbar_crop_image(img, pixelsize, plotting_properties=PlottingProperties()
         ini = get_registered_ini_instance(application_name=application_name)
 
         img_size_o = np.shape(img)
-        idx4crop = ini.get_list_from_ini("Parameters", "Crop")
+        idx4crop = ini.get_list_from_ini("Parameters", "Crop", type=int)
         img = common_tools.crop_matrix_at_indexes(img, idx4crop)
         cmap = None
         clim = None
