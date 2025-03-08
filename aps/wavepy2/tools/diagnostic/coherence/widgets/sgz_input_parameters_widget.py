@@ -167,8 +167,8 @@ class AbstractSGZInputParametersWidget():
         try:    widget_height = kwargs["widget_height"]
         except: widget_height = self.HEIGHT
 
-        self.setFixedWidth(widget_width)
-        self.setFixedHeight(widget_height)
+        self.setFixedWidth(int(widget_width))
+        self.setFixedHeight(int(widget_height))
 
         tabs = gui.tabWidget(self.get_central_widget())
 

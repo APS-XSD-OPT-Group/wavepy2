@@ -69,7 +69,7 @@ class AbstractColorbarCropWidget():
         try: self.setWindowTitle(kwargs["message"])
         except: pass
 
-        idx4crop = self.__ini.get_list_from_ini("Parameters", "Crop", default=[0, -1, 0, -1])
+        idx4crop = self.__ini.get_list_from_ini("Parameters", "Crop", type=int, default=[0, -1, 0, -1])
 
         self.__initialize(img, idx4crop)
         self.__logger.print_other(idx4crop, "Stored Crop Indexes: ", color=LoggerColor.RED)
@@ -101,7 +101,7 @@ class AbstractColorbarCropWidget():
         gui.createTabPage(tab_widget, "Colormap", figure_slide_colorbar)
         gui.createTabPage(tab_widget, "Crop Image", self.crop_image)
 
-        self.setFixedWidth(max(original_cropped_image.width(), figure_slide_colorbar.width(), self.crop_image.width())*1.1)
+        self.setFixedWidth(int(max(original_cropped_image.width(), figure_slide_colorbar.width(), self.crop_image.width())*1.1))
         self.setFixedHeight(740)
 
         self.update()

@@ -61,7 +61,7 @@ class VisibilityPlot(WavePyWidget):
 
         fit_params_container = QWidget()
         fit_params_container.setFixedWidth(280)
-        fit_params_container.setFixedHeight(figure_width/pixels_to_inches)
+        fit_params_container.setFixedHeight(int(figure_width/pixels_to_inches))
 
         fit_params_box = widgetBox(fit_params_container, "Fit Parameters", orientation="vertical", width=260)
 
@@ -113,8 +113,8 @@ class VisibilityPlot(WavePyWidget):
         layout.addWidget(fit_params_container, 0, 0)
         layout.addWidget(self.__figure_canvas, 0, 1)
 
-        self.setFixedWidth(fit_params_container.width() + figure_width/pixels_to_inches)
-        self.setFixedHeight(figure_height/pixels_to_inches)
+        self.setFixedWidth(int(fit_params_container.width() + figure_width/pixels_to_inches))
+        self.setFixedHeight(int(figure_height/pixels_to_inches))
 
     def __do_fit(self):
         cursor = np.where(np.logical_and(self.__zvec >= self.zvec_min*1e-3, self.__zvec <= self.zvec_max*1e-3))

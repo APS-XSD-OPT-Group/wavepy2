@@ -117,10 +117,10 @@ def single_2Dgrating_analyses(img, img_ref=None, harmonicPeriod=None, unwrapFlag
         int10 = np.abs(h_img[2])/np.abs(h_img_ref[2])
 
         if unwrapFlag is True:
-            arg01 = (unwrap_phase(np.angle(h_img[1]), seed=72673) -
-                     unwrap_phase(np.angle(h_img_ref[1]), seed=72673))
-            arg10 = (unwrap_phase(np.angle(h_img[2]), seed=72673) -
-                     unwrap_phase(np.angle(h_img_ref[2]), seed=72673))
+            arg01 = (unwrap_phase(np.angle(h_img[1])) -
+                     unwrap_phase(np.angle(h_img_ref[1])))
+            arg10 = (unwrap_phase(np.angle(h_img[2])) -
+                     unwrap_phase(np.angle(h_img_ref[2])))
         else:
             arg01 = np.angle(h_img[1]) - np.angle(h_img_ref[1])
             arg10 = np.angle(h_img[2]) - np.angle(h_img_ref[2])
@@ -131,8 +131,8 @@ def single_2Dgrating_analyses(img, img_ref=None, harmonicPeriod=None, unwrapFlag
         int10 = np.abs(h_img[2])
 
         if unwrapFlag is True:
-            arg01 = unwrap_phase(np.angle(h_img[1]), seed=72673)
-            arg10 = unwrap_phase(np.angle(h_img[2]), seed=72673)
+            arg01 = unwrap_phase(np.angle(h_img[1]))
+            arg10 = unwrap_phase(np.angle(h_img[2]))
         else:
             arg01 = np.angle(h_img[1])
             arg10 = np.angle(h_img[2])
