@@ -437,12 +437,12 @@ class __SingleGratingCoherenceZScan(SingleGratingCoherenceZScanFacade):
     # %% ==================================================================================================
 
     def fit_visibility(self, fit_period_result, initialization_parameters, plotting_properties=PlottingProperties(), **kwargs):
-        contrastV              = fit_period_result.get_parameter("contrastV")
-        contrastH              = fit_period_result.get_parameter("contrastH")
+        contrastV                 = fit_period_result.get_parameter("contrastV")
+        contrastH                 = fit_period_result.get_parameter("contrastH")
         sourceDistance_from_fit_V = fit_period_result.get_parameter("sourceDistance_from_fit_V")
-        patternPeriodFromData_V = fit_period_result.get_parameter("patternPeriodFromData_V")
+        patternPeriodFromData_V   = fit_period_result.get_parameter("patternPeriodFromData_V")
         sourceDistance_from_fit_H = fit_period_result.get_parameter("sourceDistance_from_fit_H")
-        patternPeriodFromData_H = fit_period_result.get_parameter("patternPeriodFromData_H")
+        patternPeriodFromData_H   = fit_period_result.get_parameter("patternPeriodFromData_H")
 
         zvec                   = initialization_parameters.get_parameter("zvec")
 

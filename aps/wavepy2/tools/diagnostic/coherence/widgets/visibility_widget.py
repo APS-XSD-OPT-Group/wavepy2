@@ -22,10 +22,10 @@ class VisibilityPlot(WavePyWidget):
     zvec_min = 0.0
     zvec_max = 0.0
 
-    z_period = 0.0
-    z_period_min = 0.0
-    z_period_max = 0.0
-    z_period_fixed = 1
+    pattern_period = 0.0
+    pattern_period_min = 0.0
+    pattern_period_max = 0.0
+    pattern_period_fixed = 1
 
     source_distance = 0.0
     source_distance_min = 0.0
@@ -47,12 +47,16 @@ class VisibilityPlot(WavePyWidget):
         self.zvec_min           = np.round(np.min(self.__zvec)*1e3, 2) # mm
         self.zvec_max           = np.round(np.max(self.__zvec)*1e3, 2)
         self.__wavelength       = kwargs["wavelength"]
-        self.z_period           = np.round(kwargs["pattern_period"]**2/self.__wavelength, 6)
+        self.pattern_period     = np.round(kwargs["pattern_period"], 6)
         self.source_distance    = np.round(kwargs["source_distance"], 3)
+
         self.__contrast         = kwargs["contrast"]
         self.__ls1              = kwargs["ls1"]
         self.__lc2              = kwargs["lc2"]
         self.__direction        = kwargs["direction"]
+
+
+        #self.z_period           = np.round(kwargs["pattern_period"]**2/self.__wavelength, 6)
 
 
         try: figure_width = kwargs["figure_width"] * pixels_to_inches
@@ -75,21 +79,24 @@ class VisibilityPlot(WavePyWidget):
 
         lineEdit(fit_params_box, self, "zvec_min", "Z min [mm]", labelWidth=120, orientation="horizontal", valueType=float)
         lineEdit(fit_params_box, self, "zvec_max", "Z max [mm]", labelWidth=120, orientation="horizontal", valueType=float)
-        separator(fit_params_box)
-        z_period_box = widgetBox(fit_params_box, "", orientation="horizontal", width=240)
-        self.__le_z_period = lineEdit(z_period_box, self, "z_period", "Z period [m]", labelWidth=100, orientation="horizontal", valueType=float)
-
-        def set_z_period():
-            self.__le_z_period_min.setEnabled(not self.z_period_fixed)
-            self.__le_z_period_max.setEnabled(not self.z_period_fixed)
-
-        checkBox(z_period_box, self, "z_period_fixed", "fix", callback=set_z_period)
-        z_period_box_2 = widgetBox(fit_params_box, "", orientation="horizontal", width=240)
-        self.__le_z_period_min = lineEdit(z_period_box_2, self, "z_period_min", "min", orientation="horizontal", valueType=float)
-        self.__le_z_period_max = lineEdit(z_period_box_2, self, "z_period_max", "max", orientation="horizontal", valueType=float)
-        set_z_period()
 
         separator(fit_params_box)
+
+        period_box = widgetBox(fit_params_box, "", orientation="horizontal", width=240)
+        self.__le_pattern_period = lineEdit(period_box, self, "pattern_period", "Pattern period [m]", labelWidth=100, orientation="horizontal", valueType=float)
+
+        def set_pattern_period():
+            self.__le_pattern_period_min.setEnabled(not self.pattern_period_fixed)
+            self.__le_pattern_period_max.setEnabled(not self.pattern_period_fixed)
+
+        checkBox(period_box, self, "pattern_period_fixed", "fix", callback=set_pattern_period)
+        pattern_period_box_2 = widgetBox(fit_params_box, "", orientation="horizontal", width=240)
+        self.__le_pattern_period_min = lineEdit(pattern_period_box_2, self, "pattern_period_min", "min", orientation="horizontal", valueType=float)
+        self.__le_pattern_period_max = lineEdit(pattern_period_box_2, self, "pattern_period_max", "max", orientation="horizontal", valueType=float)
+        set_pattern_period()
+
+        separator(fit_params_box)
+
         source_distance_box = widgetBox(fit_params_box, "", orientation="horizontal", width=240)
         self.__le_source_distance = lineEdit(source_distance_box, self, "source_distance", "Source distance [m]", labelWidth=120, orientation="horizontal", valueType=float)
 
@@ -132,22 +139,22 @@ class VisibilityPlot(WavePyWidget):
         source_distance = self.source_distance
         shift_limit     = 0.05 * (zvec[-1] - zvec[0])
 
-        p0 = [1.0, self.z_period, .96, 0.05, self.source_distance, 1e-6]
+        initial_guess = [1.0, self.pattern_period, 1e-5, self.source_distance, 1e-6]
 
-        if self.z_period_fixed == 1:
-            z_period_low = self.z_period * (1-epsilon)
-            z_period_up = self.z_period * (1+epsilon)
+        if self.pattern_period_fixed == 1:
+            pattern_period_low = self.pattern_period * (1-epsilon)
+            pattern_period_up  = self.pattern_period * (1+epsilon)
         else:
-            if self.z_period_min >= self.z_period_max:
-                QMessageBox.critical(self, "Error", " Z period min >= Z period max")
+            if self.pattern_period_min >= self.pattern_period_max:
+                QMessageBox.critical(self, "Error", " Pattern period min >= pattern period max")
                 return
 
-            z_period_low = self.z_period_min
-            z_period_up = self.z_period_max
+            pattern_period_low = self.pattern_period_min
+            pattern_period_up  = self.pattern_period_max
 
         if self.source_distance_fixed == 1:
             source_distance_low = source_distance * ((1-epsilon) if source_distance > 0 else (1+epsilon))
-            source_distance_up = source_distance * ((1+epsilon) if source_distance > 0 else (1-epsilon))
+            source_distance_up  = source_distance * ((1+epsilon) if source_distance > 0 else (1-epsilon))
         else:
             if self.source_distance_min >= self.source_distance_max:
                 QMessageBox.critical(self, "Error", " Source distance min >= Source distance max")
@@ -156,33 +163,46 @@ class VisibilityPlot(WavePyWidget):
             source_distance_low = self.source_distance_min
             source_distance_up = self.source_distance_max
 
-        bounds_low = [1e-3, z_period_low, .01, -.1, source_distance_low, -shift_limit]
-        bounds_up  = [2.0,  z_period_up,  10.,  .1, source_distance_up,   shift_limit]
+        bounds_low = [1e-3, pattern_period_low, 1e-7, source_distance_low, -shift_limit]
+        bounds_up  = [2.0,  pattern_period_up,  1e-3, source_distance_up,   shift_limit]
 
-        def _func_4_fit(z, Amp, z_period, sigma, phase, sourceDist, z0):
-            return Amp * np.abs(np.sin((z - z0) / z_period * np.pi / (1 + (z - z0) / sourceDist) +
-                                       phase * 2 * np.pi)) * \
-                   np.exp(-(z - z0) ** 2 / 2 / sigma ** 2 / (1 + (z - z0) / sourceDist) ** 2)
+        def _csi(source_sigma, source_distance):
+            return self.__wavelength * source_distance / (2 * np.pi * source_sigma)
+
+        def _pz(z, p0, source_distance, z0):
+            return p0 * (1 + (z - z0) / source_distance)
+
+        def _envelope(z, Amp, p0, source_sigma, source_distance, z0):
+            csi = _csi(source_sigma, source_distance)
+            pz = _pz(z, p0, source_distance, z0)
+
+            return Amp * np.exp(-((self.__wavelength * (z - z0)) ** 2) / ((csi * pz) ** 2))
+
+        def _fitting_function(z, Amp, p0, source_sigma, source_distance, z0):
+            pz = _pz(z, p0, source_distance, z0)
+
+            return _envelope(z, Amp, p0, source_sigma, source_distance, z0) * \
+                   np.abs(np.sin(np.pi * self.__wavelength * (z - z0) / (p0 * pz)))
 
         try:
-            popt, pcov = curve_fit(_func_4_fit, zvec, contrast, p0=p0, bounds=(bounds_low, bounds_up))
+            popt, pcov = curve_fit(_fitting_function, zvec, contrast, p0=initial_guess, bounds=(bounds_low, bounds_up))
         except Exception as e:
             QMessageBox.critical(self, "Exception Occurred", str(e))
             return
 
-        self.__coherence_length = np.abs(popt[2]) * self.__wavelength / (np.sqrt(self.__wavelength * popt[1]))
-        self.__source_size = self.__wavelength * np.abs(source_distance) / (2 * np.pi * self.__coherence_length)
+        self.__source_size      = popt[2]
+        self.__coherence_length = _csi(source_sigma=popt[2], source_distance=popt[3])
 
-        fitted_curve = _func_4_fit(zvec, popt[0], popt[1], popt[2], popt[3], popt[4], popt[5])
-        envelope = _func_4_fit(zvec, popt[0], 1e10, popt[2], 1 / 4, popt[4], popt[5])
+        fitted_curve = _fitting_function(zvec, Amp=popt[0], p0=popt[1], source_sigma=popt[2], source_distance=popt[3], z0=popt[4])
+        envelope     = _envelope(        zvec, Amp=popt[0], p0=popt[1], source_sigma=popt[2], source_distance=popt[3], z0=popt[4])
 
-        self.z_period        = np.round(popt[1], 6)
+        self.pattern_period  = np.round(popt[1], 6)
         self.source_distance = np.round(popt[4], 3)
-        self.__le_z_period.setText(str(self.z_period))
+        self.__le_pattern_period.setText(str(self.pattern_period))
         self.__le_source_distance.setText(str(self.source_distance))
 
-        results_Text =  'z_period [m] : ' + str('{:.6g}'.format(popt[1]) + '\n')
-        results_Text += 'z shift [mm] : ' + str('{:.3g}'.format(popt[5]*1e3) + '\n')
+        results_Text =  'pattern_period [m] : ' + str('{:.6g}'.format(popt[1]) + '\n')
+        results_Text += 'z shift [mm] : ' + str('{:.3g}'.format(popt[4]*1e3) + '\n')
         results_Text += 'Coherent length: {:.6g} um\n'.format(self.__coherence_length*1e6)
         results_Text += 'Source size: {:.6g} um\n'.format(self.__source_size*1e6)
 
