@@ -83,7 +83,10 @@ class SimplePlot(WavePyWidget):
 
         self.setLayout(layout)
 
-        self.append_mpl_figure_to_save(widget.get_image_to_change().get_mpl_figure())
+        figure_name = common_tools.to_filename_format(self.__title)
+
+        self.append_mpl_figure_to_save(figure=widget.get_image_to_change().get_mpl_figure(),
+                                       figure_file_name=common_tools.get_unique_filename(figure_name, "png"))
 
 class SimplePlotWidget(QWidget):
     def __init__(self, parent, image, title='', xlabel='', ylabel='', figure_width=8, figure_height=7, **kwargs4imshow):

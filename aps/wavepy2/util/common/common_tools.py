@@ -91,6 +91,10 @@ hc = constants.value('inverse meter-electron volt relationship')  # hc
 import os
 from itertools import count
 
+def to_filename_format(text):
+    if is_empty_string(text): return ""
+    else:                     return text.lower().replace(",", "").strip().replace(" ", "_")
+
 def get_unique_filename(patternforname, extension='txt', width=2, isFolder=False):
     '''
     Produce a string in the format `patternforname_XX.extension`, where XX is

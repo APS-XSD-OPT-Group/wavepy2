@@ -56,6 +56,10 @@ class ErrorIntegration(WavePyWidget):
 
     def get_plot_tab_name(self): return "Error Integration"
 
+    def build_widget(self, **kwargs):
+        kwargs["figure_name"] = common_tools.to_filename_format(self.get_plot_tab_name())
+        super(ErrorIntegration, self).build_widget(**kwargs)
+
     def build_mpl_figure(self, **kwargs):
         delx_f     = kwargs["delx_f"]
         dely_f     = kwargs["dely_f"]

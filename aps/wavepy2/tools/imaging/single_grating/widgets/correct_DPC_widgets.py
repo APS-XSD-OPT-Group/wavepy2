@@ -79,9 +79,14 @@ class CorrectDPC(WavePyWidget):
 class CorrectDPCHistos(WavePyWidget):
     def get_plot_tab_name(self): return "Correct DPC" if common_tools.is_empty_string(self.__title) else self.__title
 
+    def build_widget(self, **kwargs):
+        self.__title = kwargs["title"]
+
+        kwargs["figure_name"] = common_tools.to_filename_format(self.get_plot_tab_name())
+        super(CorrectDPCHistos, self).build_widget(**kwargs)
+
     def build_mpl_figure(self, **kwargs):
         angle   = kwargs["angle"]
-        self.__title = kwargs["title"]
 
         figure = Figure()
 
@@ -97,7 +102,6 @@ class CorrectDPCHistos(WavePyWidget):
 from aps.common.logger import get_registered_logger_instance, LoggerColor
 from aps.wavepy2.util.plot.plot_tools import WIDGET_FIXED_WIDTH
 from aps.wavepy2.tools.common.widgets.graphical_select_point_idx import GraphicalSelectPointIdx
-
 
 class CorrectDPCCenter(WavePyInteractiveWidget):
     __harmonic = ["01", "10"]

@@ -61,11 +61,16 @@ class PlotResidual1D(WavePyWidget):
 
     def get_plot_tab_name(self): return "Fit center profile " + self.__direction
 
+    def build_widget(self, **kwargs):
+        self.__direction = kwargs["direction"]
+
+        kwargs["figure_name"] = common_tools.to_filename_format(self.get_plot_tab_name())
+        super(PlotResidual1D, self).build_widget(**kwargs)
+
     def build_mpl_figure(self, **kwargs):
         xvec              = kwargs["xvec"]
         data              = kwargs["data"]
         fitted            = kwargs["fitted"]
-        self.__direction  = kwargs["direction"]
         str4title         = kwargs["str4title"]
         try:    saveAscii = kwargs["saveAscii"]
         except: saveAscii = False

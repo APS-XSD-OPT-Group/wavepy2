@@ -59,6 +59,10 @@ class SlopeErrorHist(WavePyWidget):
 
     def get_plot_tab_name(self): return "Slope Error"
 
+    def build_widget(self, **kwargs):
+        kwargs["figure_name"] = common_tools.to_filename_format(self.get_plot_tab_name())
+        super(SlopeErrorHist, self).build_widget(**kwargs)
+
     def build_mpl_figure(self, **kwargs):
         thickness     = kwargs["thickness"]
         pixelsize     = kwargs["pixelsize"]

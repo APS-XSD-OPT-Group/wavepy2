@@ -56,6 +56,10 @@ class PlotDarkField(WavePyWidget):
 
     def get_plot_tab_name(self): return "Dark Field"
 
+    def build_widget(self, **kwargs):
+        kwargs["figure_name"] = common_tools.to_filename_format(self.get_plot_tab_name())
+        super(PlotDarkField, self).build_widget(**kwargs)
+
     def build_mpl_figure(self, **kwargs):
         darkField01 = kwargs["darkField01"]
         darkField10 = kwargs["darkField10"]

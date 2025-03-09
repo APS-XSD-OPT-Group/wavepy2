@@ -1,3 +1,5 @@
+import time
+
 import numpy as np
 
 from matplotlib.figure import Figure
@@ -7,6 +9,7 @@ from PyQt5.QtWidgets import QHBoxLayout
 from PyQt5.QtCore import Qt
 
 from aps.wavepy2.util.plot.plotter import WavePyWidget, pixels_to_inches
+from aps.wavepy2.util.common import common_tools
 
 from warnings import filterwarnings
 filterwarnings("ignore")
@@ -59,7 +62,9 @@ class FitPeriodVsZPlot(WavePyWidget):
 
         figure.gca().legend(fontsize=14, loc=1)
 
-        self.append_mpl_figure_to_save(figure=figure)
+
+        self.append_mpl_figure_to_save(figure=figure,
+                                       figure_file_name=common_tools.get_unique_filename(f"patter_period_vs_detector_distance_{direction}", "png"))
 
         output_data.set_parameter("sourceDistance", sourceDistance)
         output_data.set_parameter("patternPeriodFromData", patternPeriodFromData)

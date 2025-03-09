@@ -47,7 +47,7 @@ from matplotlib.figure import Figure
 from matplotlib.patches import Rectangle
 from aps.wavepy2.util.common.common_tools import extent_func, is_empty_string
 from aps.wavepy2.util.plot.plotter import WavePyWidget
-
+from aps.wavepy2.util.common import common_tools
 
 class ExtractHarmonicPlot(WavePyWidget):
     def __init__(self, parent=None, application_name=None, **kwargs):
@@ -55,18 +55,25 @@ class ExtractHarmonicPlot(WavePyWidget):
 
     def get_plot_tab_name(self): return self.__image_name + "Extract Harmonic " + self.__harmonic_name
 
-    def build_mpl_figure(self, **kwargs):
-        intensity   = kwargs["intensity"]
-        idxPeak_ij  = kwargs["idxPeak_ij"]
+    def build_widget(self, **kwargs):
         harmonic_ij = kwargs["harmonic_ij"]
-        nColumns    = kwargs["nColumns"]
-        nRows       = kwargs["nRows"]
-        periodHor   = kwargs["periodHor"]
-        periodVert  = kwargs["periodVert"]
         image_name  = kwargs["image_name"]
 
         self.__harmonic_name = harmonic_ij[0] + harmonic_ij[1]
         self.__image_name = "" if is_empty_string(image_name) else image_name + ": "
+
+        kwargs["figure_name"] = common_tools.to_filename_format(self.get_plot_tab_name())
+        super(ExtractHarmonicPlot, self).build_widget(**kwargs)
+
+    def build_mpl_figure(self, **kwargs):
+        intensity   = kwargs["intensity"]
+        idxPeak_ij  = kwargs["idxPeak_ij"]
+        nColumns    = kwargs["nColumns"]
+        nRows       = kwargs["nRows"]
+        periodHor   = kwargs["periodHor"]
+        periodVert  = kwargs["periodVert"]
+
+
 
         figure = Figure(figsize=(8, 7))
         ax = figure.subplots(1, 1)

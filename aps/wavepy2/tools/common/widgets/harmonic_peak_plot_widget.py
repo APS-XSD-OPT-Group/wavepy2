@@ -46,6 +46,7 @@ import numpy as np
 from matplotlib.figure import Figure
 from aps.wavepy2.util.common.common_tools import get_idxPeak_ij, is_empty_string
 from aps.wavepy2.util.plot.plotter import WavePyWidget
+from aps.wavepy2.util.common import common_tools
 
 class HarmonicPeakPlot(WavePyWidget):
     def __init__(self, parent=None, application_name=None, **kwargs):
@@ -53,12 +54,16 @@ class HarmonicPeakPlot(WavePyWidget):
 
     def get_plot_tab_name(self): return self.__image_name + "Harmonic Peak"
 
+    def build_widget(self, **kwargs):
+        image_name        = kwargs["image_name"]
+        self.__image_name = "" if is_empty_string(image_name) else image_name + ": "
+
+        kwargs["figure_name"] = common_tools.to_filename_format(self.get_plot_tab_name())
+        super(HarmonicPeakPlot, self).build_widget(**kwargs)
+
     def build_mpl_figure(self, **kwargs):
         imgFFT         = kwargs["imgFFT"]
         harmonicPeriod = kwargs["harmonicPeriod"]
-        image_name     = kwargs["image_name"]
-
-        self.__image_name = "" if is_empty_string(image_name) else image_name + ": "
 
         (nRows, nColumns) = imgFFT.shape
 

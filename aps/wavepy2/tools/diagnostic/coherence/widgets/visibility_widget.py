@@ -1,13 +1,16 @@
+import time
+
 import numpy as np
 from scipy.optimize import curve_fit
 
-from PyQt5.QtWidgets import QWidget, QGridLayout
+from PyQt5.QtWidgets import QWidget, QGridLayout, QMessageBox
 from PyQt5.QtCore import Qt
 
 from matplotlib.figure import Figure
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 
 from aps.wavepy2.util.plot.plotter import WavePyWidget, pixels_to_inches
+from aps.wavepy2.util.common import common_tools
 from aps.common.plot.gui import widgetBox, separator, button, checkBox, lineEdit
 
 from warnings import filterwarnings
@@ -28,6 +31,11 @@ class VisibilityPlot(WavePyWidget):
     source_distance_min = 0.0
     source_distance_max = 0.0
     source_distance_fixed = 1
+
+    shift_limit = 0.0
+    shift_limit_min = 0.0
+    shift_limit_max = 0.0
+    shift_limit_fixed = 1
 
     def __init__(self, parent=None, application_name=None, **kwargs):
         WavePyWidget.__init__(self, parent=parent, application_name=application_name)
@@ -104,8 +112,9 @@ class VisibilityPlot(WavePyWidget):
         self.__figure_canvas = FigureCanvas(self.__figure)
 
         self.__do_fit()
-        
-        self.append_mpl_figure_to_save(figure=self.__figure)
+
+        self.append_mpl_figure_to_save(figure=self.__figure,
+                                       figure_file_name=common_tools.get_unique_filename(f"visibility_vs_detector_distance_{self.__direction}", "png"))
 
         output_data.set_parameter("coherence_length", self.__coherence_length)
         output_data.set_parameter("source_size", self.__source_size)
@@ -129,6 +138,10 @@ class VisibilityPlot(WavePyWidget):
             z_period_low = self.z_period * (1-epsilon)
             z_period_up = self.z_period * (1+epsilon)
         else:
+            if self.z_period_min >= self.z_period_max:
+                QMessageBox.critical(self, "Error", " Z period min >= Z period max")
+                return
+
             z_period_low = self.z_period_min
             z_period_up = self.z_period_max
 
@@ -136,6 +149,10 @@ class VisibilityPlot(WavePyWidget):
             source_distance_low = source_distance * ((1-epsilon) if source_distance > 0 else (1+epsilon))
             source_distance_up = source_distance * ((1+epsilon) if source_distance > 0 else (1-epsilon))
         else:
+            if self.source_distance_min >= self.source_distance_max:
+                QMessageBox.critical(self, "Error", " Source distance min >= Source distance max")
+                return
+
             source_distance_low = self.source_distance_min
             source_distance_up = self.source_distance_max
 
@@ -147,7 +164,11 @@ class VisibilityPlot(WavePyWidget):
                                        phase * 2 * np.pi)) * \
                    np.exp(-(z - z0) ** 2 / 2 / sigma ** 2 / (1 + (z - z0) / sourceDist) ** 2)
 
-        popt, pcov = curve_fit(_func_4_fit, zvec, contrast, p0=p0, bounds=(bounds_low, bounds_up))
+        try:
+            popt, pcov = curve_fit(_func_4_fit, zvec, contrast, p0=p0, bounds=(bounds_low, bounds_up))
+        except Exception as e:
+            QMessageBox.critical(self, "Exception Occurred", str(e))
+            return
 
         self.__coherence_length = np.abs(popt[2]) * self.__wavelength / (np.sqrt(self.__wavelength * popt[1]))
         self.__source_size = self.__wavelength * np.abs(source_distance) / (2 * np.pi * self.__coherence_length)

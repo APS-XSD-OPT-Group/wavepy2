@@ -56,15 +56,19 @@ class PlotIntensitiesHarms(WavePyWidget):
 
     def get_plot_tab_name(self): return 'Absorption obtained from the Harmonics' + self.__title
 
+    def build_widget(self, **kwargs):
+        titleStr  = kwargs["titleStr"]
+        if not common_tools.is_empty_string(titleStr): self.__title = ', ' + titleStr
+        else:                                          self.__title = ""
+
+        kwargs["figure_name"] = common_tools.to_filename_format(self.get_plot_tab_name())
+        super(PlotIntensitiesHarms, self).build_widget(**kwargs)
+
     def build_mpl_figure(self, **kwargs):
         int00     = kwargs["int00"]
         int01     = kwargs["int01"]
         int10     = kwargs["int10"]
         pixelsize = kwargs["pixelsize"]
-        titleStr  = kwargs["titleStr"]
-
-        if not common_tools.is_empty_string(titleStr): self.__title = ', ' + titleStr
-        else: self.__title = ""
 
         factor, unit_xy = common_tools.choose_unit(np.sqrt(int00.size) * pixelsize[0])
 

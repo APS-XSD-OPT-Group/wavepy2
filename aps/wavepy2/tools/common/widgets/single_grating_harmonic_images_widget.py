@@ -46,6 +46,7 @@ import numpy as np
 from matplotlib.figure import Figure
 from aps.wavepy2.util.common.common_tools import extent_func, is_empty_string
 from aps.wavepy2.util.plot.plotter import WavePyWidget
+from aps.wavepy2.util.common import common_tools
 
 class SingleGratingHarmonicImages(WavePyWidget):
     def __init__(self, parent=None, application_name=None, **kwargs):
@@ -53,14 +54,18 @@ class SingleGratingHarmonicImages(WavePyWidget):
 
     def get_plot_tab_name(self): return self.__image_name + "Intensity in Fourier Space"
 
+    def build_widget(self, **kwargs):
+        image_name = kwargs["image_name"]
+        self.__image_name = "" if is_empty_string(image_name) else image_name + ": "
+
+        kwargs["figure_name"] = common_tools.to_filename_format(self.get_plot_tab_name())
+        super(SingleGratingHarmonicImages, self).build_widget(**kwargs)
+
     def build_mpl_figure(self, **kwargs):
         # Intensity is Fourier Space
         intFFT00 = np.log10(np.abs(kwargs["imgFFT00"]))
         intFFT01 = np.log10(np.abs(kwargs["imgFFT01"]))
         intFFT10 = np.log10(np.abs(kwargs["imgFFT10"]))
-        image_name = kwargs["image_name"]
-
-        self.__image_name = "" if is_empty_string(image_name) else image_name + ": "
 
         figure = Figure(figsize=(14, 5))
         axes = figure.subplots(nrows=1, ncols=3)

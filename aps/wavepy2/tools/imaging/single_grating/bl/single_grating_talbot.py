@@ -837,13 +837,14 @@ class __SingleGratingTalbot2D(SingleGratingTalbotFacade):
             integrated_data = -1 / 2 / np.pi * phase * self.__wavelength
 
             self.__plotter.push_plot_on_context(INTEGRATION_CONTEXT_KEY, PlotIntegration, unique_id,
-                                               data=integrated_data * 1e9,
-                                               pixelsize=virtual_pixelsize,
-                                               titleStr = r'-WF $[nm]$',
-                                               ctitle="",
-                                               max3d_grid_points=101,
-                                               kwarg4surf={},
-                                               **kwargs)
+                                                title="Frankot-Chellappa Integration",
+                                                data=integrated_data * 1e9,
+                                                pixelsize=virtual_pixelsize,
+                                                titleStr = r'-WF $[nm]$',
+                                                ctitle="",
+                                                max3d_grid_points=101,
+                                                kwarg4surf={},
+                                                **kwargs)
 
             self.__plotter.save_sdf_file(integrated_data, virtual_pixelsize, file_suffix='_phase', extraHeader={'Title': 'WF Phase', 'Zunit': 'meters'})
 

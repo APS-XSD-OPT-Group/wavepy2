@@ -1,3 +1,5 @@
+import time
+
 import numpy as np
 import pickle
 
@@ -12,7 +14,6 @@ from PyQt5.QtWidgets import QHBoxLayout
 from PyQt5.QtCore import Qt
 
 from aps.wavepy2.util.common import common_tools
-from aps.wavepy2.util.plot import plot_tools
 from aps.common.plot import gui
 from aps.wavepy2.util.plot.plotter import WavePyWidget, pixels_to_inches
 from aps.wavepy2.tools.common.widgets.plot_profile_widget import PlotProfileWidget
@@ -87,8 +88,11 @@ class PlotIntegration(WavePyWidget):
 
         figure_1_widget = FigureCanvas(figure1)
 
-        self.append_mpl_figure_to_save(figure2)
-        self.append_mpl_figure_to_save(figure3)
+        file_name = common_tools.to_filename_format(self.__title)
+
+        self.append_mpl_figure_to_save(figure1, figure_file_name=common_tools.get_unique_filename(f"{file_name}_1", extension="png"))
+        self.append_mpl_figure_to_save(figure2, figure_file_name=common_tools.get_unique_filename(f"{file_name}_2", extension="png"))
+        self.append_mpl_figure_to_save(figure3, figure_file_name=common_tools.get_unique_filename(f"{file_name}_3", extension="png"))
 
         plot_profile_widget = PlotProfileWidget(self,
                                                 xmatrix=xxGrid * factor_x,
@@ -111,7 +115,7 @@ class PlotIntegration(WavePyWidget):
         cbar = figure4.colorbar(im)
         cbar.ax.set_title(ctitle, y=1.01)
 
-        self.append_mpl_figure_to_save(figure4)
+        self.append_mpl_figure_to_save(figure4, figure_file_name=common_tools.get_unique_filename(f"{file_name}_4", extension="png"))
 
         figure_4_widget = FigureCanvas(figure4)
 
