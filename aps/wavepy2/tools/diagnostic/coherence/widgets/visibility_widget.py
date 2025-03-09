@@ -47,7 +47,7 @@ class VisibilityPlot(WavePyWidget):
         self.zvec_min           = np.round(np.min(self.__zvec)*1e3, 2) # mm
         self.zvec_max           = np.round(np.max(self.__zvec)*1e3, 2)
         self.__wavelength       = kwargs["wavelength"]
-        self.pattern_period     = np.round(kwargs["pattern_period"], 6)
+        self.pattern_period     = np.round(kwargs["pattern_period"], 9)
         self.source_distance    = np.round(kwargs["source_distance"], 3)
 
         self.__contrast         = kwargs["contrast"]
@@ -196,15 +196,15 @@ class VisibilityPlot(WavePyWidget):
         fitted_curve = _fitting_function(zvec, Amp=popt[0], p0=popt[1], source_sigma=popt[2], source_distance=popt[3], z0=popt[4])
         envelope     = _envelope(        zvec, Amp=popt[0], p0=popt[1], source_sigma=popt[2], source_distance=popt[3], z0=popt[4])
 
-        self.pattern_period  = np.round(popt[1], 6)
-        self.source_distance = np.round(popt[4], 3)
+        self.pattern_period  = np.round(popt[1], 9)
+        self.source_distance = np.round(popt[3], 3)
         self.__le_pattern_period.setText(str(self.pattern_period))
         self.__le_source_distance.setText(str(self.source_distance))
 
-        results_Text =  'pattern_period [m] : ' + str('{:.6g}'.format(popt[1]) + '\n')
+        results_Text =  'pattern_period [um] : ' + str('{:.3g}'.format(popt[1]*1e6) + '\n')
         results_Text += 'z shift [mm] : ' + str('{:.3g}'.format(popt[4]*1e3) + '\n')
-        results_Text += 'Coherent length: {:.6g} um\n'.format(self.__coherence_length*1e6)
-        results_Text += 'Source size: {:.6g} um\n'.format(self.__source_size*1e6)
+        results_Text += 'Coherent length: {:.3g} um\n'.format(self.__coherence_length*1e6)
+        results_Text += 'Source size: {:.3g} um\n'.format(self.__source_size*1e6)
 
         self.__figure.clear()
         self.__figure.gca().plot(self.__zvec * 1e3, self.__contrast * 100, self.__ls1, label='Data')
