@@ -176,7 +176,7 @@ class VisibilityPlot(WavePyWidget):
             csi = _csi(source_sigma, source_distance)
             pz = _pz(z, p0, source_distance, z0)
 
-            return Amp * np.exp(-((self.__wavelength * (z - z0)) ** 2) / ((csi * pz) ** 2))
+            return Amp * np.exp(-((self.__wavelength * (z - z0)) ** 2) / (2*(csi * pz) ** 2))
 
         def _fitting_function(z, Amp, p0, source_sigma, source_distance, z0):
             pz = _pz(z, p0, source_distance, z0)

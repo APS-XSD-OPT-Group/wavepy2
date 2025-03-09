@@ -114,6 +114,7 @@ def generate_initialization_parameters_sgz(dataFolder,
 
     return WavePyData(img=img,
                       dataFolder=dataFolder,
+                      outFolder=out_dir,
                       startDist=startDist,
                       step_z_scan=step_z_scan,
                       image_per_point=image_per_point,
