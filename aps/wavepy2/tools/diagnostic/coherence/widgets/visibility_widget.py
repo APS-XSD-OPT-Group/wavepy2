@@ -9,7 +9,7 @@ from PyQt5.QtCore import Qt
 from matplotlib.figure import Figure
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 
-from aps.wavepy2.util.plot.plotter import WavePyWidget, pixels_to_inches
+from aps.wavepy2.util.plot.plotter import WavePyWidget, pixels_to_inches, FigureToSave
 from aps.wavepy2.util.common import common_tools
 from aps.common.plot.gui import widgetBox, separator, button, checkBox, lineEdit
 
@@ -111,7 +111,7 @@ class VisibilityPlot(WavePyWidget):
         self.__figure = Figure(figsize=(figure_width, figure_height))
         self.__figure_canvas = FigureCanvas(self.__figure)
 
-        self.__do_fit()
+        self.__do_fit(True)
 
         self.append_mpl_figure_to_save(figure=self.__figure,
                                        figure_file_name=common_tools.get_unique_filename(f"visibility_vs_detector_distance_{self.__direction}", "png"))
@@ -125,7 +125,7 @@ class VisibilityPlot(WavePyWidget):
         self.setFixedWidth(int(fit_params_container.width() + figure_width/pixels_to_inches))
         self.setFixedHeight(int(figure_height/pixels_to_inches))
 
-    def __do_fit(self):
+    def __do_fit(self, is_init=False):
         cursor = np.where(np.logical_and(self.__zvec >= self.zvec_min*1e-3, self.__zvec <= self.zvec_max*1e-3))
         zvec            = self.__zvec[cursor]
         contrast        = self.__contrast[cursor]
@@ -198,3 +198,11 @@ class VisibilityPlot(WavePyWidget):
                                  bbox=dict(facecolor=self.__lc2, alpha=0.85))
 
         self.__figure_canvas.draw()
+
+        # in this case we will save an image at every fit
+        if not is_init and self._allows_saving():
+            figure_to_save = FigureToSave(figure=self.__figure,
+                                          figure_file_name=common_tools.get_unique_filename(f"visibility_vs_detector_distance_{self.__direction}", "png"))
+            figure_to_save.save_figure()
+
+
