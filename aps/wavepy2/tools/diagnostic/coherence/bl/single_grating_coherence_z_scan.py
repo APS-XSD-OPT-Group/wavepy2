@@ -76,8 +76,8 @@ class SingleGratingCoherenceZScanFacade(GenericProcessManager):
 
     def draw_crop_initial_image(self, initialization_parameters, plotting_properties=PlottingProperties(), **kwargs): raise NotImplementedError()
     def crop_initial_image(self, initialization_parameters, plotting_properties=PlottingProperties(), **kwargs): raise NotImplementedError()
-    def draw_crop_dark_image(self, initial_crop_parameters, plotting_properties=PlottingProperties(), **kwargs): raise NotImplementedError()
-    def crop_dark_image(self, initial_crop_parameters, plotting_properties=PlottingProperties(), **kwargs): raise NotImplementedError()
+    def draw_crop_dark_image(self, initial_crop_parameters, initialization_parameters, plotting_properties=PlottingProperties(), **kwargs): raise NotImplementedError()
+    def crop_dark_image(self, initial_crop_parameters, initialization_parameters, plotting_properties=PlottingProperties(), **kwargs): raise NotImplementedError()
 
     def calculate_harmonic_periods(self, initial_crop_parameters, initialization_parameters, plotting_properties=PlottingProperties(), **kwargs): raise NotImplementedError()
     def run_calculation(self, harm_periods_result, initialization_parameters, plotting_properties=PlottingProperties(), **kwargs): raise NotImplementedError()
@@ -171,6 +171,8 @@ class __SingleGratingCoherenceZScan(SingleGratingCoherenceZScanFacade):
         img             = initialization_parameters.get_parameter("img")
         pixelsize       = initialization_parameters.get_parameter("pixelsize")
 
+        kwargs["output_dir"] = initialization_parameters.get_parameter("outFolder")
+
         return crop_image.draw_colorbar_crop_image(img=img,
                                                    pixelsize=pixelsize,
                                                    plotting_properties=plotting_properties,
@@ -181,6 +183,8 @@ class __SingleGratingCoherenceZScan(SingleGratingCoherenceZScanFacade):
     def crop_initial_image(self, initialization_parameters, plotting_properties=PlottingProperties(), **kwargs):
         img_original    = initialization_parameters.get_parameter("img")
         pixelsize       = initialization_parameters.get_parameter("pixelsize")
+
+        kwargs["output_dir"] = initialization_parameters.get_parameter("outFolder")
 
         if self.__plotter.is_active():
             img, idx4crop, img_size_o, cmap, colorlimit = crop_image.colorbar_crop_image(img=img_original,
@@ -204,10 +208,12 @@ class __SingleGratingCoherenceZScan(SingleGratingCoherenceZScanFacade):
                               img=img,
                               idx4crop=idx4crop)
 
-    def draw_crop_dark_image(self, initial_crop_parameters, plotting_properties=PlottingProperties(), **kwargs):
+    def draw_crop_dark_image(self, initial_crop_parameters, initialization_parameters, plotting_properties=PlottingProperties(), **kwargs):
         img_original = initial_crop_parameters.get_parameter("img_original")
         cmap         = initial_crop_parameters.get_parameter("cmap")
         colorlimit   = initial_crop_parameters.get_parameter("colorlimit")
+
+        kwargs["output_dir"] = initialization_parameters.get_parameter("outFolder")
 
         return crop_image.draw_crop_image(img=img_original,
                                           plotting_properties=plotting_properties,
@@ -217,10 +223,12 @@ class __SingleGratingCoherenceZScan(SingleGratingCoherenceZScanFacade):
                                           kwargs4graph={'cmap': cmap, 'vmin': colorlimit[0], 'vmax': colorlimit[1]},
                                           **kwargs)
 
-    def crop_dark_image(self, initial_crop_parameters, plotting_properties=PlottingProperties(), **kwargs):
+    def crop_dark_image(self, initial_crop_parameters, initialization_parameters, plotting_properties=PlottingProperties(), **kwargs):
         img_original = initial_crop_parameters.get_parameter("img_original")
         cmap         = initial_crop_parameters.get_parameter("cmap")
         colorlimit   = initial_crop_parameters.get_parameter("colorlimit")
+
+        kwargs["output_dir"] = initialization_parameters.get_parameter("outFolder")
 
         if self.__plotter.is_active():
             _, idx4cropDark, _ = crop_image.crop_image(img=img_original,
@@ -252,6 +260,8 @@ class __SingleGratingCoherenceZScan(SingleGratingCoherenceZScanFacade):
 
         add_context_label = plotting_properties.get_parameter("add_context_label", True)
         use_unique_id     = plotting_properties.get_parameter("use_unique_id", False)
+
+        kwargs["output_dir"] = initialization_parameters.get_parameter("outFolder")
 
         unique_id = self.__plotter.register_context_window(CALCULATE_HARMONIC_PERIODS_CONTEXT_KEY,
                                                            context_window=plotting_properties.get_context_widget(),
@@ -347,6 +357,8 @@ class __SingleGratingCoherenceZScan(SingleGratingCoherenceZScanFacade):
         add_context_label = plotting_properties.get_parameter("add_context_label", True)
         use_unique_id     = plotting_properties.get_parameter("use_unique_id", False)
 
+        kwargs["output_dir"] = initialization_parameters.get_parameter("outFolder")
+
         unique_id = self.__plotter.register_context_window(RUN_CALCULATION_CONTEXT_KEY,
                                                            context_window=plotting_properties.get_context_widget(),
                                                            use_unique_id=use_unique_id)
@@ -386,6 +398,8 @@ class __SingleGratingCoherenceZScan(SingleGratingCoherenceZScanFacade):
 
         pixelsize = initialization_parameters.get_parameter("pixelsize")
         zvec      = initialization_parameters.get_parameter("zvec")
+
+        kwargs["output_dir"] = initialization_parameters.get_parameter("outFolder")
 
         contrastV = np.asarray([x[0] for x in res])
         contrastH = np.asarray([x[1] for x in res])
@@ -448,6 +462,8 @@ class __SingleGratingCoherenceZScan(SingleGratingCoherenceZScanFacade):
 
         add_context_label = plotting_properties.get_parameter("add_context_label", True)
         use_unique_id     = plotting_properties.get_parameter("use_unique_id", False)
+
+        kwargs["output_dir"] = initialization_parameters.get_parameter("outFolder")
 
         unique_id = self.__plotter.register_context_window(FIT_VISIBILITY_CONTEXT_KEY,
                                                            context_window=plotting_properties.get_context_widget(),

@@ -123,7 +123,8 @@ class MainSingleGratingCoherenceZScan(WavePyScript):
             # %% CROP Initial Image
             # ==========================================================================
 
-            initial_crop_result = single_grating_coherence_z_scan_manager.crop_dark_image(single_grating_coherence_z_scan_manager.crop_initial_image(initialization_parameters))
+            initial_crop_result = single_grating_coherence_z_scan_manager.crop_initial_image(initialization_parameters)
+            initial_crop_result = single_grating_coherence_z_scan_manager.crop_dark_image(initial_crop_result, initialization_parameters)
 
             # ==========================================================================
 

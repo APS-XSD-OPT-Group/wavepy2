@@ -47,17 +47,14 @@ class VisibilityPlot(WavePyWidget):
         self.zvec_min           = np.round(np.min(self.__zvec)*1e3, 2) # mm
         self.zvec_max           = np.round(np.max(self.__zvec)*1e3, 2)
         self.__wavelength       = kwargs["wavelength"]
-        self.pattern_period     = np.round(kwargs["pattern_period"], 9)
+        self.pattern_period     = np.round(kwargs["pattern_period"], 10)
         self.source_distance    = np.round(kwargs["source_distance"], 3)
 
         self.__contrast         = kwargs["contrast"]
         self.__ls1              = kwargs["ls1"]
         self.__lc2              = kwargs["lc2"]
         self.__direction        = kwargs["direction"]
-
-
-        #self.z_period           = np.round(kwargs["pattern_period"]**2/self.__wavelength, 6)
-
+        self.__output_dir       = kwargs.get("output_dir", "")
 
         try: figure_width = kwargs["figure_width"] * pixels_to_inches
         except: figure_width = 10
@@ -121,7 +118,7 @@ class VisibilityPlot(WavePyWidget):
         self.__do_fit(True)
 
         self.append_mpl_figure_to_save(figure=self.__figure,
-                                       figure_file_name=common_tools.get_unique_filename(f"visibility_vs_detector_distance_{self.__direction}", "png"))
+                                       figure_file_name=common_tools.get_unique_filename(self.__output_dir + f"visibility_vs_detector_distance_{self.__direction}", "png"))
 
         output_data.set_parameter("coherence_length", self.__coherence_length)
         output_data.set_parameter("source_size", self.__source_size)
@@ -196,15 +193,16 @@ class VisibilityPlot(WavePyWidget):
         fitted_curve = _fitting_function(zvec, Amp=popt[0], p0=popt[1], source_sigma=popt[2], source_distance=popt[3], z0=popt[4])
         envelope     = _envelope(        zvec, Amp=popt[0], p0=popt[1], source_sigma=popt[2], source_distance=popt[3], z0=popt[4])
 
-        self.pattern_period  = np.round(popt[1], 9)
+        self.pattern_period  = np.round(popt[1], 10)
         self.source_distance = np.round(popt[3], 3)
         self.__le_pattern_period.setText(str(self.pattern_period))
         self.__le_source_distance.setText(str(self.source_distance))
 
-        results_Text =  'pattern_period [um] : ' + str('{:.3g}'.format(popt[1]*1e6) + '\n')
-        results_Text += 'z shift [mm] : ' + str('{:.3g}'.format(popt[4]*1e3) + '\n')
-        results_Text += 'Coherent length: {:.3g} um\n'.format(self.__coherence_length*1e6)
-        results_Text += 'Source size: {:.3g} um\n'.format(self.__source_size*1e6)
+        results_Text =  'Pattern period [$\mu$m]    : ' + str('{:.4f}'.format(popt[1]*1e6) + '\n')
+        results_Text += 'z shift [mm]                : ' + str('{:.4f}'.format(popt[4]*1e3) + '\n')
+        results_Text += 'Coherent length [$\mu$m] : {:.4f}\n'.format(self.__coherence_length*1e6)
+        results_Text += 'Source size [$\mu$m]        : {:.4f}\n'.format(self.__source_size*1e6)
+        results_Text += 'Source distance [m]   : {:.3f}'.format(self.source_distance)
 
         self.__figure.clear()
         self.__figure.gca().plot(self.__zvec * 1e3, self.__contrast * 100, self.__ls1, label='Data')
@@ -222,7 +220,7 @@ class VisibilityPlot(WavePyWidget):
         # in this case we will save an image at every fit
         if not is_init and self._allows_saving():
             figure_to_save = FigureToSave(figure=self.__figure,
-                                          figure_file_name=common_tools.get_unique_filename(f"visibility_vs_detector_distance_{self.__direction}", "png"))
+                                          figure_file_name=common_tools.get_unique_filename(self.__output_dir + f"visibility_vs_detector_distance_{self.__direction}", "png"))
             figure_to_save.save_figure()
 
 

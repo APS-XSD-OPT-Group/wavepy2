@@ -88,6 +88,6 @@ class ShowCroppedFigure(WavePyWidget):
         self.setLayout(layout)
 
         self.append_mpl_figure_to_save(figure=widget.get_image_to_change().get_mpl_figure(),
-                                       figure_file_name=common_tools.get_unique_filename("cropped_raw_image", "png"))
+                                       figure_file_name=common_tools.get_unique_filename(kwargs.get("output_dir", "") + "cropped_raw_image", "png"))
 
 

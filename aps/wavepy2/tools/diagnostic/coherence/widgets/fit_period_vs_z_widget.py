@@ -64,7 +64,8 @@ class FitPeriodVsZPlot(WavePyWidget):
 
 
         self.append_mpl_figure_to_save(figure=figure,
-                                       figure_file_name=common_tools.get_unique_filename(f"patter_period_vs_detector_distance_{direction}", "png"))
+                                       figure_file_name=common_tools.get_unique_filename(kwargs.get("output_dir", "") +
+                                                                                         f"patter_period_vs_detector_distance_{direction}", "png"))
 
         output_data.set_parameter("sourceDistance", sourceDistance)
         output_data.set_parameter("patternPeriodFromData", patternPeriodFromData)
