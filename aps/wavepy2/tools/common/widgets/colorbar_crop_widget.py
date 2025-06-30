@@ -139,7 +139,7 @@ from PyQt5.QtCore import Qt
 class ColorbarCropWidgetPlot(AbstractColorbarCropWidget, WavePyWidget):
 
     def __init__(self, application_name=None, **kwargs):
-        AbstractColorbarCropWidget.__init__(self, application_name)
+        AbstractColorbarCropWidget.__init__(self, application_name, **kwargs)
         WavePyWidget.__init__(self, parent=None, application_name=application_name)
 
         layout = QHBoxLayout()
@@ -163,5 +163,5 @@ class ColorbarCropWidgetPlot(AbstractColorbarCropWidget, WavePyWidget):
 class ColorbarCropDialogPlot(AbstractColorbarCropWidget, WavePyInteractiveWidget):
 
     def __init__(self, parent, application_name=None, **kwargs):
-        AbstractColorbarCropWidget.__init__(self, application_name)
+        AbstractColorbarCropWidget.__init__(self, application_name, **kwargs)
         WavePyInteractiveWidget.__init__(self, parent, message="New Crop?", title="Crop Image", application_name=application_name)
