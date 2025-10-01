@@ -1,0 +1,16 @@
+Input folder: /data/data_analysis/toshare
+
+Number of files : 212
+Stride : 1
+Z distances is Calculated
+Step zscan [mm] : 8
+Start point zscan [mm] : 9
+Pixel Size [um] : 0.6574
+Grating Period [um] : 3
+Grating Pattern : Edge
+Crop idxs : [0, -1, 0, -1]
+Dark idxs : [0, 20, 0, 20]
+Vertical Source Distance: 37.0
+Horizontal Source Distance: 37.0
+Uniform Filter Size : 1
+Search Region : 20
